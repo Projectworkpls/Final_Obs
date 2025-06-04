@@ -1,0 +1,750 @@
+{% extends "base.html" %}
+
+{% block title %}Process Observation{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-camera me-2"></i>Process Observation
+        </h1>
+        <!-- Scheduled Report Alert -->
+        {% if session.get('scheduled_child_id') %}
+        <div class="alert alert-info alert-dismissible fade show">
+            <i class="fas fa-clock me-2"></i>
+            <strong>Scheduled Report:</strong> Processing report for {{ session.get('scheduled_child_name') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row">
+    <!-- Main Processing Area -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-cogs me-2"></i>Create New Observation Report</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('observer.process_file') }}" enctype="multipart/form-data" id="process-form">
+                    <!-- Child Selection -->
+                    <div class="mb-4">
+                        <label for="child_id" class="form-label">Select Child</label>
+                        <select class="form-select" id="child_id" name="child_id" required>
+                            <option value="">Choose a child</option>
+                            {% for child in children %}
+                            <option value="{{ child.id }}">{{ child.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Processing Mode Selection -->
+                    <div class="mb-4">
+                        <label class="form-label">Processing Mode</label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="processing_mode" id="ocr_mode" value="ocr">
+                            <label class="btn btn-outline-primary" for="ocr_mode">
+                                <i class="fas fa-image me-2"></i>OCR (Image Upload)
+                            </label>
+
+                            <input type="radio" class="btn-check" name="processing_mode" id="audio_mode" value="audio">
+                            <label class="btn btn-outline-success" for="audio_mode">
+                                <i class="fas fa-microphone me-2"></i>Audio Upload
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Session Information -->
+                    <div class="mb-4">
+                        <h6>Session Information</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="student_name" class="form-label">Student Name</label>
+                                    <input type="text" class="form-control" id="student_name" name="student_name" placeholder="Student name">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="session_date" class="form-label">Session Date</label>
+                                    <input type="date" class="form-control" id="session_date" name="session_date">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="session_start" class="form-label">Start Time</label>
+                                    <input type="time" class="form-control" id="session_start" name="session_start">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="session_end" class="form-label">End Time</label>
+                                    <input type="time" class="form-control" id="session_end" name="session_end">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- File Upload Area -->
+                    <div id="upload-section" class="mb-4" style="display: none;">
+                        <div class="file-upload-area" onclick="document.getElementById('file-input').click()">
+                            <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">Click to upload or drag and drop</p>
+                            <p class="text-muted small" id="file-types">Select a processing mode first</p>
+                        </div>
+                        <input type="file" id="file-input" name="file" class="d-none">
+                        <div id="file-preview" class="mt-3"></div>
+                    </div>
+
+                    <!-- Process Button -->
+                    <button id="process-btn" class="btn btn-primary btn-lg w-100" disabled type="submit">
+                        <i class="fas fa-play me-2"></i>Process Observation
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Generated Report Display -->
+        {% if last_report %}
+        <div class="card mt-4" id="generated-report">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-file-alt me-2"></i>Generated Report</h5>
+                <div class="btn-group">
+                    <a href="{{ url_for('observer.download_report') }}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-download me-1"></i>Download Word
+                    </a>
+                    <a href="{{ url_for('observer.download_pdf') }}" class="btn btn-outline-danger btn-sm">
+                        <i class="fas fa-file-pdf me-1"></i>Download PDF
+                    </a>
+                    <button class="btn btn-outline-success btn-sm" onclick="showEmailModal('regular')">
+                        <i class="fas fa-envelope me-1"></i>Email
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="report-content" style="white-space: pre-wrap; background: #f8f9fa; padding: 1rem; border-radius: 8px; max-height: 500px; overflow-y: auto; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6;">
+                    {{ last_report }}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Custom Report Section -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5><i class="fas fa-magic me-2"></i>Generate Custom Report</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="custom-child-select" class="form-label">Select Child</label>
+                    <select class="form-select" id="custom-child-select">
+                        <option value="">Choose a child</option>
+                        {% for child in children %}
+                        <option value="{{ child.id }}">{{ child.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="custom-prompt" class="form-label">Report Prompt</label>
+                    <textarea class="form-control" id="custom-prompt" rows="3"
+                              placeholder="Describe what kind of report you want to generate based on stored observation data..."></textarea>
+                </div>
+                <button class="btn btn-success" onclick="generateCustomReport()">
+                    <i class="fas fa-magic me-2"></i>Generate Custom Report
+                </button>
+            </div>
+        </div>
+
+        <!-- FIXED: Custom Report Display with Download and Email Buttons -->
+        <div id="custom-report-section" class="card mt-4" style="display: none;">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-magic me-2"></i>Custom Report</h5>
+                <div class="btn-group">
+                    <button class="btn btn-outline-primary btn-sm" onclick="downloadCustomReport('word')">
+                        <i class="fas fa-download me-1"></i>Download Word
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm" onclick="downloadCustomReport('pdf')">
+                        <i class="fas fa-file-pdf me-1"></i>Download PDF
+                    </button>
+                    <button class="btn btn-outline-success btn-sm" onclick="emailCustomReport()">
+                        <i class="fas fa-envelope me-1"></i>Email
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="custom-report-content" style="white-space: pre-wrap; background: #f8f9fa; padding: 1rem; border-radius: 8px; max-height: 500px; overflow-y: auto; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-info-circle me-2"></i>Instructions</h5>
+            </div>
+            <div class="card-body">
+                <h6>OCR Mode</h6>
+                <ul class="small">
+                    <li>Upload clear images of observation sheets</li>
+                    <li>Ensure text is readable and well-lit</li>
+                    <li>Supported: JPG, PNG</li>
+                </ul>
+
+                <h6>Audio Mode</h6>
+                <ul class="small">
+                    <li>Upload audio recordings of sessions</li>
+                    <li>Clear audio quality recommended</li>
+                    <li>Supported: MP3, WAV, M4A</li>
+                </ul>
+
+                <div class="alert alert-info">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    <strong>Tip:</strong> Processing may take a few minutes.
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('observer.dashboard') }}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-home me-1"></i>Back to Dashboard
+                    </a>
+                    <a href="{{ url_for('observer.goals') }}" class="btn btn-outline-success btn-sm">
+                        <i class="fas fa-bullseye me-1"></i>Manage Goals
+                    </a>
+                    <a href="{{ url_for('observer.messages') }}" class="btn btn-outline-info btn-sm">
+                        <i class="fas fa-envelope me-1"></i>Messages
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Processing Status -->
+        <div class="card mt-3" id="processing-status" style="display: none;">
+            <div class="card-header">
+                <h5><i class="fas fa-cogs me-2"></i>Processing Status</h5>
+            </div>
+            <div class="card-body">
+                <div class="progress mb-2">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                </div>
+                <small class="text-muted" id="status-text">Ready to process...</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Email Modal -->
+<div class="modal fade" id="emailModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Email Report</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="email-form">
+                    <div class="mb-3">
+                        <label for="recipient-email" class="form-label">Recipient Email</label>
+                        <input type="email" class="form-control" id="recipient-email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email-subject" class="form-label">Subject</label>
+                        <input type="text" class="form-control" id="email-subject" value="Observation Report">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="sendEmail()">Send Email</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="successToast" class="toast" role="alert">
+        <div class="toast-header">
+            <i class="fas fa-check-circle text-success me-2"></i>
+            <strong class="me-auto">Success</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body" id="successMessage"></div>
+    </div>
+
+    <div id="errorToast" class="toast" role="alert">
+        <div class="toast-header">
+            <i class="fas fa-exclamation-triangle text-danger me-2"></i>
+            <strong class="me-auto">Error</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body" id="errorMessage"></div>
+    </div>
+</div>
+
+<style>
+.file-upload-area {
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    padding: 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.file-upload-area:hover {
+    border-color: #007bff;
+    background-color: #f8f9fa;
+}
+
+.file-upload-area.dragover {
+    border-color: #28a745;
+    background-color: #d4edda;
+}
+
+.report-content {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+}
+
+.processing-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.processing-spinner {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    text-align: center;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+</style>
+
+<script>
+let selectedFile = null;
+let processingInterval = null;
+
+// Handle form submission
+document.getElementById('process-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const form = this;
+    const processBtn = document.getElementById('process-btn');
+    const originalBtnText = processBtn.innerHTML;
+
+    // Show processing status
+    showProcessingStatus();
+
+    // Show loading state
+    processBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+    processBtn.disabled = true;
+
+    // Submit form
+    fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        hideProcessingStatus();
+
+        if (data.success) {
+            // Remove existing report if any
+            const existingReport = document.getElementById('generated-report');
+            if (existingReport) {
+                existingReport.remove();
+            }
+
+            // Create new report section
+            const reportSection = document.createElement('div');
+            reportSection.className = 'card mt-4 fade-in';
+            reportSection.id = 'generated-report';
+            reportSection.innerHTML = `
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="fas fa-file-alt me-2"></i>Generated Report</h5>
+                    <div class="btn-group">
+                        <a href="${data.download_urls.word}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-download me-1"></i>Download Word
+                        </a>
+                        <a href="${data.download_urls.pdf}" class="btn btn-outline-danger btn-sm">
+                            <i class="fas fa-file-pdf me-1"></i>Download PDF
+                        </a>
+                        <button class="btn btn-outline-success btn-sm" onclick="showEmailModal('regular')">
+                            <i class="fas fa-envelope me-1"></i>Email
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="report-content" style="white-space: pre-wrap; background: #f8f9fa; padding: 1rem; border-radius: 8px; max-height: 500px; overflow-y: auto; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6;">
+                        ${data.report}
+                    </div>
+                </div>
+            `;
+
+            // Insert the new report section after the form card
+            const formCard = document.querySelector('.card');
+            formCard.parentNode.insertBefore(reportSection, formCard.nextSibling);
+
+            // Show success toast
+            showToast('success', data.message);
+
+            // Scroll to report
+            reportSection.scrollIntoView({ behavior: 'smooth' });
+        } else {
+            showToast('error', data.error);
+        }
+
+        // Reset form and button
+        resetForm();
+        processBtn.innerHTML = originalBtnText;
+        processBtn.disabled = true;
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        hideProcessingStatus();
+        showToast('error', 'Error processing observation. Please try again.');
+        processBtn.innerHTML = originalBtnText;
+        processBtn.disabled = false;
+    });
+});
+
+function showProcessingStatus() {
+    const statusCard = document.getElementById('processing-status');
+    const progressBar = statusCard.querySelector('.progress-bar');
+    const statusText = document.getElementById('status-text');
+
+    statusCard.style.display = 'block';
+    let progress = 0;
+
+    const steps = [
+        'Uploading file...',
+        'Processing content...',
+        'Generating report...',
+        'Finalizing...'
+    ];
+
+    let stepIndex = 0;
+    statusText.textContent = steps[stepIndex];
+
+    processingInterval = setInterval(() => {
+        progress += Math.random() * 15;
+        if (progress > 90) progress = 90;
+
+        progressBar.style.width = progress + '%';
+
+        if (progress > 25 && stepIndex === 0) {
+            stepIndex = 1;
+            statusText.textContent = steps[stepIndex];
+        } else if (progress > 50 && stepIndex === 1) {
+            stepIndex = 2;
+            statusText.textContent = steps[stepIndex];
+        } else if (progress > 75 && stepIndex === 2) {
+            stepIndex = 3;
+            statusText.textContent = steps[stepIndex];
+        }
+    }, 500);
+}
+
+function hideProcessingStatus() {
+    if (processingInterval) {
+        clearInterval(processingInterval);
+        processingInterval = null;
+    }
+
+    const statusCard = document.getElementById('processing-status');
+    const progressBar = statusCard.querySelector('.progress-bar');
+    const statusText = document.getElementById('status-text');
+
+    progressBar.style.width = '100%';
+    statusText.textContent = 'Complete!';
+
+    setTimeout(() => {
+        statusCard.style.display = 'none';
+        progressBar.style.width = '0%';
+        statusText.textContent = 'Ready to process...';
+    }, 1000);
+}
+
+function showToast(type, message) {
+    const toastId = type === 'success' ? 'successToast' : 'errorToast';
+    const messageId = type === 'success' ? 'successMessage' : 'errorMessage';
+
+    document.getElementById(messageId).textContent = message;
+
+    const toast = new bootstrap.Toast(document.getElementById(toastId));
+    toast.show();
+}
+
+function resetForm() {
+    document.getElementById('process-form').reset();
+    document.getElementById('file-preview').innerHTML = '';
+    selectedFile = null;
+    document.getElementById('upload-section').style.display = 'none';
+    document.getElementById('file-types').textContent = 'Select a processing mode first';
+}
+
+function initializeEventListeners() {
+    // Handle processing mode change
+    document.querySelectorAll('input[name="processing_mode"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const uploadSection = document.getElementById('upload-section');
+            const fileTypes = document.getElementById('file-types');
+            const fileInput = document.getElementById('file-input');
+
+            uploadSection.style.display = 'block';
+
+            if (this.value === 'ocr') {
+                fileTypes.textContent = 'Images: JPG, PNG';
+                fileInput.accept = '.jpg,.jpeg,.png';
+            } else if (this.value === 'audio') {
+                fileTypes.textContent = 'Audio: MP3, WAV, M4A';
+                fileInput.accept = '.mp3,.wav,.m4a';
+            }
+
+            updateProcessButton();
+        });
+    });
+
+    // Handle file selection
+    document.getElementById('file-input').addEventListener('change', function(e) {
+        selectedFile = e.target.files[0];
+        const preview = document.getElementById('file-preview');
+
+        if (selectedFile) {
+            preview.innerHTML = `
+                <div class="alert alert-info">
+                    <i class="fas fa-file me-2"></i>
+                    Selected: ${selectedFile.name} (${(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
+                </div>
+            `;
+        }
+
+        updateProcessButton();
+    });
+
+    // Handle child selection
+    document.getElementById('child_id').addEventListener('change', function() {
+        updateProcessButton();
+
+        // Auto-populate student name when child is selected
+        const selectedOption = this.options[this.selectedIndex];
+        if (selectedOption.value) {
+            document.getElementById('student_name').value = selectedOption.text;
+        }
+    });
+
+    // Drag and drop functionality
+    const uploadArea = document.querySelector('.file-upload-area');
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, highlight, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, unhighlight, false);
+    });
+
+    function highlight(e) {
+        uploadArea.classList.add('dragover');
+    }
+
+    function unhighlight(e) {
+        uploadArea.classList.remove('dragover');
+    }
+
+    uploadArea.addEventListener('drop', handleDrop, false);
+
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+
+        if (files.length > 0) {
+            document.getElementById('file-input').files = files;
+            document.getElementById('file-input').dispatchEvent(new Event('change'));
+        }
+    }
+}
+
+// Initialize event listeners on page load
+document.addEventListener('DOMContentLoaded', function() {
+    initializeEventListeners();
+    document.getElementById('session_date').valueAsDate = new Date();
+
+    // Handle URL parameters for pre-selection
+    const urlParams = new URLSearchParams(window.location.search);
+    const childId = urlParams.get('child_id');
+
+    if (childId) {
+        const childSelect = document.getElementById('child_id');
+        childSelect.value = childId;
+        childSelect.dispatchEvent(new Event('change'));
+    }
+
+    // Handle scheduled child from session
+    {% if session.get('scheduled_child_id') %}
+    const scheduledChildId = '{{ session.get("scheduled_child_id") }}';
+    if (scheduledChildId) {
+        const childSelect = document.getElementById('child_id');
+        childSelect.value = scheduledChildId;
+        childSelect.dispatchEvent(new Event('change'));
+    }
+    {% endif %}
+});
+
+function updateProcessButton() {
+    const childSelected = document.getElementById('child_id').value;
+    const modeSelected = document.querySelector('input[name="processing_mode"]:checked');
+    const processBtn = document.getElementById('process-btn');
+
+    processBtn.disabled = !(childSelected && modeSelected && selectedFile);
+}
+
+// UPDATED: Enhanced email modal handling for different report types
+function showEmailModal(reportType = 'regular') {
+    const modal = document.getElementById('emailModal');
+    if (modal) {
+        // Store report type for use in sendEmail
+        modal.setAttribute('data-report-type', reportType);
+        const bootstrapModal = new bootstrap.Modal(modal);
+        bootstrapModal.show();
+    }
+}
+
+// UPDATED: Enhanced email sending for different report types
+function sendEmail() {
+    const email = document.getElementById('recipient-email').value;
+    const modal = document.getElementById('emailModal');
+    const reportType = modal ? modal.getAttribute('data-report-type') || 'regular' : 'regular';
+
+    if (!email) {
+        showToast('error', 'Please enter an email address');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('recipient_email', email);
+
+    let endpoint = '/observer/email_report';
+    if (reportType === 'custom') {
+        endpoint = '/observer/email_custom_report';
+    }
+
+    fetch(endpoint, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('success', 'Email sent successfully!');
+            bootstrap.Modal.getInstance(modal).hide();
+        } else {
+            showToast('error', 'Error sending email: ' + data.error);
+        }
+    })
+    .catch(error => {
+        showToast('error', 'Error sending email');
+        console.error('Error:', error);
+    });
+}
+
+// UPDATED: Enhanced custom report generation with display and download functionality
+function generateCustomReport() {
+    const childId = document.getElementById('custom-child-select').value;
+    const prompt = document.getElementById('custom-prompt').value;
+
+    if (!childId || !prompt.trim()) {
+        showToast('error', 'Please select a child and enter a prompt');
+        return;
+    }
+
+    // Show loading
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating...';
+    button.disabled = true;
+
+    const formData = new FormData();
+    formData.append('child_id', childId);
+    formData.append('prompt', prompt);
+
+    fetch('/observer/custom_report', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Display the custom report with download buttons
+            document.getElementById('custom-report-content').textContent = data.report;
+            document.getElementById('custom-report-section').style.display = 'block';
+            document.getElementById('custom-report-section').classList.add('fade-in');
+
+            // Scroll to the report
+            document.getElementById('custom-report-section').scrollIntoView({ behavior: 'smooth' });
+            showToast('success', 'Custom report generated successfully!');
+        } else {
+            showToast('error', 'Error generating report: ' + data.error);
+        }
+    })
+    .catch(error => {
+        showToast('error', 'Error generating report');
+        console.error('Error:', error);
+    })
+    .finally(() => {
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
+
+// NEW: Download custom reports
+function downloadCustomReport(type) {
+    const url = type === 'word' ? '/observer/download_custom_report' : '/observer/download_custom_pdf';
+    window.open(url, '_blank');
+}
+
+// NEW: Email custom report
+function emailCustomReport() {
+    showEmailModal('custom');
+}
+</script>
+{% endblock %}
