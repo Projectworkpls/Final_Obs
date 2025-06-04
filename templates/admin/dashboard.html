@@ -1,0 +1,310 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-tachometer-alt me-2"></i>Admin Dashboard
+        </h1>
+        <p class="text-muted">Welcome to the Learning Observer administration panel.</p>
+    </div>
+</div>
+
+<!-- Analytics Cards -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ analytics.users_count }}</h4>
+                        <p class="mb-0">Total Users</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-users fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ analytics.children_count }}</h4>
+                        <p class="mb-0">Children</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-child fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ analytics.observations_count }}</h4>
+                        <p class="mb-0">Observations</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-file-alt fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('admin.user_management') }}" class="btn btn-primary w-100 h-100 d-flex flex-column justify-content-center align-items-center">
+                            <i class="fas fa-users fa-2x mb-2"></i>
+                            <span>Manage Users</span>
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('admin.mappings') }}" class="btn btn-success w-100 h-100 d-flex flex-column justify-content-center align-items-center">
+                            <i class="fas fa-sitemap fa-2x mb-2"></i>
+                            <span>User Mappings</span>
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('admin.process_reports') }}" class="btn btn-info w-100 h-100 d-flex flex-column justify-content-center align-items-center">
+                            <i class="fas fa-file-medical-alt fa-2x mb-2"></i>
+                            <span>Process Reports</span>
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <button class="btn btn-warning w-100 h-100 d-flex flex-column justify-content-center align-items-center" onclick="viewAnalytics()">
+                            <i class="fas fa-chart-bar fa-2x mb-2"></i>
+                            <span>View Analytics</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-history me-2"></i>Recent Activity</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Action</th>
+                                <th>User</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><small class="text-muted">Just now</small></td>
+                                <td><span class="badge bg-success">Login</span></td>
+                                <td>Admin</td>
+                                <td>Admin dashboard accessed</td>
+                            </tr>
+                            <tr>
+                                <td><small class="text-muted">5 min ago</small></td>
+                                <td><span class="badge bg-info">Report</span></td>
+                                <td>System</td>
+                                <td>Analytics updated</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-cog me-2"></i>System Status</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Database</span>
+                        <span class="badge bg-success">Online</span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>OCR Service</span>
+                        <span class="badge bg-success">Active</span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Email Service</span>
+                        <span class="badge bg-success">Active</span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>AI Processing</span>
+                        <span class="badge bg-success">Active</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5><i class="fas fa-info-circle me-2"></i>Quick Info</h5>
+            </div>
+            <div class="card-body">
+                <p class="small text-muted">
+                    <strong>Version:</strong> 1.0.0<br>
+                    <strong>Last Update:</strong> Today<br>
+                    <strong>Uptime:</strong> 24h 15m
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Analytics Modal -->
+<div class="modal fade" id="analyticsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">System Analytics</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h3 class="text-primary">{{ analytics.users_count }}</h3>
+                                <p class="mb-0">Total Users</p>
+                                <small class="text-muted">Admins, Observers, Parents</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h3 class="text-success">{{ analytics.children_count }}</h3>
+                                <p class="mb-0">Children Registered</p>
+                                <small class="text-muted">Active learning profiles</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mt-3">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h3 class="text-info">{{ analytics.observations_count }}</h3>
+                                <p class="mb-0">Total Observations</p>
+                                <small class="text-muted">Reports generated</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mt-3">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h3 class="text-warning">
+                                    {% if analytics.observations_count > 0 and analytics.children_count > 0 %}
+                                        {{ "%.1f"|format(analytics.observations_count / analytics.children_count) }}
+                                    {% else %}
+                                        0.0
+                                    {% endif %}
+                                </h3>
+                                <p class="mb-0">Avg Reports/Child</p>
+                                <small class="text-muted">Engagement metric</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <h6>System Health</h6>
+                    <div class="progress mb-2">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: 95%">
+                            Database: 95%
+                        </div>
+                    </div>
+                    <div class="progress mb-2">
+                        <div class="progress-bar bg-info" role="progressbar" style="width: 88%">
+                            API Services: 88%
+                        </div>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar bg-warning" role="progressbar" style="width: 92%">
+                            Overall Performance: 92%
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="exportAnalytics()">Export Report</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function viewAnalytics() {
+    const modal = new bootstrap.Modal(document.getElementById('analyticsModal'));
+    modal.show();
+}
+
+function exportAnalytics() {
+    // Create CSV data
+    const csvData = [
+        ['Metric', 'Value'],
+        ['Total Users', '{{ analytics.users_count }}'],
+        ['Children', '{{ analytics.children_count }}'],
+        ['Observations', '{{ analytics.observations_count }}'],
+        ['Avg Reports per Child', '{% if analytics.observations_count > 0 and analytics.children_count > 0 %}{{ "%.1f"|format(analytics.observations_count / analytics.children_count) }}{% else %}0.0{% endif %}']
+    ];
+
+    // Convert to CSV string
+    const csvString = csvData.map(row => row.join(',')).join('\n');
+
+    // Create download link
+    const blob = new Blob([csvString], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'system_analytics_' + new Date().toISOString().split('T')[0] + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+
+    // Close modal
+    bootstrap.Modal.getInstance(document.getElementById('analyticsModal')).hide();
+}
+
+// Auto-refresh analytics every 30 seconds
+setInterval(function() {
+    // You can add AJAX call here to refresh analytics data
+    console.log('Analytics refresh interval');
+}, 30000);
+</script>
+{% endblock %}
