@@ -9,9 +9,9 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import time
 import re
-from datetime import datetime  # ADD THIS LINE
+from datetime import datetime
 from config import Config
-
+import os
 
 
 class ObservationExtractor:
@@ -211,6 +211,72 @@ Be creative in extracting information based on context."""
         except Exception as e:
             return f"Error during transcription: {str(e)}"
 
+    def generate_conversational_transcript(self, raw_text):
+        """Convert raw observations/transcript into conversational format using Gemini API"""
+        try:
+            prompt = f"""
+            Convert the following observation text into a conversational format between an Observer and a Child. 
+            Format it as a natural dialogue where:
+            - Observer speaks first with questions, instructions, or observations
+            - Child responds naturally based on the context
+            - Use "Observer:" and "Child:" labels for each speaker
+            - Make it realistic and age-appropriate
+            - If the text is already conversational, just format it properly
+            - If it's narrative observations, convert them into likely dialogue
+            - Create a natural flow of conversation that would lead to the observations described
+            - Include educational moments and learning interactions
+
+            Original observation text:
+            {raw_text}
+
+            Please format as a realistic conversation:
+            Observer: [what the observer might have said or asked]
+            Child: [how the child might have responded based on the context]
+            Observer: [follow-up from observer]
+            Child: [child's response]
+
+            Keep it natural, educational, and age-appropriate. Make sure the conversation flows logically and would realistically result in the observations described in the original text.
+            """
+
+            # Use the same Gemini API pattern as your existing methods
+            model = genai.GenerativeModel('gemini-2.0-flash')
+            response = model.generate_content([
+                {"role": "user", "parts": [{"text": prompt}]}
+            ])
+
+            if response and response.text:
+                return response.text.strip()
+            else:
+                return self._basic_transcript_formatting(raw_text)
+
+        except Exception as e:
+            # Fallback to basic formatting if API fails
+            return self._basic_transcript_formatting(raw_text)
+
+    def _basic_transcript_formatting(self, raw_text):
+        """Basic fallback transcript formatting"""
+        lines = raw_text.split('\n')
+        formatted_lines = []
+
+        for i, line in enumerate(lines):
+            line = line.strip()
+            if line:
+                if i % 2 == 0:
+                    formatted_lines.append(f"Observer: {line}")
+                else:
+                    formatted_lines.append(f"Child: {line}")
+
+        if not formatted_lines:
+            # If no lines, create a basic conversation
+            formatted_lines = [
+                "Observer: Can you tell me about what you learned today?",
+                f"Child: {raw_text[:100]}..." if len(raw_text) > 100 else f"Child: {raw_text}",
+                "Observer: That's wonderful! Can you tell me more about it?",
+                "Child: Yes, I enjoyed learning about this topic."
+            ]
+
+        return '\n'.join(formatted_lines)
+
     def generate_report_from_text(self, text_content, user_info):
         """Generate a structured report from text using Google Gemini"""
         prompt = f"""
@@ -287,7 +353,6 @@ Be creative in extracting information based on context."""
         💚 Good (5-6 areas) – Solid engagement with positive trends        
         ⚠️ Fair (3-4 areas) – Some engagement, needs encouragement        
         📈 Needs Work (1-2 areas) – Area not activated or underperforming today
-
 
         give the entire report such that its a direct send worthy item, so all things should always be there and no other unecessary words in the response. No repetation.
         """
@@ -551,11 +616,9 @@ Be creative in extracting information based on context."""
         except Exception as e:
             return False, f"Error: {str(e)}"
 
-    # UPDATED: Enhanced custom report generation with new JSON format
     def generate_custom_report_from_prompt(self, prompt, child_id):
         """Generate custom report based on prompt and stored data with new JSON format"""
         from models.database import get_supabase_client
-        from datetime import datetime  # ADD THIS LINE
 
         try:
             supabase = get_supabase_client()
@@ -613,25 +676,25 @@ Be creative in extracting information based on context."""
 
                 # Format the JSON response into a readable report
                 formatted_report = f"""
-    📋 Custom Report: {json_response.get('className', 'Custom Analysis Report')}
+📋 Custom Report: {json_response.get('className', 'Custom Analysis Report')}
 
-    🧒 Student Name: {json_response.get('studentName', child_name)}
-    📅 Date: {json_response.get('date', datetime.now().strftime('%Y-%m-%d'))}
-    📝 Report Type: Custom Analysis
+🧒 Student Name: {json_response.get('studentName', child_name)}
+📅 Date: {json_response.get('date', datetime.now().strftime('%Y-%m-%d'))}
+📝 Report Type: Custom Analysis
 
-    📊 Observations Summary:
-    {json_response.get('observations', 'No observations available')}
+📊 Observations Summary:
+{json_response.get('observations', 'No observations available')}
 
-    ⭐ Strengths Identified:
-    {chr(10).join([f"• {strength}" for strength in json_response.get('strengths', [])])}
+⭐ Strengths Identified:
+{chr(10).join([f"• {strength}" for strength in json_response.get('strengths', [])])}
 
-    📈 Areas for Development:
-    {chr(10).join([f"• {area}" for area in json_response.get('areasOfDevelopment', [])])}
+📈 Areas for Development:
+{chr(10).join([f"• {area}" for area in json_response.get('areasOfDevelopment', [])])}
 
-    💡 Recommendations:
-    {chr(10).join([f"• {rec}" for rec in json_response.get('recommendations', [])])}
+💡 Recommendations:
+{chr(10).join([f"• {rec}" for rec in json_response.get('recommendations', [])])}
 
-    📋 Report Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+📋 Report Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
                 """
 
                 return formatted_report.strip()
@@ -643,7 +706,6 @@ Be creative in extracting information based on context."""
         except Exception as e:
             return f"Error generating custom report: {str(e)}"
 
-    # NEW: Generate monthly report with JSON format and graph suggestions
     def generate_monthly_report_json_format(self, observations, goal_progress, child_name, year, month):
         """Generate monthly summary in the new JSON format with graph recommendations"""
         try:
