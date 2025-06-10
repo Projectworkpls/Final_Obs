@@ -13,7 +13,7 @@ def login():
         email = request.form.get('email', '').strip()
         password = request.form.get('password', '')
 
-        print(f"Login attempt - Email: {email}, Config Admin: {Config.ADMIN_USER}")  # Debug
+        # Removed print statements to avoid OSError
 
         # Check admin credentials first (case-sensitive comparison)
         if email == Config.ADMIN_USER and password == Config.ADMIN_PASS:
@@ -29,7 +29,7 @@ def login():
             session['logged_in'] = True
             session['is_admin'] = True
 
-            print(f"Admin session set: {dict(session)}")  # Debug
+            # Removed print statements
 
             flash('Admin login successful!', 'success')
             return redirect(url_for('admin.dashboard'))
