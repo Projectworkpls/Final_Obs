@@ -1,0 +1,308 @@
+{% extends "base.html" %}
+
+{% block title %}View Report - Admin{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>
+                <i class="fas fa-file-alt me-2"></i>Report Details
+            </h1>
+            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Report Info -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-info-circle me-2"></i>Report Information</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Student:</strong> {{ report.student_name or 'N/A' }}</p>
+                <p><strong>Observer:</strong> {{ report.observer_name or 'N/A' }}</p>
+                <p><strong>Date:</strong> {{ report.date or 'N/A' }}</p>
+                <p><strong>Generated:</strong> {{ report.timestamp[:16] if report.timestamp else 'N/A' }}</p>
+                <p><strong>Source:</strong> 
+                    {% if report.processed_by_admin %}
+                        <span class="badge bg-warning">Admin Processed</span>
+                    {% else %}
+                        <span class="badge bg-info">Observer Generated</span>
+                    {% endif %}
+                </p>
+                {% if report.filename %}
+                <p><strong>Original File:</strong> {{ report.filename }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        {% if report.file_url %}
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-paperclip me-2"></i>Associated Media</h5>
+            </div>
+            <div class="card-body">
+                {% if '.mp3' in report.file_url.lower() or '.wav' in report.file_url.lower() or '.m4a' in report.file_url.lower() or '.ogg' in report.file_url.lower() %}
+                    <div class="text-center">
+                        <i class="fas fa-volume-up fa-3x text-primary mb-3"></i>
+                        <br>
+                        <audio controls class="w-100" crossorigin="anonymous" preload="none">
+                            {% if report.signed_url %}
+                                <source src="{{ report.signed_url }}" type="audio/mpeg">
+                                <source src="{{ report.signed_url }}" type="audio/wav">
+                                <source src="{{ report.signed_url }}" type="audio/mp4">
+                            {% endif %}
+                            <source src="{{ report.file_url }}" type="audio/mpeg">
+                            <source src="{{ report.file_url }}" type="audio/wav">
+                            <source src="{{ report.file_url }}" type="audio/ogg">
+                            <source src="{{ report.file_url }}" type="audio/mp4">
+                            Your browser does not support the audio element.
+                        </audio>
+                        <br><br>
+                        <div class="btn-group">
+                            <a href="{{ report.signed_url or report.file_url }}" target="_blank" class="btn btn-primary btn-sm">
+                                <i class="fas fa-external-link-alt me-1"></i>Open in New Tab
+                            </a>
+                            <a href="{{ report.file_url }}" download class="btn btn-secondary btn-sm">
+                                <i class="fas fa-download me-1"></i>Download
+                            </a>
+                        </div>
+                    </div>
+                {% elif '.jpg' in report.file_url.lower() or '.jpeg' in report.file_url.lower() or '.png' in report.file_url.lower() or '.gif' in report.file_url.lower() %}
+                    <div class="text-center">
+                        <img src="{{ report.file_url }}" alt="Report Image" class="img-fluid" style="max-height: 300px;">
+                        <br><br>
+                        <a href="{{ report.file_url }}" target="_blank" class="btn btn-primary btn-sm">
+                            <i class="fas fa-external-link-alt me-1"></i>View Full Size
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="text-center">
+                        <i class="fas fa-file fa-3x text-info mb-3"></i>
+                        <br>
+                        <a href="{{ report.file_url }}" target="_blank" class="btn btn-primary">
+                            <i class="fas fa-external-link-alt me-1"></i>View File
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Transcript Section (NEW) -->
+{% if report.observations %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-comments me-2"></i>Conversational Transcript</h5>
+                <button class="btn btn-outline-primary btn-sm" onclick="generateTranscript('{{ report.id }}')">
+                    <i class="fas fa-magic me-1"></i>Generate Conversation
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="transcript-loading" style="display: none;" class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Generating transcript...</span>
+                    </div>
+                    <p class="mt-2">Generating conversational transcript...</p>
+                </div>
+
+                <div id="transcript-content" style="display: none;">
+                    <!-- Transcript will be loaded here -->
+                </div>
+
+                <div id="transcript-placeholder" class="text-center text-muted">
+                    <i class="fas fa-comments fa-3x mb-3"></i>
+                    <p>Click "Generate Conversation" to create a conversational format of this observation.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Formatted Report -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-file-text me-2"></i>Formatted Report</h5>
+                {% if formatted_report %}
+                <a href="{{ url_for('admin.download_report', report_id=report.id) }}" class="btn btn-success">
+                    <i class="fas fa-download me-1"></i>Download Report
+                </a>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if formatted_report %}
+                    <div class="report-content" style="white-space: pre-wrap; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6;">{{ formatted_report }}</div>
+                {% else %}
+                    <div class="text-center text-muted">
+                        <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                        <p>No formatted report available for this observation.</p>
+                        <p>Raw observations: {{ report.observations or 'No observations recorded' }}</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function generateTranscript(reportId) {
+    // Show loading
+    document.getElementById('transcript-placeholder').style.display = 'none';
+    document.getElementById('transcript-content').style.display = 'none';
+    document.getElementById('transcript-loading').style.display = 'block';
+
+    fetch(`/admin/generate_transcript/${reportId}`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('transcript-loading').style.display = 'none';
+
+            if (data.success) {
+                const transcriptHtml = formatTranscript(data.transcript, data.student_name, data.observer_name, data.date);
+                document.getElementById('transcript-content').innerHTML = transcriptHtml;
+                document.getElementById('transcript-content').style.display = 'block';
+            } else {
+                document.getElementById('transcript-placeholder').innerHTML = `
+                    <div class="text-danger">
+                        <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                        <p>Error generating transcript: ${data.error}</p>
+                    </div>
+                `;
+                document.getElementById('transcript-placeholder').style.display = 'block';
+            }
+        })
+        .catch(error => {
+            document.getElementById('transcript-loading').style.display = 'none';
+            document.getElementById('transcript-placeholder').innerHTML = `
+                <div class="text-danger">
+                    <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                    <p>Network error: ${error.message}</p>
+                </div>
+            `;
+            document.getElementById('transcript-placeholder').style.display = 'block';
+        });
+}
+
+function formatTranscript(transcript, studentName, observerName, date) {
+    const lines = transcript.split('\n');
+    let formattedHtml = `
+        <div class="transcript-header mb-3 p-3 bg-light rounded">
+            <h6><i class="fas fa-info-circle me-2"></i>Conversation Details</h6>
+            <p class="mb-1"><strong>Student:</strong> ${studentName}</p>
+            <p class="mb-1"><strong>Observer:</strong> ${observerName}</p>
+            <p class="mb-0"><strong>Date:</strong> ${date}</p>
+        </div>
+        <div class="conversation-transcript">
+    `;
+
+    lines.forEach(line => {
+        line = line.trim();
+        if (line) {
+            if (line.startsWith('Observer:')) {
+                const text = line.replace('Observer:', '').trim();
+                formattedHtml += `
+                    <div class="conversation-line observer-line mb-3">
+                        <div class="d-flex">
+                            <div class="speaker-icon me-3">
+                                <i class="fas fa-user-tie text-primary"></i>
+                            </div>
+                            <div class="speech-bubble observer-bubble">
+                                <strong>Observer:</strong><br>
+                                ${text}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (line.startsWith('Child:')) {
+                const text = line.replace('Child:', '').trim();
+                formattedHtml += `
+                    <div class="conversation-line child-line mb-3">
+                        <div class="d-flex justify-content-end">
+                            <div class="speech-bubble child-bubble me-3">
+                                <strong>Child:</strong><br>
+                                ${text}
+                            </div>
+                            <div class="speaker-icon">
+                                <i class="fas fa-child text-success"></i>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+    });
+
+    formattedHtml += '</div>';
+    return formattedHtml;
+}
+</script>
+
+<style>
+.report-content {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.conversation-transcript {
+    max-height: 500px;
+    overflow-y: auto;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.speech-bubble {
+    background-color: white;
+    padding: 12px 16px;
+    border-radius: 18px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    max-width: 70%;
+    position: relative;
+}
+
+.observer-bubble {
+    background-color: #e3f2fd;
+    border: 1px solid #2196f3;
+}
+
+.child-bubble {
+    background-color: #e8f5e8;
+    border: 1px solid #4caf50;
+}
+
+.speaker-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.conversation-line {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
+{% endblock %}
