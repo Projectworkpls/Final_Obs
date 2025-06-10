@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, send_file, session
 from models.database import (get_supabase_client, get_children, get_observers, get_parents,
-                             save_observation, get_observer_children, upload_file_to_storage)
+                             save_observation, get_observer_children, upload_file_to_storage, get_signed_audio_url)
 from models.observation_extractor import ObservationExtractor
 from utils.decorators import admin_required
 import pandas as pd
@@ -9,6 +9,12 @@ import json
 from datetime import datetime
 import io
 import re
+import urllib.parse
+import logging
+import os
+
+# Set up logging to replace print statements
+logger = logging.getLogger(__name__)
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -16,30 +22,256 @@ admin_bp = Blueprint('admin', __name__)
 @admin_bp.route('/dashboard')
 @admin_required
 def dashboard():
-    print(f"Dashboard accessed - Session: {dict(session)}")
-
-    # Get analytics data with proper error handling
+    # Get comprehensive analytics data for the dashboard
     try:
         supabase = get_supabase_client()
 
-        # Get counts with proper error handling
+        # Get comprehensive analytics data
         users_response = supabase.table('users').select("id", count="exact").execute()
+        observers_response = supabase.table('users').select("id", count="exact").eq('role', 'Observer').execute()
+        parents_response = supabase.table('users').select("id", count="exact").eq('role', 'Parent').execute()
         children_response = supabase.table('children').select("id", count="exact").execute()
         observations_response = supabase.table('observations').select("id", count="exact").execute()
 
+        # Get all reports with detailed information including file URLs
+        all_reports_response = supabase.table('observations').select("""
+            id, student_name, observer_name, date, timestamp, filename, 
+            file_url, full_data, processed_by_admin, username, student_id
+        """).order('timestamp', desc=True).execute()
+
+        all_reports = all_reports_response.data if all_reports_response.data else []
+
+        # Process reports to extract formatted reports and file info
+        processed_reports = []
+        for report in all_reports:
+            processed_report = {
+                'id': report.get('id'),
+                'student_name': report.get('student_name', 'N/A'),
+                'observer_name': report.get('observer_name', 'N/A'),
+                'date': report.get('date', 'N/A'),
+                'timestamp': report.get('timestamp', 'N/A'),
+                'filename': report.get('filename', 'N/A'),
+                'file_url': report.get('file_url'),
+                'processed_by_admin': report.get('processed_by_admin', False),
+                'has_formatted_report': False,
+                'formatted_report': None,
+                'file_type': None,
+                'signed_url': None
+            }
+
+            # URL encode the file_url to handle spaces and special characters
+            if processed_report['file_url']:
+                # Properly encode the URL to handle spaces and special characters
+                processed_report['file_url'] = urllib.parse.quote(processed_report['file_url'],
+                                                                  safe=':/?#[]@!$&\'()*+,;=')
+
+                # Determine file type from URL or filename
+                file_url_lower = processed_report['file_url'].lower()
+                if any(ext in file_url_lower for ext in ['.mp3', '.wav', '.m4a', '.ogg']):
+                    processed_report['file_type'] = 'audio'
+                    # Create signed URL for audio files for better compatibility
+                    filename = processed_report['file_url'].split('/')[-1]
+                    signed_url = get_signed_audio_url(filename)
+                    if signed_url:
+                        processed_report['signed_url'] = signed_url
+                elif any(ext in file_url_lower for ext in ['.jpg', '.jpeg', '.png', '.gif', '.bmp']):
+                    processed_report['file_type'] = 'image'
+
+            # Extract formatted report from full_data
+            if report.get('full_data'):
+                try:
+                    full_data = json.loads(report['full_data'])
+                    if full_data.get('formatted_report'):
+                        processed_report['has_formatted_report'] = True
+                        processed_report['formatted_report'] = full_data['formatted_report']
+                except:
+                    pass
+
+            processed_reports.append(processed_report)
+
+        # Get recent activity (last 10 observations)
+        recent_observations = processed_reports[:10]
+
+        # Get system status data
+        total_storage_files = supabase.table('observations').select("file_url").not_.is_('file_url', 'null').execute()
+
         analytics = {
-            'users_count': users_response.count if users_response.count else 0,
+            'total_users': users_response.count if users_response.count else 0,
+            'observers_count': observers_response.count if observers_response.count else 0,
+            'parents_count': parents_response.count if parents_response.count else 0,
             'children_count': children_response.count if children_response.count else 0,
-            'observations_count': observations_response.count if observations_response.count else 0
+            'observations_count': observations_response.count if observations_response.count else 0,
+            'storage_files': len(total_storage_files.data) if total_storage_files.data else 0,
+            'recent_observations': recent_observations,
+            'all_reports': processed_reports
         }
 
-        print(f"Analytics loaded: {analytics}")
-
     except Exception as e:
-        print(f"Analytics error: {e}")
-        analytics = {'users_count': 0, 'children_count': 0, 'observations_count': 0}
+        analytics = {
+            'total_users': 0, 'observers_count': 0, 'parents_count': 0,
+            'children_count': 0, 'observations_count': 0, 'storage_files': 0,
+            'recent_observations': [], 'all_reports': []
+        }
 
     return render_template('admin/dashboard.html', analytics=analytics)
+
+
+@admin_bp.route('/view_report/<report_id>')
+@admin_required
+def view_report(report_id):
+    try:
+        supabase = get_supabase_client()
+
+        # Get the specific report
+        report_response = supabase.table('observations').select("*").eq('id', report_id).execute()
+
+        if not report_response.data:
+            flash('Report not found', 'error')
+            return redirect(url_for('admin.dashboard'))
+
+        report = report_response.data[0]
+
+        # URL encode the file_url if it exists and create signed URL for audio
+        if report.get('file_url'):
+            report['file_url'] = urllib.parse.quote(report['file_url'], safe=':/?#[]@!$&\'()*+,;=')
+
+            # If it's an audio file, create signed URL
+            if any(ext in report['file_url'].lower() for ext in ['.mp3', '.wav', '.m4a', '.ogg']):
+                filename = report['file_url'].split('/')[-1]
+                signed_url = get_signed_audio_url(filename)
+                if signed_url:
+                    report['signed_url'] = signed_url
+
+        # Extract formatted report from full_data
+        formatted_report = None
+        if report.get('full_data'):
+            try:
+                full_data = json.loads(report['full_data'])
+                formatted_report = full_data.get('formatted_report')
+            except:
+                pass
+
+        # If no formatted report exists, generate one
+        if not formatted_report:
+            observations_text = report.get('observations', '')
+            if observations_text:
+                user_info = {
+                    'student_name': report.get('student_name', 'N/A'),
+                    'observer_name': report.get('observer_name', 'N/A'),
+                    'session_date': report.get('date', 'N/A'),
+                    'session_start': '',
+                    'session_end': ''
+                }
+
+                # Generate formatted report
+                extractor = ObservationExtractor()
+                formatted_report = extractor.generate_report_from_text(observations_text, user_info)
+
+                # Update the database with the formatted report
+                updated_full_data = json.loads(report.get('full_data', '{}'))
+                updated_full_data['formatted_report'] = formatted_report
+
+                supabase.table('observations').update({
+                    'full_data': json.dumps(updated_full_data)
+                }).eq('id', report_id).execute()
+
+        return render_template('admin/view_report.html',
+                               report=report,
+                               formatted_report=formatted_report)
+
+    except Exception as e:
+        flash(f'Error loading report: {str(e)}', 'error')
+        return redirect(url_for('admin.dashboard'))
+
+
+@admin_bp.route('/generate_transcript/<report_id>')
+@admin_required
+def generate_transcript(report_id):
+    """Generate conversational transcript from audio/text observations"""
+    try:
+        supabase = get_supabase_client()
+
+        # Get the specific report
+        report_response = supabase.table('observations').select("*").eq('id', report_id).execute()
+
+        if not report_response.data:
+            return jsonify({'success': False, 'error': 'Report not found'})
+
+        report = report_response.data[0]
+
+        # Get the raw observations/transcript
+        raw_text = report.get('observations', '')
+
+        if not raw_text:
+            return jsonify({'success': False, 'error': 'No transcript data available'})
+
+        # Generate conversational format using Gemini API
+        extractor = ObservationExtractor()
+        conversational_transcript = extractor.generate_conversational_transcript(raw_text)
+
+        return jsonify({
+            'success': True,
+            'transcript': conversational_transcript,
+            'student_name': report.get('student_name', 'Unknown'),
+            'observer_name': report.get('observer_name', 'Unknown'),
+            'date': report.get('date', 'Unknown')
+        })
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@admin_bp.route('/download_report/<report_id>')
+@admin_required
+def download_report(report_id):
+    try:
+        supabase = get_supabase_client()
+        report_data = supabase.table('observations').select("*").eq('id', report_id).execute().data
+
+        if not report_data:
+            flash('Report not found', 'error')
+            return redirect(url_for('admin.dashboard'))
+
+        report = report_data[0]
+
+        # Get formatted report from full_data
+        formatted_report = None
+        if report.get('full_data'):
+            try:
+                full_data = json.loads(report['full_data'])
+                formatted_report = full_data.get('formatted_report')
+            except:
+                pass
+
+        if not formatted_report:
+            flash('No formatted report available', 'error')
+            return redirect(url_for('admin.dashboard'))
+
+        # Create Word document
+        extractor = ObservationExtractor()
+        doc_buffer = extractor.create_word_document_with_emojis(formatted_report)
+
+        # Create filename
+        student_name = report['student_name']
+        if student_name:
+            clean_name = re.sub(r'[^\w\s-]', '', student_name).strip()
+            clean_name = re.sub(r'[-\s]+', '_', clean_name)
+        else:
+            clean_name = 'Student'
+
+        date = report['date'] if report['date'] else datetime.now().strftime('%Y-%m-%d')
+        filename = f"report_{clean_name}_{date}.docx"
+
+        return send_file(
+            doc_buffer,
+            as_attachment=True,
+            download_name=filename,
+            mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        )
+
+    except Exception as e:
+        flash(f'Error downloading report: {str(e)}', 'error')
+        return redirect(url_for('admin.dashboard'))
 
 
 @admin_bp.route('/user_management')
@@ -351,7 +583,7 @@ def process_observation():
         }
 
         extractor = ObservationExtractor()
-        observation_id = str(uuid.uuid4())  # Create ID outside if blocks
+        observation_id = str(uuid.uuid4())
 
         if processing_mode == 'ocr':
             if 'file' not in request.files:
@@ -393,7 +625,7 @@ def process_observation():
                 "filename": file.filename,
                 "full_data": json.dumps({
                     **structured_data,
-                    "formatted_report": report  # Store formatted report here
+                    "formatted_report": report
                 }),
                 "theme_of_day": structured_data.get("themeOfDay", ""),
                 "curiosity_seed": structured_data.get("curiositySeed", ""),
@@ -459,7 +691,7 @@ def process_observation():
                 "full_data": json.dumps({
                     "transcript": transcript,
                     "report": report,
-                    "formatted_report": report  # Store formatted report here
+                    "formatted_report": report
                 }),
                 "theme_of_day": "",
                 "curiosity_seed": "",
