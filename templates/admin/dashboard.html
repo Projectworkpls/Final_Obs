@@ -12,133 +12,168 @@
     </div>
 </div>
 
-<!-- Analytics Cards -->
+<!-- Analytics Cards and Quick Actions in Same Row -->
 <div class="row mb-4">
-    <div class="col-md-4">
+    <!-- Analytics Cards -->
+    <div class="col-md-2">
         <div class="card bg-primary text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4>{{ analytics.users_count }}</h4>
-                        <p class="mb-0">Total Users</p>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-users fa-2x"></i>
-                    </div>
-                </div>
+            <div class="card-body text-center">
+                <h4>{{ analytics.observers_count }}</h4>
+                <p class="mb-0">Total Observers</p>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-2">
         <div class="card bg-success text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4>{{ analytics.children_count }}</h4>
-                        <p class="mb-0">Children</p>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-child fa-2x"></i>
-                    </div>
-                </div>
+            <div class="card-body text-center">
+                <h4>{{ analytics.children_count }}</h4>
+                <p class="mb-0">Children</p>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-2">
         <div class="card bg-info text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4>{{ analytics.observations_count }}</h4>
-                        <p class="mb-0">Observations</p>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-file-alt fa-2x"></i>
-                    </div>
-                </div>
+            <div class="card-body text-center">
+                <h4>{{ analytics.observations_count }}</h4>
+                <p class="mb-0">Observations</p>
             </div>
         </div>
+    </div>
+
+    <!-- Quick Actions with Colors -->
+    <div class="col-md-2">
+        <a href="{{ url_for('admin.user_management') }}" class="card bg-primary text-white text-decoration-none h-100">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <i class="fas fa-users fa-2x mb-2"></i>
+                <span>Manage Users</span>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-2">
+        <a href="{{ url_for('admin.mappings') }}" class="card bg-success text-white text-decoration-none h-100">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <i class="fas fa-sitemap fa-2x mb-2"></i>
+                <span>User Mappings</span>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-2">
+        <a href="{{ url_for('admin.process_reports') }}" class="card bg-info text-white text-decoration-none h-100">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <i class="fas fa-file-medical-alt fa-2x mb-2"></i>
+                <span>Process Reports</span>
+            </div>
+        </a>
     </div>
 </div>
 
-<!-- Quick Actions -->
+<!-- All Generated Reports -->
 <div class="row mb-4">
     <div class="col-12">
         <div class="card">
-            <div class="card-header">
-                <h5><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-3 mb-3">
-                        <a href="{{ url_for('admin.user_management') }}" class="btn btn-primary w-100 h-100 d-flex flex-column justify-content-center align-items-center">
-                            <i class="fas fa-users fa-2x mb-2"></i>
-                            <span>Manage Users</span>
-                        </a>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <a href="{{ url_for('admin.mappings') }}" class="btn btn-success w-100 h-100 d-flex flex-column justify-content-center align-items-center">
-                            <i class="fas fa-sitemap fa-2x mb-2"></i>
-                            <span>User Mappings</span>
-                        </a>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <a href="{{ url_for('admin.process_reports') }}" class="btn btn-info w-100 h-100 d-flex flex-column justify-content-center align-items-center">
-                            <i class="fas fa-file-medical-alt fa-2x mb-2"></i>
-                            <span>Process Reports</span>
-                        </a>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <button class="btn btn-warning w-100 h-100 d-flex flex-column justify-content-center align-items-center" onclick="viewAnalytics()">
-                            <i class="fas fa-chart-bar fa-2x mb-2"></i>
-                            <span>View Analytics</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Recent Activity -->
-<div class="row">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h5><i class="fas fa-history me-2"></i>Recent Activity</h5>
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-history me-2"></i>Observations</h5>
+                <button class="btn btn-sm btn-outline-secondary" onclick="toggleDebug()">
+                    <i class="fas fa-bug"></i> Debug
+                </button>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table table-sm">
+                    <table class="table table-sm table-striped">
                         <thead>
                             <tr>
-                                <th>Time</th>
-                                <th>Action</th>
-                                <th>User</th>
-                                <th>Details</th>
+                                <th>Date</th>
+                                <th>Student</th>
+                                <th>Observer</th>
+                                <th>File Type</th>
+                                <th>Source</th>
+                                <th>Report Status</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
+                            {% for report in analytics.all_reports %}
                             <tr>
-                                <td><small class="text-muted">Just now</small></td>
-                                <td><span class="badge bg-success">Login</span></td>
-                                <td>Admin</td>
-                                <td>Admin dashboard accessed</td>
+                                <td>
+                                    <small class="text-muted">
+                                        {{ report.timestamp[:16] if report.timestamp else 'N/A' }}
+                                    </small>
+                                </td>
+                                <td>{{ report.student_name }}</td>
+                                <td>{{ report.observer_name }}</td>
+                                <td>
+                                    {% if report.file_url %}
+                                        {% if report.file_type == 'audio' %}
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-volume-up text-primary me-2"></i>
+                                                <span class="text-muted">{{ report.filename or 'Audio File' }}</span>
+                                            </div>
+                                        {% elif report.file_type == 'image' %}
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-image text-success me-2"></i>
+                                                <span class="text-muted">{{ report.filename or 'Image File' }}</span>
+                                            </div>
+                                        {% else %}
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-file text-info me-2"></i>
+                                                <span class="text-muted">{{ report.filename or 'File' }}</span>
+                                            </div>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">No media</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if report.processed_by_admin %}
+                                        <span class="badge bg-warning">Admin</span>
+                                    {% else %}
+                                        <span class="badge bg-info">Observer</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if report.has_formatted_report %}
+                                        <span class="badge bg-success">Available</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Generating...</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ url_for('admin.view_report', report_id=report.id) }}"
+                                           class="btn btn-sm btn-primary" title="View Report">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {% if report.has_formatted_report %}
+                                        <a href="{{ url_for('admin.download_report', report_id=report.id) }}"
+                                           class="btn btn-sm btn-success" title="Download Report">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                        {% endif %}
+                                        {% if report.file_url %}
+                                        <a href="{{ report.signed_url or report.file_url }}" target="_blank"
+                                           class="btn btn-sm btn-info" title="View Original File">
+                                            <i class="fas fa-external-link-alt"></i>
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
                             </tr>
+                            {% else %}
                             <tr>
-                                <td><small class="text-muted">5 min ago</small></td>
-                                <td><span class="badge bg-info">Report</span></td>
-                                <td>System</td>
-                                <td>Analytics updated</td>
+                                <td colspan="7" class="text-center text-muted">No reports found</td>
                             </tr>
+                            {% endfor %}
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <div class="col-md-4">
+<!-- System Status and Quick Info -->
+<div class="row">
+    <div class="col-md-6">
         <div class="card">
             <div class="card-header">
                 <h5><i class="fas fa-cog me-2"></i>System Status</h5>
@@ -152,159 +187,208 @@
                 </div>
                 <div class="mb-3">
                     <div class="d-flex justify-content-between">
+                        <span>File Storage</span>
+                        <span class="badge bg-success">Active</span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
                         <span>OCR Service</span>
-                        <span class="badge bg-success">Active</span>
+                        <span class="badge bg-success">Running</span>
                     </div>
                 </div>
                 <div class="mb-3">
                     <div class="d-flex justify-content-between">
-                        <span>Email Service</span>
-                        <span class="badge bg-success">Active</span>
+                        <span>Audio Processing</span>
+                        <span class="badge bg-success">Available</span>
                     </div>
                 </div>
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between">
-                        <span>AI Processing</span>
-                        <span class="badge bg-success">Active</span>
-                    </div>
+                <hr>
+                <div class="text-center">
+                    <small class="text-muted" id="last-updated">Last updated: </small>
                 </div>
             </div>
         </div>
+    </div>
 
-        <div class="card mt-3">
+    <div class="col-md-6">
+        <!-- Quick Info Card -->
+        <div class="card">
             <div class="card-header">
                 <h5><i class="fas fa-info-circle me-2"></i>Quick Info</h5>
             </div>
             <div class="card-body">
-                <p class="small text-muted">
-                    <strong>Version:</strong> 1.0.0<br>
-                    <strong>Last Update:</strong> Today<br>
-                    <strong>Uptime:</strong> 24h 15m
-                </p>
+                <div class="mb-2">
+                    <strong>Active Observers:</strong> {{ analytics.observers_count }}
+                </div>
+                <div class="mb-2">
+                    <strong>Total Reports:</strong> {{ analytics.observations_count }}
+                </div>
+                <div class="mb-2">
+                    <strong>Registered Children:</strong> {{ analytics.children_count }}
+                </div>
+                <div class="mb-2">
+                    <strong>Parent Accounts:</strong> {{ analytics.parents_count }}
+                </div>
+                <div class="mb-2">
+                    <strong>Avg Reports/Child:</strong>
+                    {% if analytics.observations_count > 0 and analytics.children_count > 0 %}
+                        {{ "%.1f"|format(analytics.observations_count / analytics.children_count) }}
+                    {% else %}
+                        0.0
+                    {% endif %}
+                </div>
+                <div class="mb-2">
+                    <strong>Reports with Media:</strong>
+                    {% set reports_with_media = analytics.all_reports | selectattr('file_url') | list | length %}
+                    {{ reports_with_media }}
+                </div>
+                <div class="mb-2">
+                    <strong>Audio Files:</strong>
+                    {% set audio_files = analytics.all_reports | selectattr('file_type', 'equalto', 'audio') | list | length %}
+                    {{ audio_files }}
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Analytics Modal -->
-<div class="modal fade" id="analyticsModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">System Analytics</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-body text-center">
-                                <h3 class="text-primary">{{ analytics.users_count }}</h3>
-                                <p class="mb-0">Total Users</p>
-                                <small class="text-muted">Admins, Observers, Parents</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-body text-center">
-                                <h3 class="text-success">{{ analytics.children_count }}</h3>
-                                <p class="mb-0">Children Registered</p>
-                                <small class="text-muted">Active learning profiles</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 mt-3">
-                        <div class="card">
-                            <div class="card-body text-center">
-                                <h3 class="text-info">{{ analytics.observations_count }}</h3>
-                                <p class="mb-0">Total Observations</p>
-                                <small class="text-muted">Reports generated</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 mt-3">
-                        <div class="card">
-                            <div class="card-body text-center">
-                                <h3 class="text-warning">
-                                    {% if analytics.observations_count > 0 and analytics.children_count > 0 %}
-                                        {{ "%.1f"|format(analytics.observations_count / analytics.children_count) }}
-                                    {% else %}
-                                        0.0
-                                    {% endif %}
-                                </h3>
-                                <p class="mb-0">Avg Reports/Child</p>
-                                <small class="text-muted">Engagement metric</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mt-4">
-                    <h6>System Health</h6>
-                    <div class="progress mb-2">
-                        <div class="progress-bar bg-success" role="progressbar" style="width: 95%">
-                            Database: 95%
-                        </div>
-                    </div>
-                    <div class="progress mb-2">
-                        <div class="progress-bar bg-info" role="progressbar" style="width: 88%">
-                            API Services: 88%
-                        </div>
-                    </div>
-                    <div class="progress">
-                        <div class="progress-bar bg-warning" role="progressbar" style="width: 92%">
-                            Overall Performance: 92%
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" onclick="exportAnalytics()">Export Report</button>
-            </div>
+<!-- Debug Section (Hidden by default) -->
+<div class="row mb-2" style="display: none;" id="debug-section">
+    <div class="col-12">
+        <div class="alert alert-info">
+            <h6>Debug Information:</h6>
+            <button class="btn btn-sm btn-secondary" onclick="testAllAudioUrls()">Test Audio URLs</button>
+            <button class="btn btn-sm btn-secondary" onclick="showReportData()">Show Report Data</button>
+            <button class="btn btn-sm btn-secondary" onclick="fixAllAudioUrls()">Fix Audio URLs</button>
+            <button class="btn btn-sm btn-secondary" onclick="testSignedUrls()">Test Signed URLs</button>
+            <pre id="debug-output" style="max-height: 200px; overflow-y: auto;"></pre>
         </div>
     </div>
 </div>
 
 <script>
-function viewAnalytics() {
-    const modal = new bootstrap.Modal(document.getElementById('analyticsModal'));
-    modal.show();
+// Store reports data for debugging
+const reportsData = {{ analytics.all_reports | tojson }};
+
+// Set the last updated time using JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('en-US', {
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    document.getElementById('last-updated').innerText = 'Last updated: ' + timeString;
+
+    // Log reports data for debugging
+    console.log('Reports data loaded:', reportsData);
+});
+
+function toggleDebug() {
+    const debugSection = document.getElementById('debug-section');
+    debugSection.style.display = debugSection.style.display === 'none' ? 'block' : 'none';
 }
 
-function exportAnalytics() {
-    // Create CSV data
-    const csvData = [
-        ['Metric', 'Value'],
-        ['Total Users', '{{ analytics.users_count }}'],
-        ['Children', '{{ analytics.children_count }}'],
-        ['Observations', '{{ analytics.observations_count }}'],
-        ['Avg Reports per Child', '{% if analytics.observations_count > 0 and analytics.children_count > 0 %}{{ "%.1f"|format(analytics.observations_count / analytics.children_count) }}{% else %}0.0{% endif %}']
-    ];
+function testAllAudioUrls() {
+    const debugOutput = document.getElementById('debug-output');
+    debugOutput.innerHTML = 'Testing audio URLs...\n';
 
-    // Convert to CSV string
-    const csvString = csvData.map(row => row.join(',')).join('\n');
+    reportsData.forEach((report, index) => {
+        if (report.file_url && report.file_type === 'audio') {
+            debugOutput.innerHTML += `\nTesting ${index + 1}: ${report.student_name}\n`;
+            debugOutput.innerHTML += `URL: ${report.file_url}\n`;
+            debugOutput.innerHTML += `Signed URL: ${report.signed_url || 'None'}\n`;
+            debugOutput.innerHTML += `File type: ${report.file_type}\n`;
+            debugOutput.innerHTML += `Filename: ${report.filename}\n`;
 
-    // Create download link
-    const blob = new Blob([csvString], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'system_analytics_' + new Date().toISOString().split('T')[0] + '.csv';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
+            // Test both URLs
+            const testUrl = report.signed_url || report.file_url;
 
-    // Close modal
-    bootstrap.Modal.getInstance(document.getElementById('analyticsModal')).hide();
+            fetch(testUrl, {
+                method: 'HEAD',
+                mode: 'cors'
+            })
+            .then(response => {
+                const status = response.ok ? '✅ OK' : '❌ FAILED';
+                debugOutput.innerHTML += `Status: ${status} (${response.status})\n`;
+                debugOutput.innerHTML += `Content-Type: ${response.headers.get('content-type')}\n`;
+                debugOutput.innerHTML += `Content-Length: ${response.headers.get('content-length')}\n`;
+                debugOutput.innerHTML += `Accept-Ranges: ${response.headers.get('accept-ranges')}\n`;
+            })
+            .catch(error => {
+                debugOutput.innerHTML += `❌ ERROR: ${error.message}\n`;
+            });
+        }
+    });
 }
 
-// Auto-refresh analytics every 30 seconds
+function testSignedUrls() {
+    const debugOutput = document.getElementById('debug-output');
+    debugOutput.innerHTML = 'Testing signed URLs specifically...\n';
+
+    reportsData.forEach((report, index) => {
+        if (report.signed_url && report.file_type === 'audio') {
+            debugOutput.innerHTML += `\nTesting signed URL ${index + 1}:\n`;
+            debugOutput.innerHTML += `Signed: ${report.signed_url}\n`;
+            debugOutput.innerHTML += `Original: ${report.file_url}\n`;
+
+            // Test signed URL
+            fetch(report.signed_url, { method: 'HEAD' })
+                .then(response => {
+                    debugOutput.innerHTML += `Signed URL Status: ${response.status}\n`;
+                })
+                .catch(error => {
+                    debugOutput.innerHTML += `Signed URL Error: ${error.message}\n`;
+                });
+        }
+    });
+}
+
+function showReportData() {
+    const debugOutput = document.getElementById('debug-output');
+    debugOutput.innerHTML = 'Report Data (first 3 reports):\n';
+    debugOutput.innerHTML += JSON.stringify(reportsData.slice(0, 3), null, 2);
+}
+
+function fixAllAudioUrls() {
+    const debugOutput = document.getElementById('debug-output');
+    debugOutput.innerHTML = 'URL fixing function available for debugging purposes.\n';
+    debugOutput.innerHTML += 'Audio playback is handled in the View Report section.\n';
+}
+
+function retryAudio(url) {
+    window.open(url, '_blank');
+}
+
+// Auto-refresh dashboard every 5 minutes
 setInterval(function() {
-    // You can add AJAX call here to refresh analytics data
-    console.log('Analytics refresh interval');
-}, 30000);
+    location.reload();
+}, 300000);
 </script>
+
+<style>
+#debug-output {
+    font-size: 12px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 10px;
+    margin-top: 10px;
+}
+
+.btn-xs {
+    padding: 0.125rem 0.25rem;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    border-radius: 0.2rem;
+}
+
+/* Hover effects for quick action cards */
+.card:hover {
+    transform: translateY(-2px);
+    transition: transform 0.2s ease-in-out;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+</style>
 {% endblock %}
