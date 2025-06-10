@@ -6,7 +6,7 @@
 <div class="row">
     <div class="col-12">
         <h1 class="mb-4">
-            <i class="fas fa-bullseye me-2"></i>Goal Management
+            <i class="fas fa-bullseye me-2"></i>Milestone Management
         </h1>
     </div>
 </div>
@@ -16,7 +16,7 @@
     <div class="col-md-6">
         <div class="card">
             <div class="card-header">
-                <h5><i class="fas fa-plus me-2"></i>Add New Goal</h5>
+                <h5><i class="fas fa-plus me-2"></i>Add New Milestone</h5>
             </div>
             <div class="card-body">
                 <form method="POST" action="{{ url_for('observer.add_goal') }}">
@@ -30,7 +30,7 @@
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label for="goal_text" class="form-label">Goal Description</label>
+                        <label for="goal_text" class="form-label">Milestone Description</label>
                         <textarea class="form-control" id="goal_text" name="goal_text" rows="4"
                                   placeholder="Describe the learning goal or milestone..." required></textarea>
                     </div>
@@ -39,7 +39,7 @@
                         <input type="date" class="form-control" id="target_date" name="target_date" required>
                     </div>
                     <button type="submit" class="btn btn-primary w-100">
-                        <i class="fas fa-save me-2"></i>Save Goal
+                        <i class="fas fa-save me-2"></i>Save Milestone
                     </button>
                 </form>
             </div>
@@ -50,7 +50,7 @@
     <div class="col-md-6">
         <div class="card">
             <div class="card-header">
-                <h5><i class="fas fa-chart-pie me-2"></i>Goal Statistics</h5>
+                <h5><i class="fas fa-chart-pie me-2"></i>Milestone Statistics</h5>
             </div>
             <div class="card-body">
                 <div class="row text-center">
@@ -95,7 +95,7 @@
         {% for child in children %}
         <div class="card mb-4">
             <div class="card-header">
-                <h5><i class="fas fa-child me-2"></i>Goals for {{ child.name }}</h5>
+                <h5><i class="fas fa-child me-2"></i>Milestones for {{ child.name }}</h5>
             </div>
             <div class="card-body">
                 {% if child.id in all_goals and all_goals[child.id] %}
