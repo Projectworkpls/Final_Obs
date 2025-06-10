@@ -1008,7 +1008,7 @@ def get_messages_api(parent_id):
     observer_id = session.get('user_id')
     try:
         supabase = get_supabase_client()
-        
+
         # Get messages in both directions using separate queries
         messages1 = supabase.table('messages').select("*") \
             .eq('sender_id', observer_id).eq('receiver_id', parent_id) \
@@ -1020,7 +1020,7 @@ def get_messages_api(parent_id):
 
         # Combine and sort messages
         messages = sorted((messages1 or []) + (messages2 or []), key=lambda m: m['timestamp'])
-        
+
         return jsonify(messages)
     except Exception as e:
         print(f"Error getting messages: {str(e)}")
@@ -1034,10 +1034,10 @@ def send_message_api():
     observer_id = session.get('user_id')
     parent_id = request.form.get('receiver_id')
     content = request.form.get('content')
-    
+
     if not parent_id or not content:
         return jsonify({'success': False, 'error': 'Missing data'})
-    
+
     try:
         supabase = get_supabase_client()
         message_data = {
