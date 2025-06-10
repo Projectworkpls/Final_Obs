@@ -4,6 +4,9 @@ import logging
 from flask_login import UserMixin
 from datetime import datetime, timedelta, time
 import pytz
+import uuid
+import re
+import base64
 
 logger = logging.getLogger(__name__)
 
@@ -196,7 +199,8 @@ def get_messages_between_users(user1_id, user2_id):
     try:
         client = get_supabase_client()
         response = client.table('messages').select("*") \
-            .or_(f"and(sender_id.eq.{user1_id},receiver_id.eq.{user2_id}),and(sender_id.eq.{user2_id},receiver_id.eq.{user1_id})") \
+            .or_(
+            f"and(sender_id.eq.{user1_id},receiver_id.eq.{user2_id}),and(sender_id.eq.{user2_id},receiver_id.eq.{user1_id})") \
             .order('timestamp', desc=False) \
             .execute()
         return response.data
@@ -215,27 +219,135 @@ def save_message(message_data):
         return None
 
 
-def upload_file_to_storage(file_data, file_name, file_type):
+def get_signed_audio_url(file_path, bucket_name="audio-files"):
+    """Get signed URL for better audio compatibility"""
     try:
-        import uuid
         client = get_supabase_client()
-        unique_filename = f"{uuid.uuid4()}_{file_name}"
-        bucket_name = "audio-files" if "audio" in file_type else "image-files"
 
-        response = client.storage.from_(bucket_name).upload(
-            unique_filename,
-            file_data,
-            file_options={"content-type": file_type}
+        # Create signed URL with longer expiry for audio streaming
+        response = client.storage.from_(bucket_name).create_signed_url(
+            file_path,
+            expires_in=3600  # 1 hour
         )
 
+        if response.get('error'):
+            logger.error(f"Signed URL error: {response['error']}")
+            return None
+
+        return response['signedURL']
+
+    except Exception as e:
+        logger.error(f"Signed URL creation error: {e}")
+        return None
+
+
+def upload_file_to_storage(file_data, file_name, file_type):
+    """Upload file to Supabase storage with enhanced audio compatibility"""
+    try:
+        client = get_supabase_client()
+
+        # Clean filename to avoid issues with spaces and special characters
+        clean_filename = re.sub(r'[^\w\s.-]', '', file_name)
+        clean_filename = clean_filename.replace(' ', '_')
+        unique_filename = f"{uuid.uuid4()}_{clean_filename}"
+
+        # Determine bucket based on file type
+        if "audio" in file_type.lower():
+            bucket_name = "audio-files"
+        elif "image" in file_type.lower():
+            bucket_name = "image-files"
+        else:
+            bucket_name = "image-files"
+
+        logger.info(f"Uploading to bucket: {bucket_name}, file: {unique_filename}")
+
+        # For audio files, use special handling for better compatibility
+        if "audio" in file_type.lower():
+            response = client.storage.from_(bucket_name).upload(
+                unique_filename,
+                file_data,
+                file_options={
+                    "content-type": file_type,
+                    "cache-control": "public, max-age=3600",
+                    "content-disposition": f"inline; filename=\"{clean_filename}\""
+                }
+            )
+        else:
+            response = client.storage.from_(bucket_name).upload(
+                unique_filename,
+                file_data,
+                file_options={"content-type": file_type}
+            )
+
+        # Check for upload errors
+        if hasattr(response, 'error') and response.error:
+            logger.error(f"Storage upload error: {response.error}")
+            return None
+
+        # Get public URL
         file_url = client.storage.from_(bucket_name).get_public_url(unique_filename)
+
+        # Verify the URL was generated
+        if not file_url:
+            logger.error("Failed to generate public URL")
+            return None
+
+        logger.info(f"File uploaded successfully: {file_url}")
         return file_url
+
     except Exception as e:
         logger.error(f"Error uploading file: {str(e)}")
         return None
 
 
-# NEW FUNCTIONS FOR SCHEDULED REPORTING SYSTEM
+def diagnose_audio_file(file_path):
+    """Diagnose audio file compatibility issues"""
+    try:
+        client = get_supabase_client()
+
+        # Get file metadata
+        file_info = client.storage.from_('audio-files').list(path=file_path)
+
+        if file_info:
+            file_data = file_info[0]
+            logger.info(f"File size: {file_data.get('metadata', {}).get('size', 'unknown')}")
+            logger.info(f"Content type: {file_data.get('metadata', {}).get('mimetype', 'unknown')}")
+            logger.info(f"Last modified: {file_data.get('updated_at', 'unknown')}")
+
+            # Test file accessibility
+            public_url = client.storage.from_('audio-files').get_public_url(file_path)
+            logger.info(f"Public URL: {public_url}")
+
+            return True
+        else:
+            logger.error("File not found")
+            return False
+
+    except Exception as e:
+        logger.error(f"Diagnosis error: {e}")
+        return False
+
+
+def test_storage_upload():
+    """Test function to verify storage upload is working"""
+    try:
+        # Test audio upload
+        test_audio_content = b"fake audio content for testing"
+        audio_url = upload_file_to_storage(test_audio_content, "test_audio.mp3", "audio/mpeg")
+
+        # Test image upload
+        test_image_content = b"fake image content for testing"
+        image_url = upload_file_to_storage(test_image_content, "test_image.jpg", "image/jpeg")
+
+        logger.info(f"Storage test results - Audio: {audio_url}, Image: {image_url}")
+        return audio_url and image_url
+
+    except Exception as e:
+        logger.error(f"Storage test failed: {e}")
+        return False
+
+
+# SCHEDULED REPORTING SYSTEM FUNCTIONS
 
 def get_scheduled_reports_for_observer(observer_id):
     """Get all scheduled reports for an observer with child details"""
@@ -502,4 +614,51 @@ def update_scheduled_report_status(observer_id, child_id, is_active):
 
     except Exception as e:
         logger.error(f"Error updating scheduled report status: {e}")
+        return None
+
+
+# UTILITY FUNCTIONS FOR STORAGE MANAGEMENT
+
+def list_storage_buckets():
+    """List all available storage buckets"""
+    try:
+        client = get_supabase_client()
+        buckets = client.storage.list_buckets()
+        logger.info(f"Available buckets: {[bucket.name for bucket in buckets]}")
+        return buckets
+    except Exception as e:
+        logger.error(f"Error listing buckets: {e}")
+        return []
+
+
+def verify_bucket_exists(bucket_name):
+    """Verify if a specific bucket exists"""
+    try:
+        buckets = list_storage_buckets()
+        bucket_names = [bucket.name for bucket in buckets]
+        return bucket_name in bucket_names
+    except Exception as e:
+        logger.error(f"Error verifying bucket {bucket_name}: {e}")
+        return False
+
+
+def get_file_from_storage(bucket_name, file_path):
+    """Download a file from storage"""
+    try:
+        client = get_supabase_client()
+        response = client.storage.from_(bucket_name).download(file_path)
+        return response
+    except Exception as e:
+        logger.error(f"Error downloading file {file_path} from {bucket_name}: {e}")
+        return None
+
+
+def delete_file_from_storage(bucket_name, file_path):
+    """Delete a file from storage"""
+    try:
+        client = get_supabase_client()
+        response = client.storage.from_(bucket_name).remove([file_path])
+        return response
+    except Exception as e:
+        logger.error(f"Error deleting file {file_path} from {bucket_name}: {e}")
         return None
