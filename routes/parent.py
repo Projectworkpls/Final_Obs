@@ -5,7 +5,7 @@ from models.database import (get_supabase_client, get_observations_by_child, get
 from models.monthly_report_generator import MonthlyReportGenerator
 from utils.decorators import parent_required
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 import uuid
 import re
 from models.observation_extractor import ObservationExtractor
@@ -127,7 +127,6 @@ def reports():
         return render_template('parent/reports.html', reports=[], feedback_data={})
 
 
-# NEW: View individual report route
 @parent_bp.route('/view_report/<report_id>')
 @login_required
 @parent_required
@@ -158,7 +157,6 @@ def view_report(report_id):
                 full_data = json.loads(report['full_data'])
                 formatted_report = full_data.get('formatted_report')
             except Exception as e:
-                print(f"Error parsing full_data: {e}")
                 pass
 
         # If no formatted report, use observations text
@@ -188,7 +186,7 @@ def view_report(report_id):
                                                                                       str) else report[
                     'recommendations']
         except Exception as e:
-            print(f"Error parsing report data: {e}")
+            pass
 
         return render_template('parent/view_report.html',
                                report=report,
@@ -454,7 +452,6 @@ def download_monthly_report():
         return redirect(url_for('parent.monthly_report'))
 
 
-# NEW: Download individual report
 @parent_bp.route('/download_report/<report_id>')
 @login_required
 @parent_required
@@ -571,89 +568,6 @@ def download_pdf(report_id):
         return redirect(url_for('parent.reports'))
 
 
-# NEW: Get report data for AJAX requests
-@parent_bp.route('/get_report_data/<report_id>')
-@login_required
-@parent_required
-def get_report_data(report_id):
-    try:
-        child_id = session.get('child_id')
-
-        if not child_id:
-            return jsonify({'success': False, 'error': 'No child assigned'})
-
-        supabase = get_supabase_client()
-
-        # Get the specific report and verify it belongs to this parent's child
-        report_data = supabase.table('observations').select("*").eq('id', report_id).eq('student_id',
-                                                                                        child_id).execute().data
-
-        if not report_data:
-            return jsonify({'success': False, 'error': 'Report not found'})
-
-        report = report_data[0]
-
-        # Get formatted report
-        formatted_report = None
-        if report.get('full_data'):
-            try:
-                full_data = json.loads(report['full_data'])
-                formatted_report = full_data.get('formatted_report')
-            except:
-                pass
-
-        if not formatted_report:
-            formatted_report = report.get('observations', 'No report content available')
-
-        return jsonify({
-            'success': True,
-            'report': {
-                'id': report['id'],
-                'student_name': report.get('student_name'),
-                'observer_name': report.get('observer_name'),
-                'date': report.get('date'),
-                'formatted_report': formatted_report,
-                'theme_of_day': report.get('theme_of_day'),
-                'curiosity_seed': report.get('curiosity_seed')
-            }
-        })
-
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-
-@parent_bp.route('/get_messages')
-@login_required
-@parent_required
-def get_messages():
-    try:
-        user_id = session.get('user_id')
-        child_id = session.get('child_id')
-
-        if not child_id:
-            return jsonify({'success': False, 'error': 'No child assigned'})
-
-        # Get observer ID
-        supabase = get_supabase_client()
-        mapping = supabase.table('observer_child_mappings').select("observer_id").eq("child_id",
-                                                                                     child_id).execute().data
-        if not mapping:
-            return jsonify({'success': False, 'error': 'No observer assigned'})
-
-        observer_id = mapping[0]['observer_id']
-
-        # Get messages
-        messages = get_messages_between_users(user_id, observer_id)
-
-        return jsonify({
-            'success': True,
-            'messages': messages
-        })
-
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-
 @parent_bp.route('/get_messages_api/<observer_id>')
 @login_required
 @parent_required
@@ -661,7 +575,7 @@ def get_messages_api(observer_id):
     parent_id = session.get('user_id')
     try:
         supabase = get_supabase_client()
-        
+
         # Get messages in both directions using separate queries
         messages1 = supabase.table('messages').select("*") \
             .eq('sender_id', parent_id).eq('receiver_id', observer_id) \
@@ -673,10 +587,9 @@ def get_messages_api(observer_id):
 
         # Combine and sort messages
         messages = sorted((messages1 or []) + (messages2 or []), key=lambda m: m['timestamp'])
-        
+
         return jsonify(messages)
     except Exception as e:
-        print(f"Error getting messages: {str(e)}")
         return jsonify([])
 
 
@@ -687,10 +600,10 @@ def send_message_api():
     parent_id = session.get('user_id')
     observer_id = request.form.get('receiver_id')
     content = request.form.get('content')
-    
+
     if not observer_id or not content:
         return jsonify({'success': False, 'error': 'Missing data'})
-    
+
     try:
         supabase = get_supabase_client()
         message_data = {
