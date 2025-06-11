@@ -26,6 +26,13 @@ def create_app():
     # Initialize server-side session
     Session(app)
 
+    # CRITICAL FIX: Add session refresh logic to prevent expiration
+    @app.before_request
+    def refresh_session():
+        if 'user_id' in session:
+            session.permanent = True
+            session.modified = True
+
     # Ensure upload folder exists
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
