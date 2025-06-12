@@ -1,3 +1,4 @@
+# config.py
 import os
 from dotenv import load_dotenv
 from datetime import timedelta
@@ -8,16 +9,16 @@ load_dotenv()
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key'
 
-    # Enhanced session configuration to prevent expiration issues
-    PERMANENT_SESSION_LIFETIME = timedelta(hours=24)  # Session expires after 24 hours
+    # Enhanced session configuration
+    PERMANENT_SESSION_LIFETIME = timedelta(hours=24)
     SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
-    SESSION_REFRESH_EACH_REQUEST = True  # Refresh session on each request
+    SESSION_REFRESH_EACH_REQUEST = True
 
     # Additional session security settings
     SESSION_COOKIE_NAME = 'learning_observer_session'
-    SESSION_COOKIE_DOMAIN = None  # Use default domain
+    SESSION_COOKIE_DOMAIN = None
     SESSION_COOKIE_PATH = '/'
 
     # API Keys and Database Configuration
@@ -32,9 +33,9 @@ class Config:
     ADMIN_USER = os.environ.get('ADMIN_USER')
     ADMIN_PASS = os.environ.get('ADMIN_PASS')
 
-    # File Upload Configuration
+    # CHANGED: File Upload Configuration - Updated from 16MB to 25MB
     UPLOAD_FOLDER = 'static/uploads'
-    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
+    MAX_CONTENT_LENGTH = 25 * 1024 * 1024  # 25MB max file size (was 16MB)
 
     # Mobile optimization settings
     MOBILE_USER_AGENTS = [
