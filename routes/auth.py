@@ -1,8 +1,9 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_login import login_user, logout_user, login_required
-from models.database import authenticate_user, create_user, get_children
+from models.database import authenticate_user, create_user, get_children, get_supabase_client
 from config import Config
 import uuid
+from datetime import datetime
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -12,8 +13,6 @@ def login():
     if request.method == 'POST':
         email = request.form.get('email', '').strip()
         password = request.form.get('password', '')
-
-        # Removed print statements to avoid OSError
 
         # Check admin credentials first (case-sensitive comparison)
         if email == Config.ADMIN_USER and password == Config.ADMIN_PASS:
@@ -28,8 +27,6 @@ def login():
             session['email'] = email
             session['logged_in'] = True
             session['is_admin'] = True
-
-            # Removed print statements
 
             flash('Admin login successful!', 'success')
             return redirect(url_for('admin.dashboard'))
@@ -86,7 +83,8 @@ def register():
             "name": f"{first_name} {last_name}",
             "password": password,
             "role": "Parent",
-            "child_id": child_id if child_id else None
+            "child_id": child_id if child_id else None,
+            "created_at": datetime.now().isoformat()
         }
 
         if create_user(user_data):
@@ -106,12 +104,9 @@ def register_observer():
         email = request.form.get('email', '').strip().lower()
         password = request.form.get('password', '')
         confirm_password = request.form.get('confirm_password', '')
-        qualification = request.form.get('qualification', '').strip()
-        experience = request.form.get('experience', '')
-        bio = request.form.get('bio', '').strip()
 
-        # Validation
-        if not all([first_name, last_name, email, password, confirm_password, qualification, experience, bio]):
+        # Validation - only check the 5 required fields
+        if not all([first_name, last_name, email, password, confirm_password]):
             flash('Please fill in all required fields', 'error')
             return render_template('auth/register_observer.html')
 
@@ -123,23 +118,34 @@ def register_observer():
             flash('Password must be at least 8 characters', 'error')
             return render_template('auth/register_observer.html')
 
-        # Create user
+        # Create user with only basic fields
         user_data = {
             "id": str(uuid.uuid4()),
             "email": email,
             "name": f"{first_name} {last_name}",
             "password": password,
             "role": "Observer",
-            "qualification": qualification,
-            "experience": experience,
-            "bio": bio
+            "created_at": datetime.now().isoformat()
         }
 
-        if create_user(user_data):
-            flash('Registration successful! Please login.', 'success')
-            return redirect(url_for('auth.login'))
-        else:
-            flash('Registration failed. Email may already exist.', 'error')
+        try:
+            # Direct database insertion
+            supabase = get_supabase_client()
+            result = supabase.table('users').insert(user_data).execute()
+
+            if result.data:
+                flash('Observer registration successful! Please login.', 'success')
+                return redirect(url_for('auth.login'))
+            else:
+                flash('Registration failed. Please try again.', 'error')
+
+        except Exception as e:
+            if 'duplicate key' in str(e) or '23505' in str(e):
+                flash('Email already exists. Please use a different email.', 'error')
+            else:
+                flash(f'Registration failed: {str(e)}', 'error')
+
+        return render_template('auth/register_observer.html')
 
     return render_template('auth/register_observer.html')
 
@@ -150,3 +156,11 @@ def logout():
     session.clear()
     flash('You have been logged out successfully.', 'info')
     return redirect(url_for('landing'))
+
+
+# ADDED: Session keepalive route for mobile session management
+@auth_bp.route('/keepalive', methods=['POST'])
+@login_required
+def keepalive():
+    session.modified = True
+    return jsonify({'status': 'alive'})
