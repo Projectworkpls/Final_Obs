@@ -136,8 +136,8 @@ function handleFileSelect(e) {
     }
 
     // Validate file size (10MB limit)
-    if (file.size > 10 * 1024 * 1024) {
-        showAlert('File size too large. Please select a file smaller than 10MB.', 'danger');
+    if (file.size > 25 * 1024 * 1024) {
+        showAlert('File size too large. Please select a file smaller than 25MB.', 'danger');
         e.target.value = '';
         return;
     }
