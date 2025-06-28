@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}View Report - Principal{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-file-alt me-2"></i>Observation Report</h2>
+        <a href="{{ url_for('principal.dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Report Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Student:</strong> {{ report.student_name }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Observer:</strong> {{ report.observer_name }}
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Date:</strong> {{ report.date }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Timestamp:</strong> {{ report.timestamp[:19] if report.timestamp else 'N/A' }}
+                        </div>
+                    </div>
+
+                    {% if formatted_report %}
+                    <div class="mt-4">
+                        <h6>Formatted Report:</h6>
+                        <div class="border p-3 bg-light" style="white-space: pre-wrap;">{{ formatted_report }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            {% if report.file_url %}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6>Media File</h6>
+                </div>
+                <div class="card-body">
+                    {% if report.signed_url %}
+                    <audio controls class="w-100">
+                        <source src="{{ report.signed_url }}" type="audio/mpeg">
+                        Your browser does not support the audio element.
+                    </audio>
+                    {% else %}
+                    <a href="{{ report.file_url }}" target="_blank" class="btn btn-info">
+                        <i class="fas fa-external-link-alt"></i> View File
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

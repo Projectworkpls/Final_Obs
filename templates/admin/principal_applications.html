@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+{% block title %}Principal Applications - Admin{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-user-tie me-2"></i>Principal Applications Management</h2>
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </div>
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h4>{{ stats.total }}</h4>
+                    <p class="mb-0">Total Applications</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body text-center">
+                    <h4>{{ stats.pending }}</h4>
+                    <p class="mb-0">Pending Review</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h4>{{ stats.approved }}</h4>
+                    <p class="mb-0">Approved</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body text-center">
+                    <h4>{{ stats.rejected }}</h4>
+                    <p class="mb-0">Rejected</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Applications Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5><i class="fas fa-list me-2"></i>Principal Applications ({{ applications|length }})</h5>
+        </div>
+        <div class="card-body">
+            {% if applications %}
+            <div class="table-responsive">
+                <table class="table table-striped" id="applicationsTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Experience</th>
+                            <th>Applied Date</th>
+                            <th>Status</th>
+                            <th>Organization</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for app in applications %}
+                        <tr class="{% if app.status == 'pending' %}table-warning{% elif app.status == 'approved' %}table-success{% elif app.status == 'rejected' %}table-danger{% endif %}">
+                            <td>
+                                <strong>{{ app.applicant_name }}</strong>
+                                {% if app.phone %}
+                                <br><small class="text-muted">{{ app.phone }}</small>
+                                {% endif %}
+                            </td>
+                            <td>{{ app.email }}</td>
+                            <td>{{ app.experience_years }} years</td>
+                            <td>{{ app.applied_at[:10] if app.applied_at else 'N/A' }}</td>
+                            <td>
+                                <span class="badge bg-{% if app.status == 'approved' %}success{% elif app.status == 'rejected' %}danger{% else %}warning{% endif %} fs-6">
+                                    {{ app.status|title }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if app.organization_id %}
+                                    {% for org in organizations %}
+                                        {% if org.id == app.organization_id %}
+                                            <span class="badge bg-info">{{ org.name }}</span>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="text-muted">Not assigned</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="viewApplication('{{ app.id }}', '{{ app.applicant_name }}')">
+                                        <i class="fas fa-eye"></i> View
+                                    </button>
+                                    {% if app.status == 'pending' %}
+                                    <button class="btn btn-sm btn-success" onclick="reviewApplication('{{ app.id }}', '{{ app.applicant_name }}', 'approve')">
+                                        <i class="fas fa-check"></i> Approve
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" onclick="reviewApplication('{{ app.id }}', '{{ app.applicant_name }}', 'reject')">
+                                        <i class="fas fa-times"></i> Reject
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No principal applications</h5>
+                <p class="text-muted">Principal applications will appear here when submitted.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<!-- Review Application Modal -->
+<div class="modal fade" id="reviewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="reviewModalTitle">Review Principal Application</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="reviewModalBody">
+                <!-- Content will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+<!-- View Application Modal -->
+<div class="modal fade" id="viewModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewModalTitle">Application Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="viewModalBody">
+                <!-- Content will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+function reviewApplication(appId, applicantName, defaultAction = '') {
+    const modalTitle = document.getElementById('reviewModalTitle');
+    const modalBody = document.getElementById('reviewModalBody');
+    modalTitle.textContent = `Review Application: ${applicantName}`;
+    modalBody.innerHTML = `
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Reviewing application for:</strong> ${applicantName}
+        </div>
+        <form method="POST" action="/admin/review_principal_application/${appId}" id="reviewForm">
+            <div class="mb-3">
+                <label class="form-label"><strong>Decision</strong></label>
+                <div class="form-check">
+                    <input type="radio" class="form-check-input" id="approve" name="action" value="approve" 
+                           onchange="toggleFields()" ${defaultAction === 'approve' ? 'checked' : ''}>
+                    <label class="form-check-label" for="approve">
+                        <i class="fas fa-check text-success me-1"></i>Approve Application
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input type="radio" class="form-check-input" id="reject" name="action" value="reject" 
+                           onchange="toggleFields()" ${defaultAction === 'reject' ? 'checked' : ''}>
+                    <label class="form-check-label" for="reject">
+                        <i class="fas fa-times text-danger me-1"></i>Reject Application
+                    </label>
+                </div>
+            </div>
+            <div class="mb-3" id="organizationDiv" style="display: none;">
+                <label for="organization_id" class="form-label"><strong>Assign to Organization</strong></label>
+                <select class="form-select" name="organization_id" id="organization_id">
+                    <option value="">Select Organization...</option>
+                    {% for org in organizations %}
+                    <option value="{{ org.id }}">{{ org.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3" id="rejectionDiv" style="display: none;">
+                <label for="rejection_reason" class="form-label"><strong>Rejection Reason</strong></label>
+                <textarea class="form-control" name="rejection_reason" id="rejection_reason" rows="3" 
+                          placeholder="Explain why the application is being rejected..."></textarea>
+            </div>
+            <div class="mb-3">
+                <label for="admin_comments" class="form-label"><strong>Admin Comments (Optional)</strong></label>
+                <textarea class="form-control" name="admin_comments" rows="2" 
+                          placeholder="Additional comments for the applicant..."></textarea>
+            </div>
+            <div class="d-flex justify-content-end">
+                <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="submitBtn">Submit Decision</button>
+            </div>
+        </form>
+    `;
+    if (defaultAction) {
+        toggleFields();
+    }
+    new bootstrap.Modal(document.getElementById('reviewModal')).show();
+}
+function toggleFields() {
+    const approveChecked = document.getElementById('approve').checked;
+    const rejectChecked = document.getElementById('reject').checked;
+    document.getElementById('organizationDiv').style.display = approveChecked ? 'block' : 'none';
+    document.getElementById('rejectionDiv').style.display = rejectChecked ? 'block' : 'none';
+    document.getElementById('organization_id').required = approveChecked;
+    document.getElementById('rejection_reason').required = rejectChecked;
+    const submitBtn = document.getElementById('submitBtn');
+    if (approveChecked) {
+        submitBtn.className = 'btn btn-success';
+        submitBtn.innerHTML = '<i class="fas fa-check me-1"></i>Approve Application';
+    } else if (rejectChecked) {
+        submitBtn.className = 'btn btn-danger';
+        submitBtn.innerHTML = '<i class="fas fa-times me-1"></i>Reject Application';
+    }
+}
+function viewApplication(appId, applicantName) {
+    const modalTitle = document.getElementById('viewModalTitle');
+    const modalBody = document.getElementById('viewModalBody');
+    modalTitle.textContent = `Application Details: ${applicantName}`;
+    modalBody.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+    fetch(`/admin/view_principal_application/${appId}`)
+        .then(response => response.text())
+        .then(html => {
+            modalBody.innerHTML = html;
+        })
+        .catch(error => {
+            modalBody.innerHTML = '<div class="alert alert-danger">Error loading application details.</div>';
+        });
+    new bootstrap.Modal(document.getElementById('viewModal')).show();
+}
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof DataTable !== 'undefined' && document.getElementById('applicationsTable')) {
+        new DataTable('#applicationsTable', {
+            pageLength: 25,
+            order: [[3, 'desc']],
+            columnDefs: [
+                { orderable: false, targets: [6] }
+            ]
+        });
+    }
+});
+</script>
+{% endblock %} 

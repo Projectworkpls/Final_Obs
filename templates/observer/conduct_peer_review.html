@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Conduct Peer Review{% endblock %}
+{% block content %}
+<div class="container">
+    <h2><i class="fas fa-clipboard-check me-2"></i>Peer Review</h2>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Observation Details</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Student:</strong> {{ observation.student_name }}</p>
+                    <p><strong>Date:</strong> {{ observation.date }}</p>
+                    <p><strong>Theme:</strong> {{ observation.theme_of_day }}</p>
+                    <hr>
+                    <h6>Observations:</h6>
+                    <p>{{ observation.observations }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Your Review</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="review_score" class="form-label">Score (1-10)</label>
+                            <input type="number" class="form-control" id="review_score" name="review_score" min="1" max="10" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="review_comments" class="form-label">Comments</label>
+                            <textarea class="form-control" id="review_comments" name="review_comments" rows="4" required></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="suggested_improvements" class="form-label">Suggested Improvements</label>
+                            <textarea class="form-control" id="suggested_improvements" name="suggested_improvements" rows="3"></textarea>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="requires_changes" name="requires_changes">
+                            <label class="form-check-label" for="requires_changes">
+                                Requires Changes
+                            </label>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Submit Review</button>
+                        <a href="{{ url_for('observer.peer_reviews') }}" class="btn btn-secondary">Cancel</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

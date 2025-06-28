@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Organization Audit Log - Admin{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-clipboard-list me-2"></i>Organization Assignment Audit Log</h2>
+        <a href="{{ url_for('admin.user_management') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to User Management
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5><i class="fas fa-history me-2"></i>Recent Organization Changes</h5>
+        </div>
+        <div class="card-body">
+            {% if audit_logs %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Entity Type</th>
+                            <th>Entity ID</th>
+                            <th>Organization</th>
+                            <th>Action</th>
+                            <th>Admin</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in audit_logs %}
+                        <tr>
+                            <td>{{ log.created_at[:19] if log.created_at else 'N/A' }}</td>
+                            <td>
+                                <span class="badge bg-{% if log.entity_type == 'user' %}primary{% else %}success{% endif %}">
+                                    {{ log.entity_type|title }}
+                                </span>
+                            </td>
+                            <td><code>{{ log.entity_id[:8] }}...</code></td>
+                            <td><code>{{ log.organization_id[:8] if log.organization_id else 'N/A' }}...</code></td>
+                            <td>
+                                <span class="badge bg-{% if log.action == 'assigned' %}success{% elif log.action == 'unassigned' %}warning{% else %}info{% endif %}">
+                                    {{ log.action|title }}
+                                </span>
+                            </td>
+                            <td><code>{{ log.admin_id[:8] if log.admin_id else 'System' }}...</code></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No audit log entries found</h5>
+                <p class="text-muted">Organization assignment changes will appear here.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

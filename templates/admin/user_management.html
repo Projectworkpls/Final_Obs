@@ -1,0 +1,474 @@
+<!-- user_management.html -->
+{% extends "base.html" %}
+
+{% block title %}User Management - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-users-cog me-2"></i>User & Organization Management</h2>
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </div>
+
+    <!-- User Creation Section -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-user-plus me-2"></i>Add New User</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin.add_user') }}">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Full Name</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="role" class="form-label">Role</label>
+                            <select class="form-select" id="role" name="role" required onchange="toggleUserFields()">
+                                <option value="">Select Role</option>
+                                <option value="Principal">Principal</option>
+                                <option value="Observer">Observer</option>
+                                <option value="Parent">Parent</option>
+                                <option value="Child">Child</option>
+                            </select>
+                        </div>
+                        <div class="mb-3" id="email_field">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email">
+                        </div>
+                        <div class="mb-3" id="password_field">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password" name="password">
+                        </div>
+                        <div class="mb-3" id="child_fields" style="display: none;">
+                            <label for="birth_date" class="form-label">Birth Date (Optional)</label>
+                            <input type="date" class="form-control" id="birth_date" name="birth_date">
+                            <label for="grade" class="form-label mt-2">Grade (Optional)</label>
+                            <input type="text" class="form-control" id="grade" name="grade" placeholder="e.g., Grade 1">
+                        </div>
+                        <div class="mb-3" id="child_selection" style="display: none;">
+                            <label for="child_id" class="form-label">Select Child (for Parent)</label>
+                            <select class="form-select" id="child_id" name="child_id">
+                                <option value="">Select Child</option>
+                                {% for child in children %}
+                                <option value="{{ child.id }}">{{ child.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="organization_id" class="form-label">Organization (Optional)</label>
+                            <select class="form-select" id="organization_id" name="organization_id">
+                                <option value="">Select Organization</option>
+                                {% for org in organizations %}
+                                <option value="{{ org.id }}">{{ org.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>Add User
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bulk Upload Section -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-upload me-2"></i>Bulk Upload Users</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin.bulk_upload_users') }}" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="upload_type" class="form-label">Upload Type</label>
+                            <select class="form-select" id="upload_type" name="upload_type" required>
+                                <option value="">Select Type</option>
+                                <option value="children">Children</option>
+                                <option value="parents">Parents</option>
+                                <option value="observers">Observers</option>
+                                <option value="principals">Principals</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="bulk_organization_id" class="form-label">Organization (Optional)</label>
+                            <select class="form-select" id="bulk_organization_id" name="bulk_organization_id">
+                                <option value="">Select Organization</option>
+                                {% for org in organizations %}
+                                <option value="{{ org.id }}">{{ org.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="file" class="form-label">CSV File</label>
+                            <input type="file" class="form-control" id="file" name="file" accept=".csv" required>
+                            <div class="form-text">
+                                <strong>Children:</strong> name, birth_date (optional), grade (optional)<br>
+                                <strong>Parents/Observers/Principals:</strong> name, email, password
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-upload me-1"></i>Upload CSV
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CSV Templates Download -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-download me-2"></i>Download CSV Templates</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <a href="{{ url_for('admin.download_csv_template', template_type='children') }}" class="btn btn-outline-success d-block mb-2">
+                                <i class="fas fa-file-csv me-2"></i>Children Template
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('admin.download_csv_template', template_type='parents') }}" class="btn btn-outline-primary d-block mb-2">
+                                <i class="fas fa-file-csv me-2"></i>Parents Template
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('admin.download_csv_template', template_type='observers') }}" class="btn btn-outline-info d-block mb-2">
+                                <i class="fas fa-file-csv me-2"></i>Observers Template
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('admin.download_csv_template', template_type='principals') }}" class="btn btn-outline-warning d-block mb-2">
+                                <i class="fas fa-file-csv me-2"></i>Principals Template
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Organization Assignment Section -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5><i class="fas fa-user me-2"></i>Assign User (Observer/Parent/Principal) to Organization</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin.assign_user_organization') }}">
+                        <div class="mb-3">
+                            <label for="user_id" class="form-label">Select User</label>
+                            <select class="form-select" id="user_id" name="user_id" required>
+                                <option value="">Choose User...</option>
+                                {% for user in users %}
+                                <option value="{{ user.id }}">
+                                    {{ user.name }} ({{ user.role }})
+                                    {% if user.organization_id %}
+                                        {% for org in organizations %}
+                                            {% if org.id == user.organization_id %} - {{ org.name }}{% endif %}
+                                        {% endfor %}
+                                    {% else %}
+                                        - Unassigned
+                                    {% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="organization_id" class="form-label">Select Organization</label>
+                            <select class="form-select" id="organization_id" name="organization_id" required>
+                                <option value="">Choose Organization...</option>
+                                {% for org in organizations %}
+                                <option value="{{ org.id }}">{{ org.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-link me-1"></i>Assign User to Organization
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-child me-2"></i>Assign Child to Organization</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin.assign_child_organization') }}">
+                        <div class="mb-3">
+                            <label for="child_id" class="form-label">Select Child</label>
+                            <select class="form-select" id="child_id" name="child_id" required>
+                                <option value="">Choose Child...</option>
+                                {% for child in children %}
+                                <option value="{{ child.id }}">
+                                    {{ child.name }} 
+                                    {% if child.organization_id %}
+                                        {% for org in organizations %}
+                                            {% if org.id == child.organization_id %}({{ org.name }}){% endif %}
+                                        {% endfor %}
+                                    {% else %}
+                                        (Unassigned)
+                                    {% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="organization_id" class="form-label">Select Organization</label>
+                            <select class="form-select" id="organization_id" name="organization_id" required>
+                                <option value="">Choose Organization...</option>
+                                {% for org in organizations %}
+                                <option value="{{ org.id }}">{{ org.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-link me-1"></i>Assign Child & Auto-assign Parent
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mapping Creation Section -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-user-tie me-2"></i>Create Observer-Child Mapping</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin.create_observer_child_mapping') }}">
+                        <div class="mb-3">
+                            <label for="mapping_observer_id" class="form-label">Select Observer</label>
+                            <select class="form-select" id="mapping_observer_id" name="observer_id" required>
+                                <option value="">Choose Observer...</option>
+                                {% for user in users %}
+                                    {% if user.role == 'Observer' %}
+                                    <option value="{{ user.id }}">
+                                        {{ user.name }} 
+                                        {% if user.organization_id %}
+                                            {% for org in organizations %}
+                                                {% if org.id == user.organization_id %}({{ org.name }}){% endif %}
+                                            {% endfor %}
+                                        {% else %}
+                                            (No Org)
+                                        {% endif %}
+                                    </option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="mapping_child_id" class="form-label">Select Child</label>
+                            <select class="form-select" id="mapping_child_id" name="child_id" required>
+                                <option value="">Choose Child...</option>
+                                {% for child in children %}
+                                <option value="{{ child.id }}">
+                                    {{ child.name }}
+                                    {% if child.organization_id %}
+                                        {% for org in organizations %}
+                                            {% if org.id == child.organization_id %}({{ org.name }}){% endif %}
+                                        {% endfor %}
+                                    {% else %}
+                                        (No Org)
+                                    {% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-plus me-1"></i>Create Observer-Child Mapping
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-heart me-2"></i>Create Parent-Child Mapping</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin.create_parent_child_mapping') }}">
+                        <div class="mb-3">
+                            <label for="mapping_parent_id" class="form-label">Select Parent</label>
+                            <select class="form-select" id="mapping_parent_id" name="parent_id" required>
+                                <option value="">Choose Parent...</option>
+                                {% for user in users %}
+                                    {% if user.role == 'Parent' %}
+                                    <option value="{{ user.id }}">
+                                        {{ user.name }}
+                                        {% if user.organization_id %}
+                                            {% for org in organizations %}
+                                                {% if org.id == user.organization_id %}({{ org.name }}){% endif %}
+                                            {% endfor %}
+                                        {% else %}
+                                            (No Org)
+                                        {% endif %}
+                                    </option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="mapping_parent_child_id" class="form-label">Select Child</label>
+                            <select class="form-select" id="mapping_parent_child_id" name="child_id" required>
+                                <option value="">Choose Child...</option>
+                                {% for child in children %}
+                                <option value="{{ child.id }}">
+                                    {{ child.name }}
+                                    {% if child.organization_id %}
+                                        {% for org in organizations %}
+                                            {% if org.id == child.organization_id %}({{ org.name }}){% endif %}
+                                        {% endfor %}
+                                    {% else %}
+                                        (No Org)
+                                    {% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-plus me-1"></i>Create Parent-Child Mapping
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-history me-2"></i>Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <a href="{{ url_for('admin.organization_audit_log') }}" class="btn btn-info me-2">
+                        <i class="fas fa-clipboard-list me-1"></i>View Audit Log
+                    </a>
+                    <a href="{{ url_for('admin.observer_applications') }}" class="btn btn-secondary me-2">
+                        <i class="fas fa-file-alt me-1"></i>Observer Applications
+                    </a>
+                    <a href="{{ url_for('admin.mappings') }}" class="btn btn-primary">
+                        <i class="fas fa-sitemap me-1"></i>View All Mappings
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Users Overview Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-table me-2"></i>All Users Overview</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Organization</th>
+                                    <th>Child Assigned</th>
+                                    <th>Created</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                <tr>
+                                    <td>{{ user.name or 'N/A' }}</td>
+                                    <td>{{ user.email }}</td>
+                                    <td>
+                                        <span class="badge bg-{% if user.role == 'Principal' %}warning{% elif user.role == 'Observer' %}info{% elif user.role == 'Parent' %}success{% else %}secondary{% endif %}">
+                                            {{ user.role }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if user.organization_id %}
+                                            {% for org in organizations %}
+                                                {% if org.id == user.organization_id %}
+                                                    <span class="badge bg-light text-dark">{{ org.name }}</span>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% else %}
+                                            <span class="text-muted">Unassigned</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if user.child_id %}
+                                            {% for child in children %}
+                                                {% if child.id == user.child_id %}
+                                                    <span class="badge bg-light text-dark">{{ child.name }}</span>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% else %}
+                                            <span class="text-muted">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ user.created_at[:10] if user.created_at else 'N/A' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleUserFields() {
+    const role = document.getElementById('role').value;
+    const emailField = document.getElementById('email_field');
+    const passwordField = document.getElementById('password_field');
+    const childFields = document.getElementById('child_fields');
+    const childSelection = document.getElementById('child_selection');
+    
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const childIdInput = document.getElementById('child_id');
+
+    // Reset all fields
+    emailField.style.display = 'block';
+    passwordField.style.display = 'block';
+    childFields.style.display = 'none';
+    childSelection.style.display = 'none';
+    
+    emailInput.required = true;
+    passwordInput.required = true;
+    childIdInput.required = false;
+
+    if (role === 'Child') {
+        // Children don't need email/password but need birth_date/grade
+        emailField.style.display = 'none';
+        passwordField.style.display = 'none';
+        childFields.style.display = 'block';
+        
+        emailInput.required = false;
+        passwordInput.required = false;
+    } else if (role === 'Parent') {
+        // Parents can optionally be linked to a child
+        childSelection.style.display = 'block';
+    }
+}
+</script>
+{% endblock %}

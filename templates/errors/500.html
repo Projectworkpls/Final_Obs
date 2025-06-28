@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Server Error{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6 text-center">
+            <h1 class="display-1">500</h1>
+            <h2>Internal Server Error</h2>
+            <p class="lead">Something went wrong on our end.</p>
+            <!-- FIX: Change 'index' to 'landing' -->
+            <a href="{{ url_for('landing') }}" class="btn btn-primary">Return to Home</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

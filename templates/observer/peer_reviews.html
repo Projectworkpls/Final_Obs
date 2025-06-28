@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+{% block title %}Peer Reviews - Observer{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-users me-2"></i>Peer Reviews</h2>
+        <a href="{{ url_for('observer.dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </div>
+
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        <strong>Review Limit:</strong> You can review up to {{ max_reviews_allowed }} observations (equal to your submitted reports).
+        Only observations from the last 24 hours that haven't been reviewed by anyone are shown.
+    </div>
+
+    <!-- Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h4>{{ observer_reports_count }}</h4>
+                    <p class="mb-0">Your Reports</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body text-center">
+                    <h4>{{ pending_reviews|length }}</h4>
+                    <p class="mb-0">Available Reviews</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h4>{{ completed_reviews|length }}</h4>
+                    <p class="mb-0">Completed Reviews</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <h4>{{ max_reviews_allowed - completed_reviews|length }}</h4>
+                    <p class="mb-0">Remaining</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Available Reviews -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-clipboard-list me-2"></i>Available Observations to Review ({{ pending_reviews|length }})</h5>
+        </div>
+        <div class="card-body">
+            {% if pending_reviews %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Observer</th>
+                            <th>Date</th>
+                            <th>Media</th>
+                            <th>Report</th>
+                            <th>Source</th>
+                            <th>Submitted</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for observation in pending_reviews %}
+                        <tr>
+                            <td>
+                                <strong>{{ observation.student_name or 'N/A' }}</strong>
+                            </td>
+                            <td>{{ observation.observer_name or 'N/A' }}</td>
+                            <td>{{ observation.date or 'N/A' }}</td>
+                            <td>
+                                {% if observation.file_url %}
+                                    {% if observation.file_type == 'audio' %}
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-volume-up text-primary me-2"></i>
+                                            <span class="text-muted small">{{ observation.filename or 'Audio File' }}</span>
+                                        </div>
+                                    {% elif observation.file_type == 'image' %}
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-image text-success me-2"></i>
+                                            <span class="text-muted small">{{ observation.filename or 'Image File' }}</span>
+                                        </div>
+                                    {% else %}
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-file text-info me-2"></i>
+                                            <span class="text-muted small">{{ observation.filename or 'File' }}</span>
+                                        </div>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-muted">No media</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if observation.has_formatted_report %}
+                                    <span class="badge bg-success">Available</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Text Only</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if observation.processed_by_admin %}
+                                    <span class="badge bg-warning">Admin</span>
+                                {% else %}
+                                    <span class="badge bg-info">Observer</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small class="text-muted">
+                                    {{ observation.timestamp[:16] if observation.timestamp else 'N/A' }}
+                                </small>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('observer.review_observation', observation_id=observation.id) }}"
+                                   class="btn btn-primary btn-sm">
+                                    <i class="fas fa-eye me-1"></i>Review
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-clipboard-check fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No observations available for review</h5>
+                {% if observer_reports_count == 0 %}
+                    <p class="text-muted">You need to submit observations before you can review others.</p>
+                {% else %}
+                    <p class="text-muted">All recent observations have been reviewed or no new observations in last 24 hours.</p>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Completed Reviews -->
+    <div class="card">
+        <div class="card-header">
+            <h5><i class="fas fa-check-circle me-2"></i>Your Completed Reviews ({{ completed_reviews|length }})</h5>
+        </div>
+        <div class="card-body">
+            {% if completed_reviews %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Observer</th>
+                            <th>Date</th>
+                            <th>Review Score</th>
+                            <th>Requires Changes</th>
+                            <th>Reviewed On</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for review in completed_reviews %}
+                        <tr>
+                            <td>{{ review.observations.student_name if review.observations else 'N/A' }}</td>
+                            <td>{{ review.observations.observer_name if review.observations else 'N/A' }}</td>
+                            <td>{{ review.observations.date if review.observations else 'N/A' }}</td>
+                            <td>
+                                <span class="badge bg-{% if review.review_score >= 4 %}success{% elif review.review_score >= 3 %}warning{% else %}danger{% endif %}">
+                                    {{ review.review_score }}/5
+                                </span>
+                            </td>
+                            <td>
+                                {% if review.requires_changes %}
+                                    <span class="badge bg-warning">Yes</span>
+                                {% else %}
+                                    <span class="badge bg-success">No</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ review.created_at[:10] if review.created_at else 'N/A' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No completed reviews</h5>
+                <p class="text-muted">Your completed peer reviews will appear here.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

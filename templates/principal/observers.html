@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Manage Observers{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <h2><i class="fas fa-users me-2"></i>Manage Observers</h2>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Observations</th>
+                            <th>Pending Reviews</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for observer in observers %}
+                        <tr>
+                            <td>{{ observer.name }}</td>
+                            <td>{{ observer.email }}</td>
+                            <td>{{ observer.observation_count }}</td>
+                            <td>{{ observer.pending_reviews }}</td>
+                            <td>
+                                <a href="{{ url_for('principal.observer_feedback', observer_id=observer.id) }}"
+                                   class="btn btn-sm btn-primary">Give Feedback</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+{% block title %}Observer Application Details{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-user-secret me-2"></i>Observer Application Details</h2>
+        <a href="{{ url_for('admin.observer_applications') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i>Back to Applications
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- Application Information -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-info-circle me-2"></i>Application Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Applicant Name:</strong> {{ application.applicant_name }}</p>
+                            <p><strong>Email:</strong> {{ application.applicant_email }}</p>
+                            <p><strong>Phone:</strong> {{ application.applicant_phone or 'Not provided' }}</p>
+                            <p><strong>Experience Years:</strong> {{ application.experience_years }} years</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Applied Date:</strong> {{ application.applied_at[:10] if application.applied_at else 'N/A' }}</p>
+                            <p><strong>Status:</strong>
+                                {% if application.application_status == 'pending' %}
+                                    <span class="badge bg-warning">{{ application.application_status|title }}</span>
+                                {% elif application.application_status == 'approved' %}
+                                    <span class="badge bg-success">{{ application.application_status|title }}</span>
+                                {% elif application.application_status == 'rejected' %}
+                                    <span class="badge bg-danger">{{ application.application_status|title }}</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ application.application_status|title or 'Unknown' }}</span>
+                                {% endif %}
+                            </p>
+                            <p><strong>Assigned Organization:</strong>
+                                {% if organization_info %}
+                                    {{ organization_info.name }}
+                                {% else %}
+                                    <span class="text-muted">Not assigned</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Qualifications & Motivation -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-graduation-cap me-2"></i>Qualifications & Motivation</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6>Qualifications:</h6>
+                        <p class="text-muted">{{ application.qualifications or 'Not provided' }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6>Motivation:</h6>
+                        <p class="text-muted">{{ application.motivation_text or 'Not provided' }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Review Information -->
+            {% if application.application_status != 'pending' %}
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-clipboard-check me-2"></i>Review Information</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Reviewed By:</strong> {{ reviewer_info.name if reviewer_info else 'Unknown' }}</p>
+                    <p><strong>Reviewed Date:</strong> {{ application.reviewed_at[:10] if application.reviewed_at else 'N/A' }}</p>
+
+                    {% if application.application_status == 'rejected' and application.rejection_reason %}
+                    <div class="alert alert-danger">
+                        <h6><i class="fas fa-exclamation-triangle me-2"></i>Rejection Reason:</h6>
+                        <p class="mb-0">{{ application.rejection_reason }}</p>
+                    </div>
+                    {% endif %}
+
+                    {% if application.admin_comments %}
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-comment me-2"></i>Admin Comments:</h6>
+                        <p class="mb-0">{{ application.admin_comments }}</p>
+                    </div>
+                    {% endif %}
+
+                    {% if application.application_status == 'approved' and application.temp_password %}
+                    <div class="alert alert-success">
+                        <h6><i class="fas fa-key me-2"></i>Temporary Password:</h6>
+                        <p class="mb-0"><code>{{ application.temp_password }}</code></p>
+                        <small class="text-muted">This password was sent to the applicant's email.</small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-cogs me-2"></i>Actions</h5>
+                </div>
+                <div class="card-body">
+                    {% if application.application_status == 'pending' or not application.application_status %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        This application is pending review.
+                    </div>
+                    <!-- Approve Button (Direct Submit) -->
+                    <form method="POST" action="{{ url_for('admin.review_observer_application', application_id=application.id) }}" style="margin-bottom: 1em;">
+                        <input type="hidden" name="action" value="approve">
+                        <input type="hidden" name="organization_id" value="{{ application.organization_id or '' }}">
+                        <button type="submit" class="btn btn-success btn-lg w-100">
+                            <i class="fas fa-check me-2"></i>Approve Application
+                        </button>
+                    </form>
+                    <!-- Reject Button (Direct Submit) -->
+                    <form method="POST" action="{{ url_for('admin.review_observer_application', application_id=application.id) }}">
+                        <input type="hidden" name="action" value="reject">
+                        <input type="hidden" name="rejection_reason" value="Rejected by admin">
+                        <button type="submit" class="btn btn-danger btn-lg w-100">
+                            <i class="fas fa-times me-2"></i>Reject Application
+                        </button>
+                    </form>
+                    {% elif application.application_status == 'approved' %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        This application has been approved.
+                    </div>
+                    {% elif application.application_status == 'rejected' %}
+                    <div class="alert alert-danger">
+                        <i class="fas fa-times-circle me-2"></i>
+                        This application has been rejected.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Timeline -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-clock me-2"></i>Timeline</h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-primary"></div>
+                            <div class="timeline-content">
+                                <h6 class="timeline-title">Application Submitted</h6>
+                                <p class="timeline-text">{{ application.applied_at[:16] if application.applied_at else 'N/A' }}</p>
+                            </div>
+                        </div>
+
+                        {% if application.application_status != 'pending' %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-{% if application.application_status == 'approved' %}success{% else %}danger{% endif %}"></div>
+                            <div class="timeline-content">
+                                <h6 class="timeline-title">Application {{ application.application_status|title }}</h6>
+                                <p class="timeline-text">{{ application.reviewed_at[:16] if application.reviewed_at else 'N/A' }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -35px;
+    top: 5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px #dee2e6;
+}
+
+.timeline-item:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: -30px;
+    top: 17px;
+    width: 2px;
+    height: calc(100% + 5px);
+    background-color: #dee2e6;
+}
+
+.timeline-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.timeline-text {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-bottom: 0;
+}
+</style>
+{% endblock %}

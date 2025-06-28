@@ -1,0 +1,308 @@
+<!-- process_reports.html -->
+{% extends "base.html" %}
+
+{% block title %}Process Reports - Admin{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-file-medical-alt me-2"></i>Process Reports
+        </h1>
+        <p class="text-muted">Process observations on behalf of observers when needed.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-cogs me-2"></i>Report Processing</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin.process_observation') }}" enctype="multipart/form-data">
+                    <!-- Observer Selection -->
+                    <div class="mb-3">
+                        <label for="observer_id" class="form-label">Select Observer</label>
+                        <select class="form-select" id="observer_id" name="observer_id" required onchange="loadObserverChildren()">
+                            <option value="">Choose Observer</option>
+                            {% for observer in observers %}
+                            <option value="{{ observer.id }}">{{ observer.name }} ({{ observer.email }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Child Selection -->
+                    <div class="mb-3">
+                        <label for="child_id" class="form-label">Select Child</label>
+                        <select class="form-select" id="child_id" name="child_id" required disabled>
+                            <option value="">First select an observer</option>
+                        </select>
+                    </div>
+
+                    <!-- Processing Mode -->
+                    <div class="mb-3">
+                        <label class="form-label">Processing Mode</label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="processing_mode" id="ocr_mode" value="ocr">
+                            <label class="btn btn-outline-primary" for="ocr_mode">
+                                <i class="fas fa-image me-2"></i>OCR (Image)
+                            </label>
+
+                            <input type="radio" class="btn-check" name="processing_mode" id="audio_mode" value="audio">
+                            <label class="btn btn-outline-success" for="audio_mode">
+                                <i class="fas fa-microphone me-2"></i>Audio
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Session Information -->
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="session_date" class="form-label">Session Date</label>
+                                <input type="date" class="form-control" id="session_date" name="session_date" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="session_start" class="form-label">Start Time</label>
+                                <input type="time" class="form-control" id="session_start" name="session_start" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="session_end" class="form-label">End Time</label>
+                                <input type="time" class="form-control" id="session_end" name="session_end" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- File Upload -->
+                    <div class="mb-3">
+                        <label for="file" class="form-label">Upload File</label>
+                        <div class="file-upload-area" onclick="document.getElementById('file').click()">
+                            <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">Click to upload or drag and drop</p>
+                            <p class="text-muted small">Images: JPG, PNG | Audio: MP3, WAV, M4A</p>
+                        </div>
+                        <input type="file" class="form-control d-none" id="file" name="file" accept=".jpg,.jpeg,.png,.mp3,.wav,.m4a" required>
+                        <div id="file-preview" class="mt-2"></div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg w-100">
+                        <i class="fas fa-play me-2"></i>Process Observation
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Last Processed Report Display -->
+        {% if session.get('last_admin_report_id') %}
+        <div class="card mt-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-file-alt me-2"></i>Last Processed Report</h5>
+                <div>
+                    <a href="{{ url_for('admin.download_admin_report') }}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-download me-1"></i>Download Word
+                    </a>
+                    <a href="{{ url_for('admin.download_admin_pdf') }}" class="btn btn-outline-danger btn-sm">
+                        <i class="fas fa-file-pdf me-1"></i>Download PDF
+                    </a>
+                    <button class="btn btn-outline-success btn-sm" onclick="showAdminEmailModal()">
+                        <i class="fas fa-envelope me-1"></i>Email Report
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    Report processed successfully! Use the buttons above to download or email the report.
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Instructions Panel -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-info-circle me-2"></i>Instructions</h5>
+            </div>
+            <div class="card-body">
+                <h6>OCR Mode</h6>
+                <ul class="small">
+                    <li>Upload clear images of observation sheets</li>
+                    <li>Ensure text is readable and well-lit</li>
+                    <li>Supported formats: JPG, PNG</li>
+                </ul>
+
+                <h6>Audio Mode</h6>
+                <ul class="small">
+                    <li>Upload audio recordings of sessions</li>
+                    <li>Clear audio quality recommended</li>
+                    <li>Supported formats: MP3, WAV, M4A</li>
+                </ul>
+
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    <strong>Tip:</strong> Processing may take a few minutes depending on file size and type.
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5><i class="fas fa-history me-2"></i>Recent Activity</h5>
+            </div>
+            <div class="card-body">
+                <div class="small text-muted">
+                    <p>Recent processing activities will appear here.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Admin Email Modal -->
+<div class="modal fade" id="adminEmailModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Email Report</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="admin-email-form">
+                    <div class="mb-3">
+                        <label for="admin-recipient-email" class="form-label">Recipient Email</label>
+                        <input type="email" class="form-control" id="admin-recipient-email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="admin-email-subject" class="form-label">Subject</label>
+                        <input type="text" class="form-control" id="admin-email-subject" value="Observation Report (Admin Processed)">
+                    </div>
+                    <div class="mb-3">
+                        <label for="admin-email-message" class="form-label">Additional Message (Optional)</label>
+                        <textarea class="form-control" id="admin-email-message" rows="3" placeholder="Add any additional notes..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="sendAdminEmail()">Send Email</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.file-upload-area {
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    padding: 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.file-upload-area:hover {
+    border-color: #007bff;
+    background-color: #f8f9fa;
+}
+</style>
+
+<script>
+function loadObserverChildren() {
+    const observerId = document.getElementById('observer_id').value;
+    const childSelect = document.getElementById('child_id');
+
+    if (!observerId) {
+        childSelect.disabled = true;
+        childSelect.innerHTML = '<option value="">First select an observer</option>';
+        return;
+    }
+
+    // Show loading
+    childSelect.innerHTML = '<option value="">Loading children...</option>';
+
+    // Fetch children for selected observer
+    fetch(`/admin/get_observer_children/${observerId}`)
+        .then(response => response.json())
+        .then(children => {
+            childSelect.disabled = false;
+            childSelect.innerHTML = '<option value="">Select Child</option>';
+
+            children.forEach(child => {
+                const option = document.createElement('option');
+                option.value = child.id;
+                option.textContent = child.name;
+                childSelect.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Error loading children:', error);
+            childSelect.innerHTML = '<option value="">Error loading children</option>';
+        });
+}
+
+// File upload handling
+document.getElementById('file').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    const preview = document.getElementById('file-preview');
+
+    if (file) {
+        preview.innerHTML = `
+            <div class="alert alert-info">
+                <i class="fas fa-file me-2"></i>
+                Selected: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)
+            </div>
+        `;
+    }
+});
+
+function showAdminEmailModal() {
+    const modal = new bootstrap.Modal(document.getElementById('adminEmailModal'));
+    modal.show();
+}
+
+function sendAdminEmail() {
+    const email = document.getElementById('admin-recipient-email').value;
+    const subject = document.getElementById('admin-email-subject').value;
+    const message = document.getElementById('admin-email-message').value;
+
+    if (!email) {
+        alert('Please enter an email address');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('recipient_email', email);
+    formData.append('subject', subject);
+    formData.append('additional_message', message);
+
+    fetch('/admin/email_report', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Email sent successfully!');
+            bootstrap.Modal.getInstance(document.getElementById('adminEmailModal')).hide();
+        } else {
+            alert('Error sending email: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Error sending email');
+        console.error('Error:', error);
+    });
+}
+
+// Set default date to today
+document.getElementById('session_date').valueAsDate = new Date();
+</script>
+{% endblock %}

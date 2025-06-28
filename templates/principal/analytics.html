@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}Analytics - Principal{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-chart-bar me-2"></i>Organization Analytics</h2>
+        <a href="{{ url_for('principal.dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </div>
+    
+    <!-- Analytics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h3>{{ analytics.observers_count }}</h3>
+                    <p class="mb-0">Observers</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h3>{{ analytics.children_count }}</h3>
+                    <p class="mb-0">Children</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <h3>{{ analytics.observations_count }}</h3>
+                    <p class="mb-0">Observations</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body text-center">
+                    <h3>{{ analytics.parents_count }}</h3>
+                    <p class="mb-0">Parents</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Detailed Analytics -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-pie me-2"></i>Organization Overview</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <strong>Total Users:</strong> {{ analytics.total_users }}
+                    </div>
+                    <div class="mb-2">
+                        <strong>Active Observers:</strong> {{ analytics.observers_count }}
+                    </div>
+                    <div class="mb-2">
+                        <strong>Total Reports:</strong> {{ analytics.observations_count }}
+                    </div>
+                    <div class="mb-2">
+                        <strong>Registered Children:</strong> {{ analytics.children_count }}
+                    </div>
+                    <div class="mb-2">
+                        <strong>Parent Accounts:</strong> {{ analytics.parents_count }}
+                    </div>
+                    <div class="mb-2">
+                        <strong>Avg Reports/Child:</strong>
+                        {% if analytics.observations_count > 0 and analytics.children_count > 0 %}
+                            {{ "%.1f"|format(analytics.observations_count / analytics.children_count) }}
+                        {% else %}
+                            0.0
+                        {% endif %}
+                    </div>
+                    <div class="mb-2">
+                        <strong>Files Stored:</strong> {{ analytics.storage_files }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-clock me-2"></i>Recent Activity</h5>
+                </div>
+                <div class="card-body">
+                    {% if analytics.recent_observations %}
+                        {% for obs in analytics.recent_observations %}
+                        <div class="mb-2 p-2 border-bottom">
+                            <strong>{{ obs.student_name }}</strong> - {{ obs.date }}
+                            <br><small class="text-muted">by {{ obs.observer_name }} on {{ obs.timestamp[:10] if obs.timestamp else 'N/A' }}</small>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">No recent observations</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

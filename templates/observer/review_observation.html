@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block title %}Review Observation - Observer{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-clipboard-check me-2"></i>Peer Review</h2>
+        <a href="{{ url_for('observer.peer_reviews') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Peer Reviews
+        </a>
+    </div>
+
+    <div class="alert alert-warning">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <strong>Note:</strong> Once you submit this review, this observation will be removed from all observers' review lists.
+    </div>
+
+    <div class="row">
+        <!-- Observation Details -->
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-info-circle me-2"></i>Observation Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Student:</strong> {{ observation.student_name or 'N/A' }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Observer:</strong> {{ observation.observer_name or 'N/A' }}
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Date:</strong> {{ observation.date or 'N/A' }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Time:</strong> {{ observation.timestamp[:19] if observation.timestamp else 'N/A' }}
+                        </div>
+                    </div>
+
+                    <!-- Audio Player -->
+                    {% if observation.signed_url or observation.file_url %}
+                    <div class="mb-3">
+                        <strong>Audio Recording:</strong>
+                        <div class="mt-2">
+                            <audio controls class="w-100" preload="metadata">
+                                <source src="{{ observation.signed_url or observation.file_url }}" type="audio/mpeg">
+                                <source src="{{ observation.signed_url or observation.file_url }}" type="audio/wav">
+                                <source src="{{ observation.signed_url or observation.file_url }}" type="audio/mp4">
+                                Your browser does not support the audio element.
+                            </audio>
+                            <div class="mt-1">
+                                <small class="text-muted">
+                                    <i class="fas fa-file-audio me-1"></i>{{ observation.filename or 'Audio File' }}
+                                    {% if observation.signed_url %}
+                                        <span class="badge bg-success ms-2">Signed URL</span>
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Raw Observations -->
+                    {% if observation.observations %}
+                    <div class="mb-3">
+                        <strong>Raw Observations/Transcript:</strong>
+                        <div class="border p-3 bg-light mt-2" style="max-height: 200px; overflow-y: auto;">
+                            {{ observation.observations }}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Formatted Report -->
+                    {% if formatted_report %}
+                    <div class="mb-3">
+                        <strong>Formatted Report:</strong>
+                        <div class="border p-3 bg-light mt-2" style="max-height: 300px; overflow-y: auto; white-space: pre-wrap;">{{ formatted_report }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Review Form -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-star me-2"></i>Submit Peer Review</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('observer.submit_peer_review_route', observation_id=observation.id) }}" id="reviewForm">
+                        <div class="mb-3">
+                            <label for="review_score" class="form-label">Overall Quality Score</label>
+                            <select class="form-select" id="review_score" name="review_score" required>
+                                <option value="">Select Score</option>
+                                <option value="5">5 - Excellent</option>
+                                <option value="4">4 - Good</option>
+                                <option value="3">3 - Satisfactory</option>
+                                <option value="2">2 - Needs Improvement</option>
+                                <option value="1">1 - Poor</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="review_comments" class="form-label">Review Comments</label>
+                            <textarea class="form-control" id="review_comments" name="review_comments"
+                                    rows="4" required placeholder="Provide detailed feedback on the observation quality, accuracy, and completeness..."></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="suggested_improvements" class="form-label">Suggested Improvements</label>
+                            <textarea class="form-control" id="suggested_improvements" name="suggested_improvements"
+                                    rows="3" placeholder="Suggest specific improvements for future observations..."></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="requires_changes" name="requires_changes">
+                                <label class="form-check-label" for="requires_changes">
+                                    This observation requires significant changes
+                                </label>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100" id="submitReviewBtn">
+                            <i class="fas fa-paper-plane me-1"></i>Submit Review
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('reviewForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const score = document.getElementById('review_score').value;
+    const comments = document.getElementById('review_comments').value;
+
+    if (!score || !comments.trim()) {
+        alert('Please provide both a score and comments.');
+        return;
+    }
+
+    if (confirm('Are you sure you want to submit this peer review? This observation will be removed from all review lists.')) {
+        this.submit();
+    }
+});
+</script>
+{% endblock %}
