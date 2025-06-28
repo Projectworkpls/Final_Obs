@@ -1,0 +1,116 @@
+/* Universal Mobile Optimizations - Apply to ALL dashboards */
+@media (max-width: 768px) {
+    /* Container & Spacing */
+    .container-fluid { 
+        padding: 8px 12px; 
+    }
+    
+    /* Touch-Friendly Elements (44px minimum) */
+    .btn { 
+        min-height: 44px; 
+        font-size: 16px; 
+        padding: 12px 20px; 
+        border-radius: 8px; 
+    }
+    
+    /* Cards & Visual Hierarchy */
+    .card {
+        margin-bottom: 15px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    /* Typography Optimization */
+    h1 { font-size: 1.8rem; }
+    h2, h3 { font-size: 1.4rem; }
+    
+    /* Form Elements (16px prevents zoom on iOS) */
+    .form-control, .form-select { 
+        min-height: 44px; 
+        font-size: 16px; 
+    }
+    
+    /* Modal Improvements */
+    .modal-dialog { 
+        margin: 10px; 
+        max-width: calc(100% - 20px); 
+    }
+    
+    /* Table Responsiveness */
+    .table th, .table td { 
+        padding: 12px 8px; 
+        font-size: 14px; 
+    }
+
+    /* Navigation Optimization */
+    .navbar-brand {
+        font-size: 1.2rem;
+    }
+
+    .navbar-text {
+        font-size: 0.9rem;
+    }
+
+    /* Dashboard Specific Optimizations */
+    .dashboard-card {
+        margin-bottom: 15px;
+    }
+
+    .quick-actions {
+        margin-bottom: 15px;
+    }
+
+    /* Chart Responsiveness */
+    .chart-container {
+        height: 300px;
+        margin-bottom: 20px;
+    }
+
+    /* Form Layout */
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    /* Alert Messages */
+    .alert {
+        margin-bottom: 10px;
+        padding: 10px;
+    }
+}
+
+/* Progressive Disclosure Pattern */
+.mobile-only {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .mobile-only {
+        display: block;
+    }
+    
+    .desktop-only {
+        display: none;
+    }
+}
+
+/* Touch Feedback */
+.touch-feedback {
+    transition: transform 0.1s ease;
+}
+
+.touch-feedback:active {
+    transform: scale(0.95);
+}
+
+/* Responsive Grid System */
+@media (max-width: 768px) {
+    .col-mobile-6 {
+        width: 50%;
+        padding: 0 5px;
+    }
+    
+    .col-mobile-12 {
+        width: 100%;
+        padding: 0 5px;
+    }
+} 

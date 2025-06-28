@@ -1,0 +1,416 @@
+{% extends "base.html" %}
+{% block title %}Welcome, Principals | Sanjaya – The Observer{% endblock %}
+{% block content %}
+<style>
+    /* Use the same CSS as Parent landing page above */
+    /* Perfect Card Layout System */
+    .section-grid {
+        display: grid;
+        gap: 2rem;
+        margin-top: 3rem;
+        padding: 0 1rem;
+        justify-items: center;
+    }
+    .section-grid.five-cards {
+        grid-template-columns: repeat(6, 1fr);
+    }
+    .section-grid.five-cards .feature-card:nth-child(1),
+    .section-grid.five-cards .feature-card:nth-child(2) {
+        grid-column: span 3;
+        max-width: 400px;
+        width: 100%;
+    }
+    .section-grid.five-cards .feature-card:nth-child(3),
+    .section-grid.five-cards .feature-card:nth-child(4),
+    .section-grid.five-cards .feature-card:nth-child(5) {
+        grid-column: span 2;
+        max-width: 350px;
+        width: 100%;
+    }
+    .section-grid.three-cards {
+        grid-template-columns: repeat(3, 1fr);
+        max-width: 1200px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .section-grid.three-cards .feature-card {
+        max-width: 380px;
+        width: 100%;
+    }
+    .section-grid.four-cards {
+        grid-template-columns: repeat(2, 1fr);
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .section-grid.four-cards .feature-card {
+        max-width: 380px;
+        width: 100%;
+    }
+    .feature-card {
+        background: linear-gradient(145deg, #ffffff 0%, #f0f9ff 100%);
+        border-radius: 20px;
+        padding: 2.5rem;
+        box-shadow: 0 8px 32px rgba(14, 165, 233, 0.1),
+                    0 4px 16px rgba(37, 99, 235, 0.08);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid rgba(14, 165, 233, 0.1);
+        position: relative;
+        overflow: hidden;
+        text-align: center;
+        min-height: 280px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .feature-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, #0ea5e9, #2563eb, #1d4ed8);
+    }
+    .feature-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 20px 50px rgba(14, 165, 233, 0.15),
+                    0 8px 25px rgba(37, 99, 235, 0.1);
+    }
+    .feature-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1.5rem;
+        display: block;
+        filter: drop-shadow(0 4px 8px rgba(14, 165, 233, 0.2));
+    }
+    .feature-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 1rem;
+        line-height: 1.3;
+    }
+    .feature-description {
+        color: #334155;
+        line-height: 1.6;
+        font-size: 0.95rem;
+        flex-grow: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+    .hero-section {
+        min-height: 60vh;
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 25%, #1e40af 50%, #0ea5e9 75%, #0284c7 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+        padding: 4rem 0;
+    }
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.15) 0%, transparent 50%),
+                    radial-gradient(circle at 70% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+        opacity: 0.8;
+    }
+    .hero-content {
+        position: relative;
+        z-index: 2;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 2rem;
+        text-align: center;
+    }
+    .hero-title {
+        font-size: clamp(2.5rem, 6vw, 4.5rem);
+        font-weight: 800;
+        color: white;
+        margin-bottom: 1.5rem;
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+        text-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+    .hero-subtitle {
+        font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+        color: rgba(255, 255, 255, 0.95);
+        font-weight: 400;
+        max-width: 600px;
+        margin: 0 auto;
+        line-height: 1.4;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    .content-section {
+        padding: 5rem 0;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding-left: 2rem;
+        padding-right: 2rem;
+        position: relative;
+    }
+    .section-title {
+        font-size: clamp(2rem, 5vw, 3rem);
+        font-weight: 700;
+        color: #0f172a;
+        text-align: center;
+        margin-bottom: 1rem;
+        letter-spacing: -0.01em;
+        background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    .section-subtitle {
+        text-align: center;
+        color: #475569;
+        font-size: 1.2rem;
+        max-width: 800px;
+        margin: 0 auto 3rem;
+        line-height: 1.6;
+    }
+    .styled-list {
+        list-style: none;
+        padding: 0;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    .styled-list li {
+        position: relative;
+        padding: 1rem 0 1rem 3rem;
+        margin-bottom: 1rem;
+        font-size: 1.1rem;
+        color: #334155;
+        background: linear-gradient(145deg, #ffffff 0%, #f0f9ff 100%);
+        border-radius: 12px;
+        border-left: 4px solid #0ea5e9;
+        box-shadow: 0 4px 20px rgba(14, 165, 233, 0.05);
+    }
+    .styled-list li::before {
+        content: "✓";
+        position: absolute;
+        left: 1rem;
+        top: 1rem;
+        color: #0ea5e9;
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+    .full-cta {
+        width: 100%;
+        text-align: center;
+        padding: 6rem 0;
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 25%, #0ea5e9 75%, #0284c7 100%);
+        color: #fff;
+        position: relative;
+        overflow: hidden;
+    }
+    .full-cta::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+    }
+    .cta-content {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 0 2rem;
+        position: relative;
+        z-index: 2;
+    }
+    .cta-btn-large {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        background: #fff;
+        color: #2563eb;
+        font-weight: 700;
+        font-size: 1.2rem;
+        padding: 1.2rem 3rem;
+        border-radius: 50px;
+        text-decoration: none;
+        box-shadow: 0 10px 30px rgba(37, 99, 235, 0.2);
+        transition: all 0.3s ease;
+        margin-top: 2rem;
+    }
+    .cta-btn-large:hover {
+        background: #f59e42;
+        color: #fff;
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(245, 158, 66, 0.3);
+    }
+    .footer-section {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        color: white;
+        padding: 3rem 0;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    .footer-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(ellipse at center top, rgba(14, 165, 233, 0.1) 0%, transparent 70%);
+    }
+    .footer-text {
+        color: #cbd5e1;
+        font-size: 0.9rem;
+        position: relative;
+        z-index: 2;
+    }
+    @media (max-width: 1200px) {
+        .section-grid.five-cards {
+            grid-template-columns: repeat(4, 1fr);
+        }
+        .section-grid.five-cards .feature-card:nth-child(1),
+        .section-grid.five-cards .feature-card:nth-child(2) {
+            grid-column: span 2;
+        }
+        .section-grid.five-cards .feature-card:nth-child(3),
+        .section-grid.five-cards .feature-card:nth-child(4),
+        .section-grid.five-cards .feature-card:nth-child(5) {
+            grid-column: span 1;
+        }
+        .section-grid.five-cards .feature-card:nth-child(5) {
+            grid-column: 2 / span 2;
+        }
+    }
+    @media (max-width: 768px) {
+        .section-grid.five-cards,
+        .section-grid.three-cards,
+        .section-grid.four-cards {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            padding: 0;
+        }
+        .section-grid.five-cards .feature-card:nth-child(1),
+        .section-grid.five-cards .feature-card:nth-child(2),
+        .section-grid.five-cards .feature-card:nth-child(3),
+        .section-grid.five-cards .feature-card:nth-child(4),
+        .section-grid.five-cards .feature-card:nth-child(5) {
+            grid-column: span 1;
+            max-width: 100%;
+        }
+        .feature-card {
+            padding: 2rem;
+            min-height: 250px;
+        }
+        .content-section {
+            padding: 3rem 1rem;
+        }
+    }
+</style>
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="hero-content">
+        <h1 class="hero-title">Welcome, Respected Principals</h1>
+        <p class="hero-subtitle">Become a Guardian of Unbiased Learning with Sanjaya – The Observer</p>
+    </div>
+</section>
+<!-- Why This Program Matters -->
+<section class="content-section">
+    <h2 class="section-title">🌟 Why This Program Matters</h2>
+    <p class="section-subtitle">
+        Every child is constantly learning – not just from books, but from people, experiences, and technology. But who's silently observing this journey and guiding it without bias? That's where Sanjaya – The Observer steps in. Built under the wisdom and supervision of India's Legendary Principals, this program ensures every child is being seen, heard, and supported.
+    </p>
+</section>
+<!-- Your Role as a Principal -->
+<section class="content-section">
+    <h2 class="section-title">🧭 Your Role as a Principal</h2>
+    <p class="section-subtitle">
+        As a Principal, you won't directly interact with students—but your guidance shapes the program:
+    </p>
+    <ul class="styled-list">
+        <li>Approve & Appoint Observers for learners in your region</li>
+        <li>Review Summaries & Reports sent by Observers</li>
+        <li>Escalate or Intervene if any red flags or unique patterns are noticed</li>
+        <li>Maintain Confidentiality & Quality Control</li>
+        <li>Promote Trust among parents, observers, and your educator network</li>
+    </ul>
+</section>
+<!-- How It Works Section - 5 cards: 2 top, 3 bottom -->
+<section class="content-section">
+    <h2 class="section-title">🔐 How It Works</h2>
+    <div class="section-grid five-cards">
+        <div class="feature-card">
+            <span class="feature-icon">1️⃣</span>
+            <h3 class="feature-title">Observer Training & Verification</h3>
+            <p class="feature-description">Observers are trained and verified by admin under your supervision</p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon">2️⃣</span>
+            <h3 class="feature-title">Parent Enrollment</h3>
+            <p class="feature-description">Parents subscribe and fill detailed student profiles</p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon">3️⃣</span>
+            <h3 class="feature-title">Daily Observation Calls</h3>
+            <p class="feature-description">Observers conduct 5-minute daily calls to quietly listen and document</p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon">4️⃣</span>
+            <h3 class="feature-title">Principal Review</h3>
+            <p class="feature-description">You receive Observer summaries and can review or escalate as needed</p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon">5️⃣</span>
+            <h3 class="feature-title">Confidential Support</h3>
+            <p class="feature-description">All insights are confidential and used only to support the learner's journey</p>
+        </div>
+    </div>
+</section>
+<!-- What You Gain Section - 4 cards: 2x2 layout -->
+<section class="content-section">
+    <h2 class="section-title">🎁 What You Gain</h2>
+    <div class="section-grid four-cards">
+        <div class="feature-card">
+            <span class="feature-icon"><i class="fas fa-certificate"></i></span>
+            <h3 class="feature-title">Educational Guardian Recognition</h3>
+            <p class="feature-description">Recognition as an educational guardian of your area</p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon"><i class="fas fa-user-tie"></i></span>
+            <h3 class="feature-title">Mentorship Influence</h3>
+            <p class="feature-description">Influence over the next generation of mentorship</p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon"><i class="fas fa-network-wired"></i></span>
+            <h3 class="feature-title">Trusted Network Access</h3>
+            <p class="feature-description">Access to a network of trusted observers and parents</p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon"><i class="fas fa-star"></i></span>
+            <h3 class="feature-title">Leadership Privileges</h3>
+            <p class="feature-description">Eligibility for Skill Bharat Association privileges and leadership roles</p>
+        </div>
+    </div>
+</section>
+<!-- CTA Section -->
+<section class="full-cta">
+    <div class="cta-content">
+        <h2 style="font-size: 2.5rem; margin-bottom: 1rem;">📝 Ready to Join?</h2>
+        <p style="font-size: 1.2rem; margin-bottom: 2rem;">
+            Become the cornerstone of India's most ethical observation program. Click below to start your onboarding and get verified by the admin.
+        </p>
+        <a href="{{ url_for('auth.apply_principal') }}" class="cta-btn-large">
+            <span>👉</span> Apply as Principal
+        </a>
+    </div>
+</section>
+<!-- Footer -->
+<footer class="footer-section">
+    <p class="footer-text">&copy; 2025 Sanjaya – The Observer. Crafted with care for every child.</p>
+</footer>
+{% endblock %}

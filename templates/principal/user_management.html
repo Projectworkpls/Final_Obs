@@ -1,0 +1,438 @@
+{% extends "base.html" %}
+
+{% block title %}User Management - Principal{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-users-cog me-2"></i>User Management & Mappings
+        </h1>
+        <p class="text-muted">Manage users and mappings in your organization</p>
+
+        <!-- Debug Info -->
+        <div class="alert alert-info">
+            <strong>Debug:</strong> Org Users: {{ users|length }}, Children: {{ children|length }},
+            Observers: {{ observers|length }}, Parents: {{ parents|length }}
+            <a href="{{ url_for('principal.debug_org_data') }}" target="_blank" class="btn btn-sm btn-outline-primary ms-2">View Debug Data</a>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <h4>{{ observers|length }}</h4>
+                <p class="mb-0">Observers</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h4>{{ children|length }}</h4>
+                <p class="mb-0">Children</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <h4>{{ observer_mappings|length }}</h4>
+                <p class="mb-0">Observer Mappings</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body text-center">
+                <h4>{{ parent_mappings|length }}</h4>
+                <p class="mb-0">Parent Mappings</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add User and Add Child -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-user-plus me-2"></i>Add New User</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('principal.add_user') }}">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Full Name</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="role" class="form-label">Role</label>
+                        <select class="form-select" id="role" name="role" required onchange="toggleChildSelection()">
+                            <option value="">Select Role</option>
+                            <option value="Observer">Observer</option>
+                            <option value="Parent">Parent</option>
+                        </select>
+                    </div>
+                    <div class="mb-3" id="child_selection" style="display: none;">
+                        <label for="child_id" class="form-label">Select Child</label>
+                        <select class="form-select" id="child_id" name="child_id">
+                            <option value="">Select Child</option>
+                            {% for child in children %}
+                            <option value="{{ child.id }}">{{ child.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>Add User
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Child -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-child me-2"></i>Add New Child</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('principal.add_child') }}">
+                    <div class="mb-3">
+                        <label for="child_name" class="form-label">Child Name</label>
+                        <input type="text" class="form-control" id="child_name" name="child_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="birth_date" class="form-label">Birth Date</label>
+                        <input type="date" class="form-control" id="birth_date" name="birth_date">
+                    </div>
+                    <div class="mb-3">
+                        <label for="grade" class="form-label">Grade</label>
+                        <input type="text" class="form-control" id="grade" name="grade" placeholder="e.g., Grade 1">
+                    </div>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-plus me-1"></i>Add Child
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Observer-Child Mapping and Parent-Child Mapping -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-link me-2"></i>Observer-Child Mapping</h5>
+            </div>
+            <div class="card-body">
+                {% if observers and children %}
+                <form method="POST" action="{{ url_for('principal.add_mapping') }}">
+                    <input type="hidden" name="mapping_type" value="observer_child">
+                    <div class="mb-3">
+                        <label for="observer_id" class="form-label">Select Observer</label>
+                        <select class="form-select" id="observer_id" name="observer_id" required>
+                            <option value="">Choose Observer...</option>
+                            {% for observer in observers %}
+                            <option value="{{ observer.id }}">{{ observer.name }} ({{ observer.email }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="child_id_mapping" class="form-label">Select Child</label>
+                        <select class="form-select" id="child_id_mapping" name="child_id" required>
+                            <option value="">Choose Child...</option>
+                            {% for child in children %}
+                            <option value="{{ child.id }}">{{ child.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-link me-1"></i>Create Mapping
+                    </button>
+                </form>
+                {% else %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    {% if not observers %}No observers found. Add observers first.{% endif %}
+                    {% if not children %}No children found. Add children first.{% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Parent-Child Mapping -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-heart me-2"></i>Parent-Child Mapping</h5>
+            </div>
+            <div class="card-body">
+                {% if parents and children %}
+                <form method="POST" action="{{ url_for('principal.add_mapping') }}">
+                    <input type="hidden" name="mapping_type" value="parent_child">
+                    <div class="mb-3">
+                        <label for="parent_id" class="form-label">Select Parent</label>
+                        <select class="form-select" id="parent_id" name="parent_id" required>
+                            <option value="">Choose Parent...</option>
+                            {% for parent in parents %}
+                            <option value="{{ parent.id }}">{{ parent.name }} ({{ parent.email }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="child_id_parent" class="form-label">Select Child</label>
+                        <select class="form-select" id="child_id_parent" name="child_id" required>
+                            <option value="">Choose Child...</option>
+                            {% for child in children %}
+                            <option value="{{ child.id }}">{{ child.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-heart me-1"></i>Link Parent to Child
+                    </button>
+                </form>
+                {% else %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    {% if not parents %}No parents found. Add parents first.{% endif %}
+                    {% if not children %}No children found. Add children first.{% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Observer Feedback -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-comment me-2"></i>Observer Feedback</h5>
+            </div>
+            <div class="card-body">
+                {% if observers %}
+                <form method="POST" action="{{ url_for('principal.send_observer_feedback') }}">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <label for="feedback_observer_id" class="form-label">Select Observer</label>
+                            <select class="form-select" id="feedback_observer_id" name="observer_id" required>
+                                <option value="">Choose Observer...</option>
+                                {% for observer in observers %}
+                                <option value="{{ observer.id }}">{{ observer.name }} ({{ observer.email }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="feedback_type" class="form-label">Feedback Type</label>
+                            <select class="form-select" id="feedback_type" name="feedback_type" required>
+                                <option value="">Select Type</option>
+                                <option value="improvement">Improvement Needed</option>
+                                <option value="commendation">Commendation</option>
+                                <option value="warning">Warning</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="feedback_text" class="form-label">Feedback</label>
+                            <textarea class="form-control" id="feedback_text" name="feedback_text" rows="2" required></textarea>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
+                            <button type="submit" class="btn btn-info d-block w-100">
+                                <i class="fas fa-comment me-1"></i>Send Feedback
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                {% else %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    No observers found. Add observers first to send feedback.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Current Mappings Display -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-list me-2"></i>Observer-Child Mappings ({{ observer_mappings|length }})</h5>
+            </div>
+            <div class="card-body">
+                {% if observer_mappings %}
+                    {% for mapping in observer_mappings %}
+                    <div class="mb-2 p-2 border-bottom d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>Observer:</strong>
+                            {% for observer in observers %}
+                                {% if observer.id == mapping.observer_id %}{{ observer.name }}{% endif %}
+                            {% endfor %}
+                            <br>
+                            <strong>Child:</strong>
+                            {% for child in children %}
+                                {% if child.id == mapping.child_id %}{{ child.name }}{% endif %}
+                            {% endfor %}
+                            <br>
+                            <small class="text-muted">Created: {{ mapping.created_at[:10] if mapping.created_at else 'N/A' }}</small>
+                        </div>
+                        <a href="{{ url_for('principal.delete_mapping', mapping_id=mapping.id) }}"
+                           class="btn btn-sm btn-danger"
+                           onclick="return confirm('Delete this mapping?')">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-link fa-2x text-muted mb-2"></i>
+                        <p class="text-muted">No observer-child mappings yet</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-family me-2"></i>Parent-Child Mappings ({{ parent_mappings|length }})</h5>
+            </div>
+            <div class="card-body">
+                {% if parent_mappings %}
+                    {% for parent in parent_mappings %}
+                    <div class="mb-2 p-2 border-bottom d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>Parent:</strong> {{ parent.name }}
+                            <br>
+                            <strong>Child:</strong>
+                            {% for child in children %}
+                                {% if child.id == parent.child_id %}{{ child.name }}{% endif %}
+                            {% endfor %}
+                            <br>
+                            <small class="text-muted">Email: {{ parent.email }}</small>
+                        </div>
+                        <a href="{{ url_for('principal.remove_parent_child_mapping', parent_id=parent.id) }}"
+                           class="btn btn-sm btn-danger"
+                           onclick="return confirm('Remove this parent-child mapping?')">
+                            <i class="fas fa-unlink"></i>
+                        </a>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-heart fa-2x text-muted mb-2"></i>
+                        <p class="text-muted">No parent-child mappings yet</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Users List -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-list me-2"></i>All Users in Your Organization ({{ users|length }})</h5>
+            </div>
+            <div class="card-body">
+                {% if users %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Child Assigned</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr>
+                                <td>{{ user.name or 'N/A' }}</td>
+                                <td>{{ user.email }}</td>
+                                <td>
+                                    <span class="badge bg-{% if user.role == 'Principal' %}warning{% elif user.role == 'Observer' %}info{% else %}success{% endif %}">
+                                        {{ user.role }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if user.child_id %}
+                                        {% for child in children %}
+                                            {% if child.id == user.child_id %}
+                                                <span class="badge bg-light text-dark">{{ child.name }}</span>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ user.created_at[:10] if user.created_at else 'N/A' }}</td>
+                                <td>
+                                    {% if user.role != 'Principal' %}
+                                    <button class="btn btn-sm btn-danger" onclick="deleteUser('{{ user.id }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No users found in your organization</h5>
+                    <p class="text-muted">Start by adding users to your organization.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleChildSelection() {
+    const role = document.getElementById('role').value;
+    const childSelection = document.getElementById('child_selection');
+
+    if (role === 'Parent') {
+        childSelection.style.display = 'block';
+        document.getElementById('child_id').required = true;
+    } else {
+        childSelection.style.display = 'none';
+        document.getElementById('child_id').required = false;
+    }
+}
+
+function deleteUser(userId) {
+    if (confirm('Are you sure you want to delete this user?')) {
+        window.location.href = `/principal/delete_user/${userId}`;
+    }
+}
+</script>
+{% endblock %}

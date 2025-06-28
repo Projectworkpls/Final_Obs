@@ -1,0 +1,175 @@
+<!-- mapping.html -->
+{% extends "base.html" %}
+
+{% block title %}Mappings - Principal{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-sitemap me-2"></i>User Mappings</h2>
+        <a href="{{ url_for('principal.dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Observer-Child Mapping -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-user-tie me-2"></i>Observer-Child Mapping</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('principal.add_mapping') }}">
+                        <input type="hidden" name="mapping_type" value="observer_child">
+                        <div class="mb-3">
+                            <label for="observer_id" class="form-label">Select Observer</label>
+                            <select class="form-select" id="observer_id" name="observer_id" required>
+                                <option value="">Choose Observer...</option>
+                                {% for observer in observers %}
+                                <option value="{{ observer.id }}">{{ observer.name }} ({{ observer.email }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="child_id" class="form-label">Select Child</label>
+                            <select class="form-select" id="child_id" name="child_id" required>
+                                <option value="">Choose Child...</option>
+                                {% for child in children %}
+                                <option value="{{ child.id }}">{{ child.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-link me-1"></i>Create Mapping
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Parent-Child Auto-Assignment -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-heart me-2"></i>Parent-Child Management</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('principal.auto_assign_parents') }}">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Auto-assign all unassigned parents in your organization to available children.
+                        </div>
+                        <button type="submit" class="btn btn-warning mb-3" onclick="return confirm('Auto-assign all unassigned parents to children?')">
+                            <i class="fas fa-magic me-1"></i>Auto-Assign Parents
+                        </button>
+                    </form>
+                    
+                    <hr>
+                    
+                    <h6>Manual Parent-Child Assignment</h6>
+                    <form method="POST" action="{{ url_for('principal.add_mapping') }}">
+                        <input type="hidden" name="mapping_type" value="parent_child">
+                        <div class="mb-3">
+                            <label for="parent_id" class="form-label">Select Parent</label>
+                            <select class="form-select" id="parent_id" name="parent_id" required>
+                                <option value="">Choose Parent...</option>
+                                {% for parent in parents %}
+                                <option value="{{ parent.id }}">{{ parent.name }} ({{ parent.email }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="child_id_parent" class="form-label">Select Child</label>
+                            <select class="form-select" id="child_id_parent" name="child_id" required>
+                                <option value="">Choose Child...</option>
+                                {% for child in children %}
+                                <option value="{{ child.id }}">{{ child.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-heart me-1"></i>Link Parent to Child
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Current Mappings -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-list me-2"></i>Observer-Child Mappings</h5>
+                </div>
+                <div class="card-body">
+                    {% if observer_mappings %}
+                        {% for mapping in observer_mappings %}
+                        <div class="mb-2 p-2 border-bottom d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>Observer:</strong> 
+                                {% for observer in observers %}
+                                    {% if observer.id == mapping.observer_id %}{{ observer.name }}{% endif %}
+                                {% endfor %}
+                                <br>
+                                <strong>Child:</strong> 
+                                {% for child in children %}
+                                    {% if child.id == mapping.child_id %}{{ child.name }}{% endif %}
+                                {% endfor %}
+                            </div>
+                            <a href="{{ url_for('principal.delete_mapping', mapping_id=mapping.id) }}" 
+                               class="btn btn-sm btn-danger" 
+                               onclick="return confirm('Delete this mapping?')">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">No observer-child mappings yet</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-family me-2"></i>Parent-Child Mappings</h5>
+                </div>
+                <div class="card-body">
+                    {% set parent_mappings = [] %}
+                    {% for parent in parents %}
+                        {% if parent.child_id %}
+                            {% set _ = parent_mappings.append(parent) %}
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if parent_mappings %}
+                        {% for parent in parent_mappings %}
+                        <div class="mb-2 p-2 border-bottom d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>Parent:</strong> {{ parent.name }}
+                                <br>
+                                <strong>Child:</strong> 
+                                {% for child in children %}
+                                    {% if child.id == parent.child_id %}{{ child.name }}{% endif %}
+                                {% endfor %}
+                            </div>
+                            <a href="{{ url_for('principal.remove_parent_child_mapping', parent_id=parent.id) }}" 
+                               class="btn btn-sm btn-danger" 
+                               onclick="return confirm('Remove this parent-child mapping?')">
+                                <i class="fas fa-unlink"></i>
+                            </a>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">No parent-child mappings yet</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

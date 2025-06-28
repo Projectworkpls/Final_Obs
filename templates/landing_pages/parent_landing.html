@@ -1,0 +1,435 @@
+{% extends "base.html" %}
+{% block title %}Welcome, Parents | Sanjaya – The Observer{% endblock %}
+{% block content %}
+<style>
+    /* Perfect Card Layout System */
+    .section-grid {
+        display: grid;
+        gap: 2rem;
+        margin-top: 3rem;
+        padding: 0 1rem;
+        justify-items: center;
+    }
+    /* For 5 cards: 2 top (centered), 3 bottom */
+    .section-grid.five-cards {
+        grid-template-columns: repeat(6, 1fr);
+    }
+    .section-grid.five-cards .feature-card:nth-child(1),
+    .section-grid.five-cards .feature-card:nth-child(2) {
+        grid-column: span 3;
+        max-width: 400px;
+        width: 100%;
+    }
+    .section-grid.five-cards .feature-card:nth-child(3),
+    .section-grid.five-cards .feature-card:nth-child(4),
+    .section-grid.five-cards .feature-card:nth-child(5) {
+        grid-column: span 2;
+        max-width: 350px;
+        width: 100%;
+    }
+    /* For 3 cards in one row */
+    .section-grid.three-cards {
+        grid-template-columns: repeat(3, 1fr);
+        max-width: 1200px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .section-grid.three-cards .feature-card {
+        max-width: 380px;
+        width: 100%;
+    }
+    /* For 4 cards (2x2 layout) */
+    .section-grid.four-cards {
+        grid-template-columns: repeat(2, 1fr);
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .section-grid.four-cards .feature-card {
+        max-width: 380px;
+        width: 100%;
+    }
+    /* Enhanced Feature Cards */
+    .feature-card {
+        background: linear-gradient(145deg, #ffffff 0%, #f0f9ff 100%);
+        border-radius: 20px;
+        padding: 2.5rem;
+        box-shadow: 0 8px 32px rgba(14, 165, 233, 0.1),
+                    0 4px 16px rgba(37, 99, 235, 0.08);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid rgba(14, 165, 233, 0.1);
+        position: relative;
+        overflow: hidden;
+        text-align: center;
+        min-height: 280px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .feature-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, #0ea5e9, #2563eb, #1d4ed8);
+    }
+    .feature-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 20px 50px rgba(14, 165, 233, 0.15),
+                    0 8px 25px rgba(37, 99, 235, 0.1);
+    }
+    .feature-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1.5rem;
+        display: block;
+        filter: drop-shadow(0 4px 8px rgba(14, 165, 233, 0.2));
+    }
+    .feature-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 1rem;
+        line-height: 1.3;
+    }
+    .feature-description {
+        color: #334155;
+        line-height: 1.6;
+        font-size: 0.95rem;
+        flex-grow: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+    /* Hero and other sections styling */
+    .hero-section {
+        min-height: 60vh;
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 25%, #1e40af 50%, #0ea5e9 75%, #0284c7 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+        padding: 4rem 0;
+    }
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.15) 0%, transparent 50%),
+                    radial-gradient(circle at 70% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+        opacity: 0.8;
+    }
+    .hero-content {
+        position: relative;
+        z-index: 2;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 2rem;
+        text-align: center;
+    }
+    .hero-title {
+        font-size: clamp(2.5rem, 6vw, 4.5rem);
+        font-weight: 800;
+        color: white;
+        margin-bottom: 1.5rem;
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+        text-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+    .hero-subtitle {
+        font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+        color: rgba(255, 255, 255, 0.95);
+        font-weight: 400;
+        max-width: 600px;
+        margin: 0 auto;
+        line-height: 1.4;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    .content-section {
+        padding: 5rem 0;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding-left: 2rem;
+        padding-right: 2rem;
+        position: relative;
+    }
+    .section-title {
+        font-size: clamp(2rem, 5vw, 3rem);
+        font-weight: 700;
+        color: #0f172a;
+        text-align: center;
+        margin-bottom: 1rem;
+        letter-spacing: -0.01em;
+        background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    .section-subtitle {
+        text-align: center;
+        color: #475569;
+        font-size: 1.2rem;
+        max-width: 800px;
+        margin: 0 auto 3rem;
+        line-height: 1.6;
+    }
+    .styled-list {
+        list-style: none;
+        padding: 0;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    .styled-list li {
+        position: relative;
+        padding: 1rem 0 1rem 3rem;
+        margin-bottom: 1rem;
+        font-size: 1.1rem;
+        color: #334155;
+        background: linear-gradient(145deg, #ffffff 0%, #f0f9ff 100%);
+        border-radius: 12px;
+        border-left: 4px solid #0ea5e9;
+        box-shadow: 0 4px 20px rgba(14, 165, 233, 0.05);
+    }
+    .styled-list li::before {
+        content: "✓";
+        position: absolute;
+        left: 1rem;
+        top: 1rem;
+        color: #0ea5e9;
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+    .full-cta {
+        width: 100%;
+        text-align: center;
+        padding: 6rem 0;
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 25%, #0ea5e9 75%, #0284c7 100%);
+        color: #fff;
+        position: relative;
+        overflow: hidden;
+    }
+    .full-cta::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+    }
+    .cta-content {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 0 2rem;
+        position: relative;
+        z-index: 2;
+    }
+    .cta-btn-large {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        background: #fff;
+        color: #2563eb;
+        font-weight: 700;
+        font-size: 1.2rem;
+        padding: 1.2rem 3rem;
+        border-radius: 50px;
+        text-decoration: none;
+        box-shadow: 0 10px 30px rgba(37, 99, 235, 0.2);
+        transition: all 0.3s ease;
+        margin-top: 2rem;
+    }
+    .cta-btn-large:hover {
+        background: #f59e42;
+        color: #fff;
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(245, 158, 66, 0.3);
+    }
+    .footer-section {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        color: white;
+        padding: 3rem 0;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    .footer-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(ellipse at center top, rgba(14, 165, 233, 0.1) 0%, transparent 70%);
+    }
+    .footer-text {
+        color: #cbd5e1;
+        font-size: 0.9rem;
+        position: relative;
+        z-index: 2;
+    }
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+        .section-grid.five-cards {
+            grid-template-columns: repeat(4, 1fr);
+        }
+        .section-grid.five-cards .feature-card:nth-child(1),
+        .section-grid.five-cards .feature-card:nth-child(2) {
+            grid-column: span 2;
+        }
+        .section-grid.five-cards .feature-card:nth-child(3),
+        .section-grid.five-cards .feature-card:nth-child(4),
+        .section-grid.five-cards .feature-card:nth-child(5) {
+            grid-column: span 1;
+        }
+        .section-grid.five-cards .feature-card:nth-child(5) {
+            grid-column: 2 / span 2;
+        }
+    }
+    @media (max-width: 768px) {
+        .section-grid.five-cards,
+        .section-grid.three-cards,
+        .section-grid.four-cards {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            padding: 0;
+        }
+        .section-grid.five-cards .feature-card:nth-child(1),
+        .section-grid.five-cards .feature-card:nth-child(2),
+        .section-grid.five-cards .feature-card:nth-child(3),
+        .section-grid.five-cards .feature-card:nth-child(4),
+        .section-grid.five-cards .feature-card:nth-child(5) {
+            grid-column: span 1;
+            max-width: 100%;
+        }
+        .feature-card {
+            padding: 2rem;
+            min-height: 250px;
+        }
+        .content-section {
+            padding: 3rem 1rem;
+        }
+    }
+</style>
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="hero-content">
+        <h1 class="hero-title">Welcome, Parents</h1>
+        <p class="hero-subtitle">Finally, Someone Who Listens to Your Child - Without Judging</p>
+    </div>
+</section>
+<!-- What is Sanjaya Section -->
+<section class="content-section">
+    <h2 class="section-title">💡 What is Sanjaya – The Observer?</h2>
+    <p class="section-subtitle">
+        Your child is learning every day — not just in school, but through conversations, digital content, emotions, and life experiences. But in today's busy world… who's truly listening?
+    </p>
+    <p class="section-subtitle">
+        <strong>Sanjaya – The Observer</strong> is India's first structured daily observation program supervised by Legendary Principals.
+    </p>
+    <p class="section-subtitle">
+        Every child is paired with a trained ethical observer who listens to them for 5 minutes a day – and simply documents what they learned, felt, or experienced.
+    </p>
+</section>
+<!-- How Does It Work Section - 5 cards: 2 top, 3 bottom -->
+<section class="content-section">
+    <h2 class="section-title">🧭 How Does It Work?</h2>
+    <div class="section-grid five-cards">
+        <div class="feature-card">
+            <span class="feature-icon">✅</span>
+            <h3 class="feature-title">Complete Student Profile</h3>
+            <p class="feature-description">You fill a detailed student profile at the time of joining</p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon">✅</span>
+            <h3 class="feature-title">Verified Observer Assignment</h3>
+            <p class="feature-description">A verified Observer is assigned to your child</p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon">✅</span>
+            <h3 class="feature-title">Daily 5-Minute Calls</h3>
+            <p class="feature-description">Every day, your child receives a short 5-minute phone call</p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon">✅</span>
+            <h3 class="feature-title">Pure Listening</h3>
+            <p class="feature-description">The Observer just listens and records — no judgment, no advice</p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon">✅</span>
+            <h3 class="feature-title">Daily Reports</h3>
+            <p class="feature-description">You receive a daily summary report on WhatsApp</p>
+        </div>
+    </div>
+</section>
+<!-- What Will You Get Section - 5 cards: 2 top, 3 bottom -->
+<section class="content-section">
+    <h2 class="section-title">✅ What Will You Get?</h2>
+    <div class="section-grid five-cards">
+        <div class="feature-card">
+            <span class="feature-icon">📩</span>
+            <h3 class="feature-title">Daily Learning Insights</h3>
+            <p class="feature-description">Daily insight into what your child is learning or struggling with</p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon">🧠</span>
+            <h3 class="feature-title">Digital Influence Clarity</h3>
+            <p class="feature-description">Clarity on your child's digital and social influences</p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon">🔍</span>
+            <h3 class="feature-title">Behavioral Patterns</h3>
+            <p class="feature-description">Patterns and behavioral trends reported by trained observers</p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon">🛡</span>
+            <h3 class="feature-title">Complete Confidentiality</h3>
+            <p class="feature-description">Your child's data is private, secure, and ethically handled</p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon">🌟</span>
+            <h3 class="feature-title">Elite Support</h3>
+            <p class="feature-description">Support from the Elite Principals Club if any concern needs escalation</p>
+        </div>
+    </div>
+</section>
+<!-- 7-Day Free Trial Section -->
+<section class="content-section">
+    <h2 class="section-title">🎁 Start with a 7-Day Free Trial</h2>
+    <p class="section-subtitle">
+        We know trust takes time. That's why your first 7 working days are absolutely free. After that, if you choose to continue, the program is just <strong>$200/month</strong>.
+    </p>
+</section>
+<!-- Who Should Join Section -->
+<section class="content-section">
+    <h2 class="section-title">👪 Who Should Join?</h2>
+    <ul class="styled-list">
+        <li>Parents who want a non-intrusive daily check-in for their child</li>
+        <li>Working parents who want support, not surveillance</li>
+        <li>Children aged 5–18 who can express themselves over a short call</li>
+        <li>Parents who believe in trust, observation, and guided growth</li>
+    </ul>
+</section>
+<!-- CTA Section -->
+<section class="full-cta">
+    <div class="cta-content">
+        <h2 style="font-size: 2.5rem; margin-bottom: 1rem;">📝 Ready to Try It?</h2>
+        <p style="font-size: 1.2rem; margin-bottom: 2rem;">
+            Let your child be seen, heard, and supported — without pressure. Click below to begin your 7-day free trial.
+        </p>
+        <a href="{{ url_for('payment_form') }}" class="cta-btn-large">
+            <span>👉</span> Start Free Trial Now
+        </a>
+    </div>
+</section>
+<!-- Footer -->
+<footer class="footer-section">
+    <p class="footer-text">&copy; 2025 Sanjaya – The Observer. Crafted with care for every child.</p>
+</footer>
+{% endblock %}

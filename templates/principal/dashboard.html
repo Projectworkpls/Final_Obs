@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+{% block title %}Principal Dashboard{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-school me-2"></i>Principal Dashboard
+        </h1>
+        <p class="text-muted">Welcome to your organization's Learning Observer administration panel.</p>
+    </div>
+</div>
+
+<!-- Analytics Cards and Quick Actions -->
+<div class="row mb-4">
+    <!-- Analytics Cards -->
+    <div class="col-md-2">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <h4>{{ analytics.observers_count }}</h4>
+                <p class="mb-0">Observers</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h4>{{ analytics.children_count }}</h4>
+                <p class="mb-0">Children</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <h4>{{ analytics.observations_count }}</h4>
+                <p class="mb-0">Observations</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- UPDATED Quick Actions - Removed Applications and Observers, Added User Management and Peer Reviews -->
+    <div class="col-md-2">
+        <a href="{{ url_for('principal.user_management') }}" class="card bg-warning text-white text-decoration-none h-100">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <i class="fas fa-users-cog fa-2x mb-2"></i>
+                <span>User Management</span>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-2">
+        <a href="{{ url_for('principal.peer_reviews') }}" class="card bg-secondary text-white text-decoration-none h-100">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <i class="fas fa-clipboard-check fa-2x mb-2"></i>
+                <span>Peer Reviews</span>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-2">
+        <a href="{{ url_for('principal.process_reports') }}" class="card bg-info text-white text-decoration-none h-100">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <i class="fas fa-file-medical-alt fa-2x mb-2"></i>
+                <span>Process Reports</span>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- Recent Observations Table (keep existing content) -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-history me-2"></i>Recent Observations (Your Organization)</h5>
+                <div>
+                    <button class="btn btn-sm btn-outline-secondary me-2" onclick="filterBySource()">
+                        <i class="fas fa-filter"></i> Filter
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Filter Section -->
+                <div class="row mb-3" id="filter-section" style="display: none;">
+                    <div class="col-md-6">
+                        <select class="form-select" id="sourceFilter" onchange="applyFilters()">
+                            <option value="">All Sources</option>
+                            <option value="Admin">Admin Processed</option>
+                            <option value="Observer">Observer Submitted</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <button class="btn btn-secondary" onclick="clearFilters()">
+                            <i class="fas fa-times"></i> Clear Filters
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped" id="observationsTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Student</th>
+                                <th>Observer</th>
+                                <th>File Type</th>
+                                <th>Source</th>
+                                <th>Report Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for report in analytics.all_reports %}
+                            <tr data-source="{{ 'Admin' if report.processed_by_admin else 'Observer' }}">
+                                <td>
+                                    <small class="text-muted">
+                                        {{ report.timestamp[:16] if report.timestamp else 'N/A' }}
+                                    </small>
+                                </td>
+                                <td>{{ report.student_name }}</td>
+                                <td>{{ report.observer_name }}</td>
+                                <td>
+                                    {% if report.file_url %}
+                                        {% if report.file_type == 'audio' %}
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-volume-up text-primary me-2"></i>
+                                                <span class="text-muted">{{ report.filename or 'Audio File' }}</span>
+                                            </div>
+                                        {% elif report.file_type == 'image' %}
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-image text-success me-2"></i>
+                                                <span class="text-muted">{{ report.filename or 'Image File' }}</span>
+                                            </div>
+                                        {% else %}
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-file text-info me-2"></i>
+                                                <span class="text-muted">{{ report.filename or 'File' }}</span>
+                                            </div>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">No media</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if report.processed_by_admin %}
+                                        <span class="badge bg-warning">Admin</span>
+                                    {% else %}
+                                        <span class="badge bg-info">Observer</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if report.has_formatted_report %}
+                                        <span class="badge bg-success">Available</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Generating...</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ url_for('principal.view_report', report_id=report.id) }}"
+                                           class="btn btn-sm btn-primary" title="View Report">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {% if report.file_url %}
+                                        <a href="{{ report.signed_url or report.file_url }}" target="_blank"
+                                           class="btn btn-sm btn-info" title="View Original File">
+                                            <i class="fas fa-external-link-alt"></i>
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted">No reports found</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions Card -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-pie me-2"></i>Organization Overview</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <strong>Active Observers:</strong> {{ analytics.observers_count }}
+                </div>
+                <div class="mb-2">
+                    <strong>Total Reports:</strong> {{ analytics.observations_count }}
+                </div>
+                <div class="mb-2">
+                    <strong>Registered Children:</strong> {{ analytics.children_count }}
+                </div>
+                <div class="mb-2">
+                    <strong>Parent Accounts:</strong> {{ analytics.parents_count }}
+                </div>
+                <div class="mb-2">
+                    <strong>Avg Reports/Child:</strong>
+                    {% if analytics.observations_count > 0 and analytics.children_count > 0 %}
+                        {{ "%.1f"|format(analytics.observations_count / analytics.children_count) }}
+                    {% else %}
+                        0.0
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-tasks me-2"></i>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <a href="{{ url_for('principal.user_management') }}" class="btn btn-warning mb-2 d-block">
+                    <i class="fas fa-users-cog me-2"></i>Manage Users & Mappings
+                </a>
+                <a href="{{ url_for('principal.peer_reviews') }}" class="btn btn-secondary mb-2 d-block">
+                    <i class="fas fa-clipboard-check me-2"></i>View Peer Reviews
+                </a>
+                <a href="{{ url_for('principal.process_reports') }}" class="btn btn-info mb-2 d-block">
+                    <i class="fas fa-file-medical-alt me-2"></i>Process Reports
+                </a>
+                <a href="{{ url_for('admin.analytics') }}" class="btn btn-success d-block">
+                    <i class="fas fa-chart-bar me-2"></i>View Analytics
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function filterBySource() {
+    const filterSection = document.getElementById('filter-section');
+    if (filterSection) {
+        filterSection.style.display = filterSection.style.display === 'none' ? 'block' : 'none';
+    }
+}
+
+function applyFilters() {
+    const sourceFilter = document.getElementById('sourceFilter').value.toLowerCase();
+    const table = document.getElementById('observationsTable');
+    const rows = table.querySelectorAll('tbody tr');
+
+    rows.forEach(row => {
+        const sourceCell = row.getAttribute('data-source').toLowerCase();
+        const sourceMatch = !sourceFilter || sourceCell.includes(sourceFilter);
+
+        if (sourceMatch) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+function clearFilters() {
+    document.getElementById('sourceFilter').value = '';
+    applyFilters();
+}
+</script>
+{% endblock %}

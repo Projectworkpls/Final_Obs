@@ -1,0 +1,26 @@
+{% if application %}
+<div class="container-fluid">
+    <h4>Principal Application Details</h4>
+    <table class="table table-bordered">
+        <tr><th>Name</th><td>{{ application.applicant_name }}</td></tr>
+        <tr><th>Email</th><td>{{ application.email }}</td></tr>
+        <tr><th>Phone</th><td>{{ application.phone or 'N/A' }}</td></tr>
+        <tr><th>Qualifications</th><td>{{ application.qualifications }}</td></tr>
+        <tr><th>Experience (years)</th><td>{{ application.experience_years }}</td></tr>
+        <tr><th>Leadership Experience</th><td>{{ application.leadership_experience or 'N/A' }}</td></tr>
+        <tr><th>Motivation</th><td>{{ application.motivation_text }}</td></tr>
+        <tr><th>Status</th><td>{{ application.status|title }}</td></tr>
+        <tr><th>Applied At</th><td>{{ application.applied_at }}</td></tr>
+        <tr><th>Reviewed At</th><td>{{ application.reviewed_at or 'N/A' }}</td></tr>
+        <tr><th>Reviewer</th><td>{{ reviewer_info.name if reviewer_info else 'N/A' }}</td></tr>
+        <tr><th>Organization</th><td>{{ organization_info.name if organization_info else 'N/A' }}</td></tr>
+        <tr><th>Admin Comments</th><td>{{ application.admin_comments or 'N/A' }}</td></tr>
+        <tr><th>Rejection Reason</th><td>{{ application.rejection_reason or 'N/A' }}</td></tr>
+        {% if application.temp_password %}
+        <tr><th>Temporary Password</th><td>{{ application.temp_password }}</td></tr>
+        {% endif %}
+    </table>
+</div>
+{% else %}
+<div class="alert alert-danger">Application details not found.</div>
+{% endif %} 

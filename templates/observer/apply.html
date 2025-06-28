@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Apply as Observer{% endblock %}
+{% block content %}
+<div class="container">
+    <h2><i class="fas fa-user-plus me-2"></i>Apply as Observer</h2>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="POST">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="applicant_name" class="form-label">Full Name</label>
+                            <input type="text" class="form-control" id="applicant_name" name="applicant_name" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="applicant_email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="applicant_email" name="applicant_email" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="applicant_phone" class="form-label">Phone</label>
+                            <input type="tel" class="form-control" id="applicant_phone" name="applicant_phone">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="organization_id" class="form-label">Organization</label>
+                            <select class="form-select" id="organization_id" name="organization_id" required>
+                                <option value="">Select Organization</option>
+                                {% for org in organizations %}
+                                <option value="{{ org.id }}">{{ org.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="experience_years" class="form-label">Years of Experience</label>
+                            <input type="number" class="form-control" id="experience_years" name="experience_years" min="0" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="qualifications" class="form-label">Qualifications</label>
+                            <textarea class="form-control" id="qualifications" name="qualifications" rows="3" required></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="motivation_text" class="form-label">Why do you want to be an Observer?</label>
+                            <textarea class="form-control" id="motivation_text" name="motivation_text" rows="4" required></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Submit Application</button>
+                <a href="{{ url_for('landing') }}" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

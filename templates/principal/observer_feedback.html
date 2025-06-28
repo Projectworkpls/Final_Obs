@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Observer Feedback{% endblock %}
+{% block content %}
+<div class="container">
+    <h2><i class="fas fa-comment me-2"></i>Feedback for {{ observer.name }}</h2>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="POST">
+                <div class="mb-3">
+                    <label for="feedback_type" class="form-label">Feedback Type</label>
+                    <select class="form-select" id="feedback_type" name="feedback_type" required>
+                        <option value="">Select Type</option>
+                        <option value="improvement">Improvement Needed</option>
+                        <option value="commendation">Commendation</option>
+                        <option value="warning">Warning</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="feedback_text" class="form-label">Feedback</label>
+                    <textarea class="form-control" id="feedback_text" name="feedback_text" rows="5" required></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Send Feedback</button>
+                <a href="{{ url_for('principal.user_management') }}" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

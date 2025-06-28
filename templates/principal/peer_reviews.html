@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% block title %}Peer Reviews & Observer Feedback - Principal{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-clipboard-check me-2"></i>Peer Reviews & Observer Feedback</h2>
+        <a href="{{ url_for('principal.dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Debug Information -->
+    <div class="alert alert-info">
+        <strong>Debug Info:</strong>
+        Found {{ peer_reviews|length }} peer reviews for your organization.
+        {{ observers|length }} observers in your organization.
+        <a href="{{ url_for('principal.debug_peer_reviews') }}" target="_blank" class="btn btn-sm btn-outline-primary ms-2">
+            View Debug Data
+        </a>
+    </div>
+
+    <!-- Peer Reviews Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-users me-2"></i>Cross-Organization Peer Reviews ({{ peer_reviews|length }})</h5>
+        </div>
+        <div class="card-body">
+            {% if peer_reviews %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Observer (Your Org)</th>
+                            <th>Reviewer</th>
+                            <th>Reviewer Org</th>
+                            <th>Score</th>
+                            <th>Requires Changes</th>
+                            <th>Comments</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for review in peer_reviews %}
+                        <tr>
+                            <td>{{ review.observation.student_name if review.observation else 'N/A' }}</td>
+                            <td>{{ review.observation.observer_name if review.observation else 'N/A' }}</td>
+                            <td>{{ review.reviewer_info.name if review.reviewer_info else 'Unknown' }}</td>
+                            <td>
+                                <span class="badge bg-info">
+                                    {{ review.reviewer_info.organization_id[:8] if review.reviewer_info.organization_id else 'N/A' }}...
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-{% if review.review_score >= 4 %}success{% elif review.review_score >= 3 %}warning{% else %}danger{% endif %}">
+                                    {{ review.review_score }}/5
+                                </span>
+                            </td>
+                            <td>
+                                {% if review.requires_changes %}
+                                    <span class="badge bg-warning">Yes</span>
+                                {% else %}
+                                    <span class="badge bg-success">No</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" onclick="showComments('{{ review.id }}')">
+                                    View Comments
+                                </button>
+                                <div id="comments-{{ review.id }}" style="display: none;" class="mt-2">
+                                    <strong>Comments:</strong> {{ review.review_comments }}<br>
+                                    {% if review.suggested_improvements %}
+                                    <strong>Improvements:</strong> {{ review.suggested_improvements }}
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>{{ review.created_at[:10] if review.created_at else 'N/A' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-clipboard-check fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No peer reviews found</h5>
+                <p class="text-muted">
+                    Cross-organization peer reviews for your organization's observations will appear here.<br>
+                    <small>Make sure your observers have submitted observations and other observers have reviewed them.</small>
+                </p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Send Feedback to Observer Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-comment-dots me-2"></i>Send Feedback to Observer</h5>
+        </div>
+        <div class="card-body">
+            {% if observers %}
+            <form method="POST" action="{{ url_for('principal.send_observer_feedback') }}">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label for="observer_id" class="form-label">Select Observer</label>
+                        <select class="form-select" id="observer_id" name="observer_id" required>
+                            <option value="">Choose Observer...</option>
+                            {% for observer in observers %}
+                            <option value="{{ observer.id }}">{{ observer.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="feedback_type" class="form-label">Feedback Type</label>
+                        <select class="form-select" id="feedback_type" name="feedback_type" required>
+                            <option value="">Select Type...</option>
+                            <option value="positive">Positive</option>
+                            <option value="constructive">Constructive</option>
+                            <option value="improvement">Improvement</option>
+                        </select>
+                    </div>
+                    <div class="col-md-5">
+                        <label for="feedback_text" class="form-label">Feedback Message</label>
+                        <textarea class="form-control" id="feedback_text" name="feedback_text" rows="2"
+                                placeholder="Enter your feedback for the observer..." required></textarea>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-paper-plane me-1"></i>Send Feedback
+                        </button>
+                    </div>
+                </div>
+            </form>
+            {% else %}
+            <p class="text-muted">No observers found in your organization.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Observer Feedback History Section -->
+    <div class="card">
+        <div class="card-header">
+            <h5><i class="fas fa-history me-2"></i>Observer Feedback History ({{ principal_feedback|length }})</h5>
+        </div>
+        <div class="card-body">
+            {% if principal_feedback %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Observer</th>
+                            <th>Feedback Type</th>
+                            <th>Feedback</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for feedback in principal_feedback %}
+                        <tr>
+                            <td>
+                                {% for user in users %}
+                                    {% if user.id == feedback.observer_id %}{{ user.name }}{% endif %}
+                                {% endfor %}
+                            </td>
+                            <td>
+                                <span class="badge bg-{% if feedback.feedback_type == 'positive' %}success{% elif feedback.feedback_type == 'constructive' %}warning{% else %}info{% endif %}">
+                                    {{ feedback.feedback_type|title }}
+                                </span>
+                            </td>
+                            <td>{{ feedback.feedback_text }}</td>
+                            <td>{{ feedback.created_at[:10] if feedback.created_at else 'N/A' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-comment-slash fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No feedback history</h5>
+                <p class="text-muted">Feedback sent to observers will appear here.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function showComments(reviewId) {
+    const commentsDiv = document.getElementById('comments-' + reviewId);
+    if (commentsDiv.style.display === 'none') {
+        commentsDiv.style.display = 'block';
+    } else {
+        commentsDiv.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

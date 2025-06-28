@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Global Analytics - Admin{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-globe me-2"></i>Global Organization Analytics</h2>
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </div>
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-table me-2"></i>Organizations Overview</h5>
+        </div>
+        <div class="card-body">
+            {% if analytics_data %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Organization</th>
+                            <th>Observers</th>
+                            <th>Parents</th>
+                            <th>Principals</th>
+                            <th>Children</th>
+                            <th>Observations</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for org in analytics_data %}
+                        <tr>
+                            <td>{{ org.organization.name }}</td>
+                            <td>{{ org.observers }}</td>
+                            <td>{{ org.parents }}</td>
+                            <td>{{ org.principals }}</td>
+                            <td>{{ org.children }}</td>
+                            <td>{{ org.observations }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-globe fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No analytics data found</h5>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            <h5><i class="fas fa-headphones me-2"></i>Peer Review: Listen & Feedback</h5>
+        </div>
+        <div class="card-body">
+            <p class="text-muted">As admin, you can listen to observer audio reports and leave feedback for the principal of the respective organization.</p>
+            <!-- Example: List of recent observer reports with audio and feedback form -->
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Observer</th>
+                            <th>Organization</th>
+                            <th>Audio</th>
+                            <th>Report</th>
+                            <th>Leave Feedback</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for report in analytics_data|selectattr('recent_reports', 'defined')|map(attribute='recent_reports')|sum(start=[]) %}
+                        <tr>
+                            <td>{{ report.observer_name }}</td>
+                            <td>{{ report.organization_name }}</td>
+                            <td>
+                                {% if report.file_type == 'audio' and report.signed_url %}
+                                <audio controls>
+                                    <source src="{{ report.signed_url }}" type="audio/mpeg">
+                                    Your browser does not support the audio element.
+                                </audio>
+                                {% else %}
+                                <span class="text-muted">No audio</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if report.has_formatted_report %}
+                                <a href="{{ url_for('admin.view_report', report_id=report.id) }}" class="btn btn-outline-info btn-sm">View Report</a>
+                                {% else %}
+                                <span class="text-muted">No report</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <form method="POST" action="#">
+                                    <textarea class="form-control mb-2" name="feedback" rows="2" placeholder="Enter feedback for principal..."></textarea>
+                                    <button type="submit" class="btn btn-primary btn-sm">Send Feedback</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

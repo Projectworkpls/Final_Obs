@@ -1,0 +1,606 @@
+{% extends "base.html" %}
+{% block title %}Welcome, Observers | Sanjaya – The Observer{% endblock %}
+
+{% block content %}
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Welcome, Observers | Sanjaya – The Observer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        line-height: 1.6;
+        color: #1a1a1a;
+        overflow-x: hidden;
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 25%, #f8fafc 50%, #f0f9ff 100%);
+        background-attachment: fixed;
+    }
+
+    /* Navigation */
+    .main-nav {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.2em 4vw;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .logo {
+        font-size: 1.8em;
+        font-weight: 700;
+        color: #2563eb;
+        letter-spacing: 1px;
+        display: flex;
+        align-items: center;
+    }
+
+    .logo .dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background: #f59e42;
+        border-radius: 50%;
+        margin-left: 8px;
+    }
+
+    .nav-links {
+        list-style: none;
+        display: flex;
+        gap: 2em;
+        margin: 0;
+        padding: 0;
+        align-items: center;
+    }
+
+    .nav-links a {
+        color: #2563eb;
+        font-weight: 600;
+        text-decoration: none;
+        font-size: 1rem;
+        padding: 0.5em 1em;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .nav-links a:hover {
+        background: #f59e42;
+        color: #fff;
+        transform: translateY(-2px);
+    }
+
+    .cta-btn {
+        background: linear-gradient(135deg, #0ea5e9, #2563eb) !important;
+        color: white !important;
+        padding: 12px 24px !important;
+        border-radius: 30px !important;
+        font-weight: 600 !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 4px 16px rgba(37, 99, 235, 0.3) !important;
+    }
+
+    .cta-btn:hover {
+        background: linear-gradient(135deg, #f59e42, #e67e22) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 20px rgba(245, 158, 66, 0.4) !important;
+    }
+
+    /* Hero Section */
+    .hero-section {
+        min-height: 60vh;
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 25%, #1e40af 50%, #0ea5e9 75%, #0284c7 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+        padding: 4rem 0;
+    }
+
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.15) 0%, transparent 50%),
+                    radial-gradient(circle at 70% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+        opacity: 0.8;
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 2;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 2rem;
+        text-align: center;
+    }
+
+    .hero-title {
+        font-size: clamp(2.5rem, 6vw, 4.5rem);
+        font-weight: 800;
+        color: white;
+        margin-bottom: 1.5rem;
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+        text-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .hero-subtitle {
+        font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+        color: rgba(255, 255, 255, 0.95);
+        font-weight: 400;
+        max-width: 600px;
+        margin: 0 auto;
+        line-height: 1.4;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Content Sections */
+    .content-section {
+        padding: 5rem 0;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding-left: 2rem;
+        padding-right: 2rem;
+        position: relative;
+    }
+
+    .section-title {
+        font-size: clamp(2rem, 5vw, 3rem);
+        font-weight: 700;
+        color: #0f172a;
+        text-align: center;
+        margin-bottom: 1rem;
+        letter-spacing: -0.01em;
+        background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .section-subtitle {
+        text-align: center;
+        color: #475569;
+        font-size: 1.2rem;
+        max-width: 800px;
+        margin: 0 auto 3rem;
+        line-height: 1.6;
+    }
+
+    /* Perfect 5-Card Layout: 2 top (centered), 3 bottom */
+    .section-grid.five-cards {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 2rem;
+        margin-top: 3rem;
+        padding: 0 1rem;
+        justify-items: center;
+    }
+    .section-grid.five-cards .feature-card:nth-child(1),
+    .section-grid.five-cards .feature-card:nth-child(2) {
+        grid-column: span 3;
+        max-width: 400px;
+        width: 100%;
+    }
+    .section-grid.five-cards .feature-card:nth-child(3),
+    .section-grid.five-cards .feature-card:nth-child(4),
+    .section-grid.five-cards .feature-card:nth-child(5) {
+        grid-column: span 2;
+        max-width: 350px;
+        width: 100%;
+    }
+    .section-grid.three-cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2rem;
+        margin-top: 3rem;
+        padding: 0 1rem;
+    }
+    .section-grid.three-cards .feature-card {
+        max-width: 400px;
+        width: 100%;
+        justify-self: center;
+    }
+    .section-grid.four-cards {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 2rem;
+        margin-top: 3rem;
+        padding: 0 1rem;
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .section-grid.four-cards .feature-card {
+        max-width: 380px;
+        width: 100%;
+        justify-self: center;
+    }
+    .feature-card {
+        background: linear-gradient(145deg, #ffffff 0%, #f0f9ff 100%);
+        border-radius: 20px;
+        padding: 2.5rem;
+        box-shadow: 0 8px 32px rgba(14, 165, 233, 0.1),
+                    0 4px 16px rgba(37, 99, 235, 0.08);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid rgba(14, 165, 233, 0.1);
+        position: relative;
+        overflow: hidden;
+        text-align: center;
+        height: auto;
+        min-height: 280px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .feature-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, #0ea5e9, #2563eb, #1d4ed8);
+    }
+    .feature-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 20px 50px rgba(14, 165, 233, 0.15),
+                    0 8px 25px rgba(37, 99, 235, 0.1);
+    }
+    .feature-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1.5rem;
+        display: block;
+        filter: drop-shadow(0 4px 8px rgba(14, 165, 233, 0.2));
+    }
+    .feature-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 1rem;
+        line-height: 1.3;
+        flex-grow: 0;
+    }
+    .feature-description {
+        color: #334155;
+        line-height: 1.6;
+        font-size: 0.95rem;
+        flex-grow: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+
+    /* Lists */
+    .styled-list {
+        list-style: none;
+        padding: 0;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .styled-list li {
+        position: relative;
+        padding: 1rem 0 1rem 3rem;
+        margin-bottom: 1rem;
+        font-size: 1.1rem;
+        color: #334155;
+        background: linear-gradient(145deg, #ffffff 0%, #f0f9ff 100%);
+        border-radius: 12px;
+        border-left: 4px solid #0ea5e9;
+        box-shadow: 0 4px 20px rgba(14, 165, 233, 0.05);
+    }
+
+    .styled-list li::before {
+        content: "✓";
+        position: absolute;
+        left: 1rem;
+        top: 1rem;
+        color: #0ea5e9;
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+
+    /* CTA Section */
+    .full-cta {
+        width: 100%;
+        text-align: center;
+        padding: 6rem 0;
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 25%, #0ea5e9 75%, #0284c7 100%);
+        color: #fff;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .full-cta::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+    }
+
+    .cta-content {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 0 2rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    .cta-btn-large {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        background: #fff;
+        color: #2563eb;
+        font-weight: 700;
+        font-size: 1.2rem;
+        padding: 1.2rem 3rem;
+        border-radius: 50px;
+        text-decoration: none;
+        box-shadow: 0 10px 30px rgba(37, 99, 235, 0.2);
+        transition: all 0.3s ease;
+        margin-top: 2rem;
+    }
+
+    .cta-btn-large:hover {
+        background: #f59e42;
+        color: #fff;
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(245, 158, 66, 0.3);
+    }
+
+    /* Footer */
+    .footer-section {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        color: white;
+        padding: 3rem 0;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .footer-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(ellipse at center top, rgba(14, 165, 233, 0.1) 0%, transparent 70%);
+    }
+
+    .footer-text {
+        color: #cbd5e1;
+        font-size: 0.9rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    @media (max-width: 1200px) {
+        .section-grid.five-cards {
+            grid-template-columns: repeat(4, 1fr);
+        }
+        .section-grid.five-cards .feature-card:nth-child(1),
+        .section-grid.five-cards .feature-card:nth-child(2) {
+            grid-column: span 2;
+        }
+        .section-grid.five-cards .feature-card:nth-child(3),
+        .section-grid.five-cards .feature-card:nth-child(4),
+        .section-grid.five-cards .feature-card:nth-child(5) {
+            grid-column: span 1;
+        }
+        .section-grid.five-cards .feature-card:nth-child(5) {
+            grid-column: 2 / span 2;
+        }
+    }
+    @media (max-width: 768px) {
+        .section-grid.five-cards,
+        .section-grid.three-cards,
+        .section-grid.four-cards {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            padding: 0;
+        }
+        .section-grid.five-cards .feature-card:nth-child(1),
+        .section-grid.five-cards .feature-card:nth-child(2),
+        .section-grid.five-cards .feature-card:nth-child(3),
+        .section-grid.five-cards .feature-card:nth-child(4),
+        .section-grid.five-cards .feature-card:nth-child(5) {
+            grid-column: span 1;
+            max-width: 100%;
+        }
+        .feature-card {
+            padding: 2rem;
+            min-height: 250px;
+        }
+        .feature-icon {
+            font-size: 2rem;
+        }
+        .feature-title {
+            font-size: 1.2rem;
+        }
+    }
+    @media (max-width: 480px) {
+        .feature-card {
+            padding: 1.5rem;
+            min-height: 220px;
+        }
+        .section-grid.five-cards,
+        .section-grid.three-cards,
+        .section-grid.four-cards {
+            gap: 1rem;
+        }
+    }
+  </style>
+</head>
+<body>
+  <!-- The navigation bar is now inherited from base.html -->
+
+  <!-- Hero Section -->
+  <header class="hero-section">
+    <div class="hero-content">
+      <h1 class="hero-title">Welcome, Observers</h1>
+      <p class="hero-subtitle">Be the Unseen Guide Every Child Deserves</p>
+    </div>
+  </header>
+
+  <!-- Content Sections -->
+  <section class="content-section">
+    <h2 class="section-title">🌱 What is Sanjaya?</h2>
+    <p class="section-subtitle">
+      Children today are learning not just from school, but from conversations, experiences, people, and technology.<br>
+      <b>Sanjaya – The Observer</b> is a unique initiative supervised by India's Legendary Principals, where you silently observe and document what children learn each day — without judging or advising.
+    </p>
+    <!-- 3 cards in one row -->
+    <div class="section-grid three-cards">
+      <div class="feature-card">
+        <span class="feature-icon">🧑‍🏫</span>
+        <h3 class="feature-title">You are not a teacher</h3>
+        <p class="feature-description">Your role transcends traditional teaching boundaries</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🧑‍💼</span>
+        <h3 class="feature-title">You are not a counselor</h3>
+        <p class="feature-description">No therapy sessions, just genuine listening</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">👂</span>
+        <h3 class="feature-title">You are an ethical listener</h3>
+        <p class="feature-description">Just like Sanjaya in the Mahabharata – quietly witnessing the journey of growth.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="content-section">
+    <h2 class="section-title">🧭 Your Role as an Observer</h2>
+    <ul class="styled-list">
+      <li>Conduct a short 5-minute daily phone call with your assigned student</li>
+      <li>Let the child speak freely – no advice, no evaluation</li>
+      <li>Log the child's learning, feelings, or experiences from that day</li>
+      <li>Submit a short structured summary – which goes to the child's parent and principal</li>
+      <li>Audit peer calls to maintain quality and earn insights</li>
+    </ul>
+  </section>
+
+  <section class="content-section">
+    <h2 class="section-title">🔒 What You'll See</h2>
+    <!-- 3 cards in one row -->
+    <div class="section-grid three-cards">
+      <div class="feature-card">
+        <span class="feature-icon"><i class="fas fa-user-graduate"></i></span>
+        <h3 class="feature-title">Student Profile Access</h3>
+        <p class="feature-description">Once assigned, you'll access the student profile (submitted by parents)</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon"><i class="fas fa-lock"></i></span>
+        <h3 class="feature-title">Secure Dashboard</h3>
+        <p class="feature-description">You'll have access to a secure Observer dashboard to log reports</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon"><i class="fas fa-users"></i></span>
+        <h3 class="feature-title">Peer Call Review</h3>
+        <p class="feature-description">You'll be able to review peer observers' calls equal to the calls you make</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="content-section">
+    <h2 class="section-title">🎯 Why You Should Join</h2>
+    <!-- 5 cards in perfect 2+3 layout -->
+    <div class="section-grid five-cards">
+      <div class="feature-card">
+        <span class="feature-icon"><i class="fas fa-award"></i></span>
+        <h3 class="feature-title">Certified Ethical Observer</h3>
+        <p class="feature-description">Become a certified ethical observer under Principal supervision</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon"><i class="fas fa-network-wired"></i></span>
+        <h3 class="feature-title">Reputation Building</h3>
+        <p class="feature-description">Build a strong reputation in the education network</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon"><i class="fas fa-tools"></i></span>
+        <h3 class="feature-title">Exclusive Resources</h3>
+        <p class="feature-description">Get exclusive access to training, tools, and mentorship</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon"><i class="fas fa-clock"></i></span>
+        <h3 class="feature-title">Flexible Commitment</h3>
+        <p class="feature-description">Work from anywhere, just 5 minutes a day</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon"><i class="fas fa-flag"></i></span>
+        <h3 class="feature-title">Purpose-Driven Initiative</h3>
+        <p class="feature-description">Be part of a purpose-driven national initiative</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="content-section">
+    <h2 class="section-title">🧰 Training & Support</h2>
+    <!-- 4 cards in 2x2 layout -->
+    <div class="section-grid four-cards">
+      <div class="feature-card">
+        <span class="feature-icon">🎥</span>
+        <h3 class="feature-title">Video Training Modules</h3>
+        <p class="feature-description">Comprehensive video guides for effective observation</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">📘</span>
+        <h3 class="feature-title">Observer Manual & Sample Reports</h3>
+        <p class="feature-description">Detailed documentation and real examples</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🧠</span>
+        <h3 class="feature-title">Weekly AI-guided insights</h3>
+        <p class="feature-description">Advanced analytics to improve your observation skills</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">👥</span>
+        <h3 class="feature-title">Peer group support</h3>
+        <p class="feature-description">Connect with fellow observers for shared learning</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="full-cta">
+    <div class="cta-content">
+      <h2 style="font-size: 2.5rem; margin-bottom: 1rem;">📝 Ready to Join?</h2>
+      <p style="font-size: 1.2rem; margin-bottom: 2rem;">Step into a meaningful role. No lectures. No pressure. Just presence.<br>Click below to begin your onboarding journey.</p>
+      <a href="{{ url_for('auth.apply_observer') }}" class="cta-btn-large">
+        <span>👉</span> Apply as Observer
+      </a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer-section">
+    <p class="footer-text">&copy; 2025 Sanjaya – The Observer. Crafted with care for every child.</p>
+  </footer>
+</body>
+</html>
+{% endblock %}
