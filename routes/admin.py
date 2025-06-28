@@ -1936,3 +1936,45 @@ def create_admin_audit_log(admin_id, action, description):
         supabase.table('admin_audit_log').insert(audit_data).execute()
     except Exception as e:
         logger.error(f"Error creating audit log: {e}")
+@admin_bp.route('/view_principal_application/<application_id>')
+@admin_required
+def view_principal_application(application_id):
+    """View detailed principal application"""
+    try:
+        supabase = get_supabase_client()
+
+        # Get application details
+        application = supabase.table('principal_applications').select('*').eq('id', application_id).execute()
+        if not application.data:
+            flash('Application not found', 'error')
+            return redirect(url_for('admin.principal_applications'))
+
+        app_data = application.data[0]
+
+        # Get reviewer info if reviewed
+        reviewer_info = None
+        if app_data.get('reviewed_by'):
+            reviewer = supabase.table('users').select('name').eq('id', app_data['reviewed_by']).execute()
+            reviewer_info = reviewer.data[0] if reviewer.data else None
+
+        # Get organization info if assigned
+        organization_info = None
+        if app_data.get('organization_id'):
+            org = supabase.table('organizations').select('name').eq('id', app_data['organization_id']).execute()
+            organization_info = org.data[0] if org.data else None
+
+        # Get organizations for assignment dropdown
+        organizations_response = supabase.table('organizations').select('*').order('name').execute()
+        organizations = organizations_response.data if organizations_response.data else []
+
+        return render_template(
+            'admin/view_principal_application.html',
+            application=app_data,
+            reviewer_info=reviewer_info,
+            organization_info=organization_info,
+            organizations=organizations
+        )
+    except Exception as e:
+        logger.error(f"Error viewing principal application: {e}")
+        flash(f'Error loading application: {str(e)}', 'error')
+        return redirect(url_for('admin.principal_applications'))
