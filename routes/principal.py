@@ -24,6 +24,43 @@ logger = logging.getLogger(__name__)
 principal_bp = Blueprint('principal', __name__)
 
 
+def create_principal_feedback(principal_id, observer_id, feedback_text, feedback_type):
+    try:
+        supabase = get_supabase_client()
+
+        # Convert to UUID objects (Supabase expects proper UUID format)
+        from uuid import UUID
+        principal_id = UUID(principal_id)
+        observer_id = UUID(observer_id)
+
+        response = supabase.table('principal_feedback').insert({
+            "principal_id": str(principal_id),  # Convert back to string
+            "observer_id": str(observer_id),
+            "feedback_text": feedback_text,
+            "feedback_type": feedback_type
+        }).execute()
+
+        # Check for Supabase-specific errors
+        if getattr(response, 'error', None):
+            logger.error(f"Supabase error: {response.error.message}")
+            return False
+
+        if response.data:
+            logger.info(f"Feedback saved: ID {response.data[0]['id']}")
+            return True
+
+        logger.error("Empty response data from Supabase")
+        return False
+
+    except ValueError as e:
+        logger.error(f"Invalid UUID format: {str(e)}")
+        return False
+
+    except Exception as e:
+        logger.exception(f"Database insertion failed: {str(e)}")
+        return False
+
+
 @principal_bp.route('/dashboard')
 @principal_required
 def dashboard():
@@ -492,94 +529,154 @@ def debug_peer_reviews():
 @principal_bp.route('/peer_reviews')
 @principal_required
 def peer_reviews():
-    """View peer reviews for observations from this organization - COMPLETELY FIXED"""
     try:
         org_id = session.get('organization_id')
         principal_id = session.get('user_id')
-
-        logger.info(f"Principal {principal_id} loading peer reviews for organization {org_id}")
+        logger.info(f"Principal {principal_id} loading peer reviews for org {org_id}")
 
         supabase = get_supabase_client()
 
-        # Step 1: Get ALL peer reviews in the system first
-        all_peer_reviews = supabase.table('peer_reviews').select('*').order('created_at', desc=True).execute()
-        logger.info(f"Total peer reviews in system: {len(all_peer_reviews.data) if all_peer_reviews.data else 0}")
+        # 1. Get organization users
+        org_users = supabase.table('users').select('id,name,role').eq('organization_id', org_id).execute()
+        org_users_data = org_users.data or []
+        org_user_ids = [user['id'] for user in org_users_data]
 
-        # Step 2: Get all users from this organization
-        org_users = supabase.table('users').select('id, name, role').eq('organization_id', org_id).execute()
-        org_user_ids = [user['id'] for user in org_users.data] if org_users.data else []
-        logger.info(f"Organization users: {len(org_user_ids)}")
-
-        # Step 3: Get all observations from this organization's users
+        # 2. Get organization observations
         org_observations = []
         org_observation_ids = []
         if org_user_ids:
-            org_observations_response = supabase.table('observations').select(
-                'id, student_name, observer_name, username').in_('username', org_user_ids).execute()
-            org_observations = org_observations_response.data if org_observations_response.data else []
+            obs_response = supabase.table('observations').select('id,student_name,observer_name,username').in_(
+                'username', org_user_ids).execute()
+            org_observations = obs_response.data or []
             org_observation_ids = [obs['id'] for obs in org_observations]
+            observation_map = {obs['id']: obs for obs in org_observations}
 
-        logger.info(f"Organization observations: {len(org_observations)}")
-        logger.info(f"Organization observation IDs: {org_observation_ids}")
-
-        # Step 4: Filter peer reviews for this organization's observations
+        # 3. Get peer reviews for org observations
         org_peer_reviews = []
+        if org_observation_ids:
+            # OPTIMIZED: Fetch only relevant peer reviews
+            peer_reviews_res = supabase.table('peer_reviews').select('*').in_('observation_id',
+                                                                              org_observation_ids).order('created_at',
+                                                                                                         desc=True).execute()
+            peer_reviews_data = peer_reviews_res.data or []
 
-        for review in all_peer_reviews.data if all_peer_reviews.data else []:
-            if review['observation_id'] in org_observation_ids:
-                logger.info(f"Found matching peer review: {review['id']} for observation {review['observation_id']}")
+            # Bulk fetch user details
+            user_ids = set()
+            for review in peer_reviews_data:
+                user_ids.add(review['reviewer_id'])
+                user_ids.add(review['observed_by'])
 
-                # Get observation details
-                observation = next((obs for obs in org_observations if obs['id'] == review['observation_id']), None)
+            user_map = {}
+            if user_ids:
+                users_res = supabase.table('users').select('id,name').in_('id', list(user_ids)).execute()
+                user_map = {user['id']: user for user in users_res.data or []}
 
-                # Get reviewer details
-                reviewer_response = supabase.table('users').select('name, organization_id').eq('id', review[
-                    'reviewer_id']).execute()
-                reviewer_info = reviewer_response.data[0] if reviewer_response.data else {}
-
-                # Get observed user details
-                observed_user_response = supabase.table('users').select('name, organization_id').eq('id', review[
-                    'observed_by']).execute()
-                observed_user_info = observed_user_response.data[0] if observed_user_response.data else {}
-
-                # Combine the data
-                review_data = {
+            # Build peer review objects
+            for review in peer_reviews_data:
+                org_peer_reviews.append({
                     **review,
-                    'observation': observation or {},
-                    'reviewer_info': reviewer_info,
-                    'observed_user_info': observed_user_info
-                }
-                org_peer_reviews.append(review_data)
+                    'observation': observation_map.get(review['observation_id'], {}),
+                    'reviewer_info': user_map.get(review['reviewer_id'], {}),
+                    'observed_user_info': user_map.get(review['observed_by'], {})
+                })
 
-        logger.info(f"Filtered peer reviews for organization: {len(org_peer_reviews)}")
-
-        # Get observers for this organization for feedback form
-        observers = [user for user in org_users.data if user.get('role') == 'Observer'] if org_users.data else []
-
-        # Get principal feedback for observers in this organization
+        # 4. Get observers and feedback
+        observers = [user for user in org_users_data if user.get('role') == 'Observer']
         principal_feedback = []
         if observers:
             observer_ids = [obs['id'] for obs in observers]
-            feedback_response = supabase.table('principal_feedback').select('*').in_('observer_id', observer_ids).order(
+            # OPTIMIZED: Direct feedback query
+            feedback_res = supabase.table('principal_feedback').select('*').in_('observer_id', observer_ids).order(
                 'created_at', desc=True).execute()
-            principal_feedback = feedback_response.data if feedback_response.data else []
-
-        logger.info(f"Principal feedback entries: {len(principal_feedback)}")
+            principal_feedback = feedback_res.data or []
 
         return render_template('principal/peer_reviews.html',
                                peer_reviews=org_peer_reviews,
                                principal_feedback=principal_feedback,
                                observers=observers,
-                               users=org_users.data if org_users.data else [])
+                               users=org_users_data
+                               )
 
     except Exception as e:
-        logger.error(f'Error loading peer reviews: {str(e)}')
+        logger.error(f'Peer reviews error: {str(e)}')
         flash(f'Error loading peer reviews: {str(e)}', 'error')
         return render_template('principal/peer_reviews.html',
                                peer_reviews=[],
                                principal_feedback=[],
                                observers=[],
-                               users=[])
+                               users=[]
+                               )
+
+
+@principal_bp.route('/send_peer_review_feedback', methods=['POST'])
+@principal_required
+def send_peer_review_feedback():
+    try:
+        principal_id = session.get('user_id')
+        observer_id = request.form.get('observer_id')
+        feedback_text = request.form.get('feedback_text')
+        feedback_type = request.form.get('feedback_type')  # Form extraction
+
+        # Validate session first
+        if not principal_id:
+            flash('User session expired. Please log in again.', 'error')
+            return redirect(url_for('auth.login'))
+
+        # === FEEDBACK TYPE HANDLING ===
+        if feedback_type:
+            feedback_type = feedback_type.capitalize()
+
+        # Database expects: 'Positive', 'Constructive', 'Critical'
+        valid_types = ['Positive', 'Constructive', 'Critical']
+
+        # Case-insensitive validation and correction
+        if feedback_type.lower() in [v.lower() for v in valid_types]:
+            # Convert to correct case
+            feedback_type = next(v for v in valid_types if v.lower() == feedback_type.lower())
+        else:
+            flash('Invalid feedback type selected', 'error')
+            return redirect(url_for('principal.peer_reviews'))
+        # === END FEEDBACK TYPE HANDLING ===
+
+        # Validate required fields
+        if not all([observer_id, feedback_text]):
+            flash('Observer and Feedback Message are required', 'error')
+            return redirect(url_for('principal.peer_reviews'))
+
+        # Validate UUID format
+        try:
+            import uuid  # Ensure import is here if not at top
+            uuid.UUID(observer_id)
+            uuid.UUID(principal_id)
+        except (ValueError, TypeError) as e:
+            logger.error(f"Invalid UUID format: {str(e)}")
+            flash('Invalid user ID format', 'error')
+            return redirect(url_for('principal.peer_reviews'))
+
+        # Validate feedback length
+        if len(feedback_text) > 5000:
+            flash('Feedback exceeds 5000 character limit', 'error')
+            return redirect(url_for('principal.peer_reviews'))
+
+        # Create feedback
+        result = create_principal_feedback(
+            principal_id=principal_id,
+            observer_id=observer_id,
+            feedback_text=feedback_text,
+            feedback_type=feedback_type  # Now correctly capitalized
+        )
+
+        if result:
+            flash('Feedback submitted successfully!', 'success')
+        else:
+            logger.error(f"Feedback save failed for principal={principal_id}, observer={observer_id}")
+            flash('Database save failed. Please try again or contact support', 'error')
+
+    except Exception as e:
+        logger.exception(f"Critical system error: {str(e)}")
+        flash('A system error occurred. Our team has been notified.', 'error')
+
+    return redirect(url_for('principal.peer_reviews'))
 
 
 # Keep all other existing routes (view_report, process_reports, analytics, etc.)
