@@ -9,9 +9,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-
     <style>
-        /* FIXED: Proper emoji support while keeping new design */
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !important;
             line-height: 1.6;
@@ -20,17 +18,6 @@
             padding: 0;
             background-color: #f8fafc;
         }
-
-        /* CRITICAL: Emoji-specific font stack */
-        .emoji, .feature-icon, [class*="emoji"], span:contains("📊"), span:contains("👥"), span:contains("📈"), span:contains("🎯") {
-            font-family: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", "EmojiOne Color", "Twemoji Mozilla", sans-serif !important;
-            font-variant-emoji: emoji !important;
-            font-style: normal !important;
-            font-weight: normal !important;
-            text-rendering: optimizeLegibility !important;
-        }
-
-        /* Unified Navigation Bar - Blue Theme */
         .unified-navbar {
             background: linear-gradient(135deg, #1e3a8a, #2563eb) !important;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
@@ -39,7 +26,6 @@
             top: 0;
             z-index: 1000;
         }
-
         .navbar-brand {
             font-size: 1.75rem !important;
             font-weight: 700 !important;
@@ -49,12 +35,10 @@
             display: flex;
             align-items: center;
         }
-
         .navbar-brand:hover {
             color: #ffffff !important;
             opacity: 0.9;
         }
-
         .navbar-brand .brand-dot {
             display: inline-block;
             width: 8px;
@@ -64,12 +48,10 @@
             margin-left: 8px;
             animation: pulse 2s infinite;
         }
-
         @keyframes pulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.7; }
         }
-
         .navbar-nav .nav-link {
             color: #e0f2fe !important;
             font-weight: 500 !important;
@@ -79,13 +61,11 @@
             transition: all 0.3s ease !important;
             margin: 0 0.25rem;
         }
-
         .navbar-nav .nav-link:hover, .navbar-nav .nav-link.active {
             background: rgba(255, 255, 255, 0.1) !important;
             color: #fff !important;
             transform: translateY(-2px);
         }
-
         .btn-login {
             background: #f59e42 !important;
             color: #1e3a8a !important;
@@ -98,14 +78,12 @@
             text-decoration: none !important;
             font-size: 0.95rem !important;
         }
-
         .btn-login:hover {
             background: #fff !important;
             color: #1e3a8a !important;
             transform: translateY(-2px) !important;
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25) !important;
         }
-
         .btn-get-started {
             background: transparent !important;
             color: #fff !important;
@@ -116,13 +94,11 @@
             transition: all 0.3s ease !important;
             font-size: 0.95rem !important;
         }
-
         .btn-get-started:hover {
             background: #fff !important;
             color: #2563eb !important;
             transform: translateY(-2px);
         }
-
         .dropdown-menu {
             border: none !important;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15) !important;
@@ -130,30 +106,54 @@
             padding: 0.75rem 0;
             margin-top: 0.5rem;
         }
-
         .dropdown-item {
             font-weight: 500 !important;
             color: #334155 !important;
             padding: 0.75rem 1.5rem !important;
             transition: all 0.2s ease;
         }
-
         .dropdown-item:hover {
             background-color: #f0f9ff !important;
             color: #2563eb !important;
         }
-
         .dropdown-item i {
             width: 20px;
             text-align: center;
         }
-
         .navbar-text {
             color: #e0f2fe !important;
             font-weight: 500;
         }
-
-        /* Mobile Responsive */
+        /* Simple Observer/Principal Links (no nav, no background) */
+        .simple-links-row {
+            display: flex;
+            justify-content: center;
+            gap: 2.5rem;
+            margin: 1.5rem 0 0.5rem 0;
+        }
+        .simple-links-row a {
+            color: #1e3a8a;
+            font-weight: 600;
+            text-decoration: none;
+            font-size: 1.08rem;
+            padding: 0.4rem 1.2rem;
+            border-radius: 6px;
+            transition: background 0.15s, color 0.15s;
+            display: flex;
+            align-items: center;
+        }
+        .simple-links-row a:hover {
+            background: #e0e7ef;
+            color: #2563eb;
+            text-decoration: none;
+        }
+        .footer-section {
+            background: #101c36;
+            color: #e0e7ef;
+            text-align: center;
+            padding: 1.5rem 0 1rem 0;
+            font-size: 1rem;
+        }
         @media (max-width: 991px) {
             .navbar-toggler {
                 border-color: rgba(255, 255, 255, 0.5) !important;
@@ -173,14 +173,16 @@
             .navbar-nav {
                 text-align: center;
             }
-
             .navbar-nav .nav-item {
                 margin: 0.25rem 0;
             }
-
             .btn-login, .btn-get-started {
                 margin-top: 0.75rem;
                 width: auto;
+            }
+            .simple-links-row {
+                flex-direction: column;
+                gap: 0.6rem;
             }
         }
     </style>
@@ -193,93 +195,68 @@
                 <i class="fas fa-eye me-2"></i>Sanjaya – The Observer
                 <span class="brand-dot"></span>
             </a>
-
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
-
             <div class="collapse navbar-collapse" id="navbarNav">
-                <!-- Navigation Links -->
-                <ul class="navbar-nav me-auto">
+                <!-- Empty left nav for spacing -->
+                <ul class="navbar-nav me-auto"></ul>
+                <!-- Right Side Actions -->
+                <div class="navbar-nav ms-auto align-items-center flex-row flex-wrap">
                     {% if not session.user_id %}
-                    <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('landing') }}">
                             <i class="fas fa-home me-1"></i>Home
                         </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('observer_landing') }}">
-                            <i class="fas fa-user-secret me-1"></i>Observer
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('principal_landing') }}">
-                            <i class="fas fa-user-tie me-1"></i>Principal
-                        </a>
-                    </li>
-                    <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('parent_landing') }}">
                             <i class="fas fa-users me-1"></i>Parents
                         </a>
-                    </li>
-                    {% endif %}
-                </ul>
-
-                <!-- Right Side Actions -->
-                <div class="navbar-nav ms-auto">
-                    {% if session.user_id %}
+                        <a class="btn btn-login ms-2" href="{{ url_for('auth.login') }}">
+                            <i class="fas fa-sign-in-alt me-1"></i>Login
+                        </a>
+                        <div class="dropdown ms-2">
+                            <button class="btn btn-get-started dropdown-toggle" type="button" id="quickAccessDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-rocket me-1"></i>Get Started
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="quickAccessDropdown">
+                                <li><a class="dropdown-item" href="{{ url_for('auth.apply_observer') }}">
+                                    <i class="fas fa-user-secret me-2"></i>Apply as Observer
+                                </a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('auth.apply_principal') }}">
+                                    <i class="fas fa-user-tie me-2"></i>Apply as Principal
+                                </a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('parent_signup') }}">
+                                    <i class="fas fa-users me-2"></i>Register as Parent
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{{ url_for('payment_form') }}">
+                                    <i class="fas fa-gift me-2"></i>Start Free Trial
+                                </a></li>
+                            </ul>
+                        </div>
+                    {% else %}
                         <span class="navbar-text me-3">
                             <i class="fas fa-user-circle me-1"></i>Welcome, {{ session.name }}!
                         </span>
-
                         {% if session.role == 'Admin' %}
-                        <a class="nav-link d-inline me-2" href="{{ url_for('admin.dashboard') }}">
-                            <i class="fas fa-crown me-1"></i>Admin Dashboard
-                        </a>
+                            <a class="nav-link d-inline me-2" href="{{ url_for('admin.dashboard') }}">
+                                <i class="fas fa-crown me-1"></i>Admin Dashboard
+                            </a>
                         {% elif session.role == 'Principal' %}
-                        <a class="nav-link d-inline me-2" href="{{ url_for('principal.dashboard') }}">
-                            <i class="fas fa-user-tie me-1"></i>Principal Dashboard
-                        </a>
+                            <a class="nav-link d-inline me-2" href="{{ url_for('principal.dashboard') }}">
+                                <i class="fas fa-user-tie me-1"></i>Principal Dashboard
+                            </a>
                         {% elif session.role == 'Observer' %}
-                        <a class="nav-link d-inline me-2" href="{{ url_for('observer.dashboard') }}">
-                            <i class="fas fa-user-secret me-1"></i>Observer Dashboard
-                        </a>
+                            <a class="nav-link d-inline me-2" href="{{ url_for('observer.dashboard') }}">
+                                <i class="fas fa-user-secret me-1"></i>Observer Dashboard
+                            </a>
                         {% elif session.role == 'Parent' %}
-                        <a class="nav-link d-inline me-2" href="{{ url_for('parent.dashboard') }}">
-                            <i class="fas fa-child me-1"></i>Parent Dashboard
-                        </a>
+                            <a class="nav-link d-inline me-2" href="{{ url_for('parent.dashboard') }}">
+                                <i class="fas fa-child me-1"></i>Parent Dashboard
+                            </a>
                         {% endif %}
-
-                        <a class="btn btn-login" href="{{ url_for('auth.logout') }}">
+                        <a class="btn btn-login ms-2" href="{{ url_for('auth.logout') }}">
                             <i class="fas fa-sign-out-alt me-1"></i>Logout
                         </a>
-                    {% else %}
-                        <div class="d-flex align-items-center flex-wrap justify-content-center">
-                            <a class="btn btn-login me-2" href="{{ url_for('auth.login') }}">
-                                <i class="fas fa-sign-in-alt me-1"></i>Login
-                            </a>
-
-                            <div class="dropdown">
-                                <button class="btn btn-get-started dropdown-toggle" type="button" id="quickAccessDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="fas fa-rocket me-1"></i>Get Started
-                                </button>
-                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="quickAccessDropdown">
-                                    <li><a class="dropdown-item" href="{{ url_for('auth.apply_observer') }}">
-                                        <i class="fas fa-user-secret me-2"></i>Apply as Observer
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="{{ url_for('auth.apply_principal') }}">
-                                        <i class="fas fa-user-tie me-2"></i>Apply as Principal
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="{{ url_for('parent_signup') }}">
-                                        <i class="fas fa-users me-2"></i>Register as Parent
-                                    </a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="{{ url_for('payment_form') }}">
-                                        <i class="fas fa-gift me-2"></i>Start Free Trial
-                                    </a></li>
-                                </ul>
-                            </div>
-                        </div>
                     {% endif %}
                 </div>
             </div>
@@ -297,9 +274,25 @@
                 {% endfor %}
             {% endif %}
         {% endwith %}
-
         {% block content %}{% endblock %}
     </main>
+
+    <!-- SIMPLE OBSERVER/PRINCIPAL LINKS: neat, no background, centered -->
+    {% if not session.user_id %}
+    <div class="simple-links-row">
+        <a href="{{ url_for('observer_landing') }}">
+            <i class="fas fa-user-secret me-1"></i>Observer
+        </a>
+        <a href="{{ url_for('principal_landing') }}">
+            <i class="fas fa-user-tie me-1"></i>Principal
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- FOOTER SECTION: only once, at the very bottom -->
+    <section class="footer-section">
+        <p class="footer-text">&copy; 2025 Sanjaya – The Observer. Crafted with care for every child.</p>
+    </section>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
