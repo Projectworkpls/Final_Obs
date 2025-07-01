@@ -100,7 +100,7 @@
         </div>
         <div class="card-body">
             {% if observers %}
-            <form method="POST" action="{{ url_for('principal.send_observer_feedback') }}">
+            <form method="POST" action="{{ url_for('principal.send_peer_review_feedback') }}">
                 <div class="row">
                     <div class="col-md-3">
                         <label for="observer_id" class="form-label">Select Observer</label>
@@ -116,8 +116,8 @@
                         <select class="form-select" id="feedback_type" name="feedback_type" required>
                             <option value="">Select Type...</option>
                             <option value="positive">Positive</option>
-                            <option value="constructive">Constructive</option>
-                            <option value="improvement">Improvement</option>
+                            <option value="Constructive">Constructive</option>
+                            <option value="Improvement">Improvement</option>
                         </select>
                     </div>
                     <div class="col-md-5">
