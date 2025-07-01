@@ -1108,50 +1108,70 @@ def add_goal():
 def messages():
     observer_id = session.get('user_id')
     children = get_observer_children(observer_id)
-
-    # Get parents for these children
-    parents = []
     supabase = get_supabase_client()
-    for child in children:
-        parent_data = supabase.table('users').select("*").eq('child_id', child['id']).eq('role',
-                                                                                         'Parent').execute().data
-        if parent_data:
-            parents.extend(parent_data)
 
-    # Get all feedback for this observer's reports
+    # Get parents for observer's children
+    parents = []
+    for child in children:
+        try:
+            parent_data = supabase.table('users').select("*").eq('child_id', child['id']).eq('role',
+                                                                                             'Parent').execute().data
+            if parent_data:
+                parents.extend(parent_data)
+        except Exception as e:
+            logger.error(f"Error fetching parents for child {child['id']}: {str(e)}")
+
+    # Get parent feedback for observer's reports
     feedback_data = []
     try:
-        # Get all reports by this observer
         reports = supabase.table('observations').select("id, student_name, date, student_id").eq('username',
                                                                                                  observer_id).execute().data
 
-        # Get feedback for these reports
         for report in reports:
-            feedback = supabase.table('parent_feedback').select("*").eq('report_id', report['id']).execute().data
-            for fb in feedback:
-                # Get parent info
-                parent_info = supabase.table('users').select("name, email").eq('child_id', report['student_id']).eq(
-                    'role', 'Parent').execute().data
-                fb['parent_info'] = parent_info[0] if parent_info else {'name': 'Unknown Parent', 'email': ''}
-                fb['report_info'] = report
+            try:
+                feedback = supabase.table('parent_feedback').select("*").eq('report_id', report['id']).execute().data
+                for fb in feedback:
+                    # Get parent info
+                    parent_info = supabase.table('users').select("name, email").eq('child_id', report['student_id']).eq(
+                        'role', 'Parent').execute().data
+                    fb['parent_info'] = parent_info[0] if parent_info else {'name': 'Unknown Parent', 'email': ''}
+                    fb['report_info'] = report
 
-                # Check if observer has responded
-                response = supabase.table('feedback_responses').select("*").eq('feedback_id', fb['id']).execute().data
-                fb['observer_response'] = response[0] if response else None
+                    # Check for observer response
+                    response = supabase.table('feedback_responses').select("*").eq('feedback_id',
+                                                                                   fb['id']).execute().data
+                    fb['observer_response'] = response[0] if response else None
 
-                feedback_data.append(fb)
+                    feedback_data.append(fb)
+            except Exception as e:
+                logger.error(f"Error processing feedback for report {report['id']}: {str(e)}")
 
         # Sort by timestamp (newest first)
         feedback_data.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
-
     except Exception as e:
-        print(f"Error loading feedback: {e}")
-        feedback_data = []
+        logger.error(f"Error loading reports: {str(e)}")
+
+    # ===== PRINCIPAL FEEDBACK SECTION =====
+    principal_feedback = []
+    try:
+        principal_feedback_response = supabase.table('principal_feedback').select(
+            "id, feedback_text, feedback_type, created_at, principal_id"
+        ).eq('observer_id', observer_id).order('created_at', desc=True).execute()
+
+        principal_feedback = principal_feedback_response.data if principal_feedback_response.data else []
+
+        # Enrich with principal names
+        for fb in principal_feedback:
+            principal_info = supabase.table('users').select("name").eq('id', fb['principal_id']).single().execute().data
+            fb['principal_name'] = principal_info['name'] if principal_info else "Unknown Principal"
+    except Exception as e:
+        logger.error(f"Error loading principal feedback: {str(e)}")
 
     return render_template('observer/messages.html',
                            children=children,
                            parents=parents,
-                           feedback_data=feedback_data)
+                           feedback_data=feedback_data,
+                           principal_feedback=principal_feedback)  # Pass to template
 
 
 @observer_bp.route('/respond_to_feedback', methods=['POST'])
