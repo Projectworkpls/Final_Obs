@@ -30,6 +30,15 @@
             {% endif %}
         </button>
     </li>
+    <!-- NEW: Principal Feedback Tab -->
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="principal-feedback-tab" data-bs-toggle="tab" data-bs-target="#principal-feedback" type="button" role="tab">
+            <i class="fas fa-user-tie me-2"></i>Principal Feedback
+            {% if principal_feedback %}
+            <span class="badge bg-info ms-1">{{ principal_feedback|length }}</span>
+            {% endif %}
+        </button>
+    </li>
 </ul>
 
 <div class="tab-content" id="communicationTabsContent">
@@ -46,7 +55,7 @@
                         {% if parents %}
                         <div class="list-group">
                             {% for parent in parents %}
-                            <button type="button" class="list-group-item list-group-item-action parent-item" 
+                            <button type="button" class="list-group-item list-group-item-action parent-item"
                                     data-parent-id="{{ parent.id }}" data-parent-name="{{ parent.name }}">
                                 <div class="d-flex w-100 justify-content-between">
                                     <h6 class="mb-1">{{ parent.name }}</h6>
@@ -136,7 +145,7 @@
                                 {{ feedback.feedback_text }}
                             </div>
                         </div>
-                        
+
                         <!-- Observer Response Section -->
                         <div class="border-top pt-3">
                             {% if feedback.observer_response %}
@@ -152,7 +161,7 @@
                             <form method="POST" action="{{ url_for('observer.respond_to_feedback') }}" class="mt-2">
                                 <input type="hidden" name="feedback_id" value="{{ feedback.id }}">
                                 <div class="mb-3">
-                                    <textarea class="form-control" name="response_text" rows="3" 
+                                    <textarea class="form-control" name="response_text" rows="3"
                                               placeholder="Write a thoughtful response to the parent's feedback..." required></textarea>
                                 </div>
                                 <button type="submit" class="btn btn-primary btn-sm">
@@ -176,6 +185,54 @@
         </div>
         {% endif %}
     </div>
+
+    <!-- NEW: Principal Feedback Tab -->
+    <div class="tab-pane fade" id="principal-feedback" role="tabpanel">
+        {% if principal_feedback %}
+        <div class="row">
+            {% for fb in principal_feedback %}
+            <div class="col-12 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">
+                                    <i class="fas fa-user-tie me-2"></i>{{ fb.principal_name }}
+                                </h6>
+                                <small class="text-muted">{{ fb.created_at|datetimeformat }}</small>
+                            </div>
+                            <div>
+                                <span class="badge
+                                    {% if fb.feedback_type == 'Positive' %}bg-success
+                                    {% elif fb.feedback_type == 'Constructive' %}bg-warning
+                                    {% else %}bg-info{% endif %}">
+                                    {{ fb.feedback_type }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <strong>Principal's Feedback:</strong>
+                            <div class="p-3 bg-light rounded mt-2">
+                                {{ fb.feedback_text }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-comment-slash fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No Principal Feedback</h5>
+                <p class="text-muted">You haven't received any feedback from principals yet.</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}
 
@@ -190,26 +247,26 @@ document.querySelectorAll('.parent-item').forEach(item => {
     item.addEventListener('click', function() {
         // Remove active class from all items
         document.querySelectorAll('.parent-item').forEach(i => i.classList.remove('active'));
-        
+
         // Add active class to clicked item
         this.classList.add('active');
-        
+
         selectedParentId = this.dataset.parentId;
         selectedParentName = this.dataset.parentName;
-        
+
         document.getElementById('chat-header').innerHTML = `
             <i class="fas fa-comment me-2"></i>Conversation with ${selectedParentName}
         `;
         document.getElementById('message-form').style.display = 'block';
-        
+
         loadMessages();
     });
 });
 
 function loadMessages() {
     if (!selectedParentId) return;
-    
-    fetch(`/observer/get_messages_api/${selectedParentId}`)
+
+    fetch(/observer/get_messages_api/${selectedParentId})
         .then(response => response.json())
         .then(messages => {
             const container = document.getElementById('messages-container');
