@@ -17,6 +17,7 @@ import sys
 # Fix Unicode encoding for Windows
 if sys.platform.startswith('win'):
     import codecs
+
     sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
     sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'strict')
     os.environ['PYTHONIOENCODING'] = 'utf-8'
@@ -32,9 +33,26 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
+
+    # Register datetimeformat filter for Jinja2 templates
+    def datetimeformat(value, format='%Y-%m-%d %H:%M'):
+        from datetime import datetime
+        if not value:
+            return ''
+        try:
+            if isinstance(value, str):
+                dt = datetime.fromisoformat(value.replace('Z', '+00:00'))
+            else:
+                dt = value
+            return dt.strftime(format)
+        except Exception:
+            return str(value)
+
+    app.jinja_env.filters['datetimeformat'] = datetimeformat
 
     # CRITICAL FIX: Configure server-side sessions to handle large data
     app.config['SESSION_TYPE'] = 'filesystem'
@@ -92,7 +110,7 @@ def create_app():
     @app.route('/favicon.ico')
     def favicon():
         return send_from_directory(os.path.join(app.root_path, 'static'),
-                                 'favicon.ico', mimetype='image/vnd.microsoft.icon')
+                                   'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
     # Health check endpoint
     @app.route('/health')
@@ -154,13 +172,13 @@ def create_app():
         try:
             from models.database import get_children, get_organizations
             return render_template('auth/register.html',
-                                 children=get_children(),
-                                 organizations=get_organizations())
+                                   children=get_children(),
+                                   organizations=get_organizations())
         except Exception as e:
             logger.error(f"Error loading signup page: {e}")
             return render_template('auth/register.html',
-                                 children=[],
-                                 organizations=[])
+                                   children=[],
+                                   organizations=[])
 
     # --- OBSERVER SIGNUP PAGE ---
     @app.route('/observer/signup', methods=['GET', 'POST'])
@@ -218,6 +236,7 @@ def create_app():
         return render_template('errors/404.html'), 404
 
     return app
+
 
 if __name__ == '__main__':
     try:
