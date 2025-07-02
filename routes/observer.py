@@ -150,9 +150,6 @@ def process_observation():
     last_report = session.get('last_report')
     last_report_id = session.get('last_report_id')
 
-    print(f"DEBUG: Process observation - last_report_id: {last_report_id}")
-    print(f"DEBUG: Session keys: {list(session.keys())}")
-
     return render_template('observer/process_observation.html',
                            children=children,
                            last_report=last_report,
@@ -163,8 +160,6 @@ def process_observation():
 @login_required
 @observer_required
 def process_file():
-    print("Processing file with mode:", request.form.get('processing_mode'))
-
     observer_id = session.get('user_id')
     child_id = request.form.get('child_id')
     processing_mode = request.form.get('processing_mode')
@@ -253,12 +248,9 @@ def process_file():
             # Log the processing
             log_report_processing(child_id, observer_id, observation_id, report_type)
 
-            # CRITICAL FIX: Clear large session data and store only essentials
-            # Remove large custom report to free space
+            # Clear large session data and store only essentials
             if 'last_custom_report' in session:
                 del session['last_custom_report']
-
-            # Clear scheduled session data
             if 'scheduled_child_id' in session:
                 del session['scheduled_child_id']
             if 'scheduled_child_name' in session:
@@ -270,9 +262,7 @@ def process_file():
             session['last_student_name'] = structured_data.get("studentName", student_name)
             session['last_date'] = structured_data.get("date", session_date)
             session.permanent = True
-            session.modified = True  # CRITICAL: Force session save
-
-            print(f"Updated session data - report_id: {observation_id}")
+            session.modified = True
 
             return jsonify({
                 'success': True,
@@ -803,22 +793,16 @@ def get_principal_feedback_for_observer(observer_id):
 @login_required
 @observer_required
 def download_report():
-    print(f"Session data in download_report: {dict(session)}")
-
     try:
         report_id = session.get('last_report_id')
-        print(f"DEBUG: Download report - session report_id: {report_id}")
 
         if not report_id:
-            print("No report_id in session")
             flash('No report available for download', 'error')
             return redirect(url_for('observer.process_observation'))
 
         # Get the report from database
         supabase = get_supabase_client()
         report_data = supabase.table('observations').select("*").eq('id', report_id).execute().data
-
-        print(f"DEBUG: Database query result: {len(report_data)} records found")
 
         if not report_data:
             flash('Report not found', 'error')
@@ -832,9 +816,8 @@ def download_report():
             try:
                 full_data = json.loads(report['full_data'])
                 formatted_report = full_data.get('formatted_report')
-                print(f"DEBUG: Formatted report found: {bool(formatted_report)}")
             except Exception as e:
-                print(f"DEBUG: Error parsing full_data: {e}")
+                pass
 
         if not formatted_report:
             flash('No formatted report available', 'error')
@@ -863,7 +846,6 @@ def download_report():
         )
 
     except Exception as e:
-        print(f"DEBUG: Download error: {e}")
         flash(f'Error downloading report: {str(e)}', 'error')
         return redirect(url_for('observer.process_observation'))
 
@@ -872,14 +854,10 @@ def download_report():
 @login_required
 @observer_required
 def download_pdf():
-    print(f"Session data in download_pdf: {dict(session)}")
-
     try:
         report_id = session.get('last_report_id')
-        print(f"DEBUG: Download PDF - session report_id: {report_id}")
 
         if not report_id:
-            print("No report_id in session")
             flash('No report available for download', 'error')
             return redirect(url_for('observer.process_observation'))
 
@@ -929,7 +907,6 @@ def download_pdf():
         )
 
     except Exception as e:
-        print(f"DEBUG: Download PDF error: {e}")
         flash(f'Error downloading PDF: {str(e)}', 'error')
         return redirect(url_for('observer.process_observation'))
 
@@ -941,8 +918,6 @@ def email_report():
     try:
         report_id = session.get('last_report_id')
         recipient_email = request.form.get('recipient_email')
-
-        print(f"DEBUG: Email report - session report_id: {report_id}")
 
         if not report_id or not recipient_email:
             return jsonify({'success': False, 'error': 'Missing report or email'})
@@ -976,7 +951,6 @@ def email_report():
         return jsonify({'success': success, 'message': message})
 
     except Exception as e:
-        print(f"DEBUG: Email error: {e}")
         return jsonify({'success': False, 'error': str(e)})
 
 
@@ -1069,8 +1043,6 @@ def email_custom_report():
         custom_report = session.get('last_custom_report')
         recipient_email = request.form.get('recipient_email')
 
-        print(f"DEBUG: Email custom report - custom_report exists: {bool(custom_report)}")
-
         if not custom_report or not recipient_email:
             return jsonify({'success': False, 'error': 'Missing report or email'})
 
@@ -1082,7 +1054,6 @@ def email_custom_report():
         return jsonify({'success': success, 'message': message})
 
     except Exception as e:
-        print(f"DEBUG: Email custom report error: {e}")
         return jsonify({'success': False, 'error': str(e)})
 
 
@@ -1407,29 +1378,70 @@ def generate_monthly_report():
 @login_required
 @observer_required
 def download_monthly_report():
+    observer_id = session.get('user_id')
+    child_id = request.args.get('child_id') or session.get('child_id')
+    year = request.args.get('year', datetime.now().year, type=int)
+    month = request.args.get('month', datetime.now().month, type=int)
+    filetype = request.args.get('filetype', 'docx')  # 'docx' or 'pdf'
+
+    if not child_id:
+        flash('No child selected for report.', 'warning')
+        return redirect(url_for('observer.monthly_reports'))
+
     try:
-        monthly_report = session.get('last_monthly_report')
-        if not monthly_report:
-            flash('No monthly report available for download', 'error')
-            return redirect(url_for('observer.monthly_reports'))
+        supabase = get_supabase_client()
+        report_generator = MonthlyReportGenerator(supabase)
 
-        # Create Word document
-        extractor = ObservationExtractor()
-        doc_buffer = extractor.create_word_document_with_emojis(monthly_report)
+        # Get data
+        observations = report_generator.get_month_data(child_id, year, month)
+        goal_progress = report_generator.get_goal_progress(child_id, year, month)
+        strength_counts = report_generator.get_strength_areas(observations)
+        development_counts = report_generator.get_development_areas(observations)
 
-        # Create filename
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        filename = f"monthly_report_{timestamp}.docx"
-
-        return send_file(
-            doc_buffer,
-            as_attachment=True,
-            download_name=filename,
-            mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        # Generate JSON summary for narrative/analytics
+        child_data = supabase.table('children').select("name").eq('id', child_id).execute().data
+        child_name = child_data[0]['name'] if child_data else 'Child'
+        summary_json = report_generator.generate_monthly_summary_json_format(
+            observations, goal_progress, child_name, year, month
         )
+        if isinstance(summary_json, str):
+            import json as _json
+            try:
+                summary_json = _json.loads(summary_json)
+            except Exception:
+                flash('Could not generate a valid summary for this report. Please check if there are enough daily reports for the selected month.', 'error')
+                return redirect(url_for('observer.monthly_reports'))
 
+        import calendar
+        month_name = calendar.month_name[month]
+        filename_base = f"{child_name}_Progress_Report_{month_name}_{year}"
+
+        if filetype == 'pdf':
+            pdf_buffer = report_generator.generate_monthly_pdf_report(
+                observations, goal_progress, strength_counts, development_counts, summary_json
+            )
+            filename = filename_base + '.pdf'
+            mimetype = 'application/pdf'
+            return send_file(
+                pdf_buffer,
+                as_attachment=True,
+                download_name=filename,
+                mimetype=mimetype
+            )
+        else:
+            docx_buffer = report_generator.generate_monthly_docx_report(
+                observations, goal_progress, strength_counts, development_counts, summary_json
+            )
+            filename = filename_base + '.docx'
+            mimetype = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            return send_file(
+                docx_buffer,
+                as_attachment=True,
+                download_name=filename,
+                mimetype=mimetype
+            )
     except Exception as e:
-        flash(f'Error downloading monthly report: {str(e)}', 'error')
+        flash(f'Error downloading report: {str(e)}. If you see no curiosity/growth charts, it may be due to missing scores in daily reports.', 'error')
         return redirect(url_for('observer.monthly_reports'))
 
 
@@ -1587,4 +1599,3 @@ def apply():
         flash('Error loading organizations. Please try again later.', 'error')
 
     return render_template('observer/apply.html', organizations=organizations)
-
