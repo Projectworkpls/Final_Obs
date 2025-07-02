@@ -414,6 +414,7 @@ def download_monthly_report():
     child_id = session.get('child_id')
     year = request.args.get('year', datetime.now().year, type=int)
     month = request.args.get('month', datetime.now().month, type=int)
+    filetype = request.args.get('filetype', 'docx')  # 'docx' or 'pdf'
 
     if not child_id:
         flash('No child assigned to your account.', 'warning')
@@ -429,26 +430,50 @@ def download_monthly_report():
         strength_counts = report_generator.get_strength_areas(observations)
         development_counts = report_generator.get_development_areas(observations)
 
-        # Generate Excel report
-        excel_buffer = report_generator.generate_excel_report(observations, goal_progress, strength_counts,
-                                                              development_counts)
-
-        # Get child name
+        # Generate JSON summary for narrative/analytics
         child_data = supabase.table('children').select("name").eq('id', child_id).execute().data
         child_name = child_data[0]['name'] if child_data else 'Child'
+        summary_json = report_generator.generate_monthly_summary_json_format(
+            observations, goal_progress, child_name, year, month
+        )
+        if isinstance(summary_json, str):
+            import json as _json
+            try:
+                summary_json = _json.loads(summary_json)
+            except Exception:
+                flash('Could not generate a valid summary for this report. Please check if there are enough daily reports for the selected month.', 'error')
+                return redirect(url_for('parent.monthly_report'))
 
         import calendar
         month_name = calendar.month_name[month]
-        filename = f"{child_name}_Progress_Report_{month_name}_{year}.xlsx"
+        filename_base = f"{child_name}_Progress_Report_{month_name}_{year}"
 
-        return send_file(
-            excel_buffer,
-            as_attachment=True,
-            download_name=filename,
-            mimetype='application/vnd.ms-excel'
-        )
+        if filetype == 'pdf':
+            pdf_buffer = report_generator.generate_monthly_pdf_report(
+                observations, goal_progress, strength_counts, development_counts, summary_json
+            )
+            filename = filename_base + '.pdf'
+            mimetype = 'application/pdf'
+            return send_file(
+                pdf_buffer,
+                as_attachment=True,
+                download_name=filename,
+                mimetype=mimetype
+            )
+        else:
+            docx_buffer = report_generator.generate_monthly_docx_report(
+                observations, goal_progress, strength_counts, development_counts, summary_json
+            )
+            filename = filename_base + '.docx'
+            mimetype = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            return send_file(
+                docx_buffer,
+                as_attachment=True,
+                download_name=filename,
+                mimetype=mimetype
+            )
     except Exception as e:
-        flash(f'Error downloading report: {str(e)}', 'error')
+        flash(f'Error downloading report: {str(e)}. If you see no curiosity/growth charts, it may be due to missing scores in daily reports.', 'error')
         return redirect(url_for('parent.monthly_report'))
 
 
