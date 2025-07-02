@@ -771,7 +771,18 @@ function generateMonthlyReport() {
 
 // NEW: Download monthly reports
 function downloadMonthlyReport(type) {
-    const url = type === 'word' ? '/observer/download_monthly_report' : '/observer/download_monthly_pdf';
+    // Get selected child, year, and month from the form
+    const childId = document.getElementById('monthly-child-select').value;
+    const year = document.getElementById('monthly-year').value;
+    const month = document.getElementById('monthly-month').value;
+    if (!childId) {
+        alert('Please select a child.');
+        return;
+    }
+    let filetype = 'docx';
+    if (type === 'pdf') filetype = 'pdf';
+    // Build the download URL with query params
+    const url = `/observer/download_monthly_report?child_id=${encodeURIComponent(childId)}&year=${encodeURIComponent(year)}&month=${encodeURIComponent(month)}&filetype=${filetype}`;
     window.open(url, '_blank');
 }
 
