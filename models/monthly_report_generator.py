@@ -8,6 +8,12 @@ from datetime import datetime
 import io
 import google.generativeai as genai
 from config import Config
+import re
+import docx
+from docx.shared import Inches, Pt
+from io import BytesIO
+import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
 
 
 class MonthlyReportGenerator:
@@ -314,8 +320,6 @@ class MonthlyReportGenerator:
 
             # Calculate weekly observation trends
             weekly_trends = self._calculate_weekly_trends(observations, year, month)
-
-            # Calculate learning progress metrics
             learning_metrics = self._calculate_learning_metrics(observations)
 
             # Prepare graph data suggestions
@@ -462,15 +466,30 @@ class MonthlyReportGenerator:
             Ensure all recommendations are specific, actionable, and tailored to the student's individual learning profile and developmental stage.
             """
 
-            # Generate the report using AI
+            print("DEBUG: monthly_prompt", monthly_prompt)
             model = genai.GenerativeModel('gemini-2.0-flash')
             response = model.generate_content([
                 {"role": "user", "parts": [{"text": monthly_prompt}]}
             ])
-
-            return response.text
+            print("DEBUG: Gemini response", response.text)
+            # Clean up Gemini's markdown code block if present
+            cleaned = response.text.strip()
+            if cleaned.startswith('```json'):
+                cleaned = cleaned[len('```json'):].strip()
+            if cleaned.startswith('```'):
+                cleaned = cleaned[len('```'):].strip()
+            if cleaned.endswith('```'):
+                cleaned = cleaned[:-3].strip()
+            # Validate JSON before returning
+            try:
+                json.loads(cleaned)
+                return cleaned
+            except Exception as e:
+                print("DEBUG: Gemini did not return valid JSON.", str(e))
+                return "Error: Gemini did not return valid JSON."
 
         except Exception as e:
+            print("DEBUG: Exception in summary generation", str(e))
             return f"Error generating monthly summary: {str(e)}"
 
     def _calculate_weekly_trends(self, observations, year, month):
@@ -515,11 +534,39 @@ class MonthlyReportGenerator:
         }
 
     def generate_excel_report(self, observations, goal_progress, strength_counts, development_counts):
-        """Generate Excel report with multiple sheets"""
+        """Generate Excel report with multiple sheets, including curiosity and growth line charts"""
         buffer = io.BytesIO()
 
+        # --- Extract curiosity and growth scores by date ---
+        curiosity_by_date = {}
+        growth_by_date = {}
+        for obs in observations:
+            date = obs.get('date')
+            try:
+                full_data = json.loads(obs.get('full_data', '{}'))
+                report = full_data.get('formatted_report', '')
+            except Exception:
+                report = ''
+            # Extract curiosity score
+            curiosity_match = re.search(r'🌈 Curiosity Response Index: (\d{1,2}) ?/ ?10', report)
+            if curiosity_match:
+                curiosity_score = int(curiosity_match.group(1))
+                curiosity_by_date[date] = curiosity_score
+            # Extract growth score (X/7)
+            growth_match = re.search(r'Overall Growth Score.*?(\d)\s*/\s*7', report)
+            if growth_match:
+                growth_score = int(growth_match.group(1))
+                growth_by_date[date] = growth_score
+
+        # Sort by date
+        curiosity_dates = sorted(curiosity_by_date.keys())
+        growth_dates = sorted(growth_by_date.keys())
+        curiosity_scores = [curiosity_by_date[d] for d in curiosity_dates]
+        growth_scores = [growth_by_date[d] for d in growth_dates]
+
         with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
-            # Summary sheet
+            workbook = writer.book
+            # --- Summary sheet ---
             summary_data = {
                 "Metric": ["Total Observations", "Goals Tracked", "Average Goal Score"],
                 "Value": [len(observations), len(goal_progress),
@@ -527,8 +574,50 @@ class MonthlyReportGenerator:
             }
             summary_df = pd.DataFrame(summary_data)
             summary_df.to_excel(writer, sheet_name='Summary', index=False)
+            worksheet = writer.sheets['Summary']
+            # Add a narrative summary at the top
+            worksheet.write('A1', 'Monthly Learning Progress Summary', workbook.add_format({'bold': True, 'font_size': 14}))
+            worksheet.write('A3', 'Key Metrics:', workbook.add_format({'bold': True}))
 
-            # Strengths sheet
+            # --- Curiosity Line Chart ---
+            if curiosity_dates:
+                curiosity_df = pd.DataFrame({
+                    'Date': curiosity_dates,
+                    'Curiosity Score': curiosity_scores
+                })
+                curiosity_df.to_excel(writer, sheet_name='Curiosity Trend', index=False)
+                ws = writer.sheets['Curiosity Trend']
+                chart = workbook.add_chart({'type': 'line'})
+                chart.add_series({
+                    'name': 'Curiosity Score',
+                    'categories': ['Curiosity Trend', 1, 0, len(curiosity_df), 0],
+                    'values':     ['Curiosity Trend', 1, 1, len(curiosity_df), 1],
+                })
+                chart.set_title({'name': 'Curiosity Response Index by Day'})
+                chart.set_x_axis({'name': 'Date'})
+                chart.set_y_axis({'name': 'Curiosity Score', 'major_gridlines': {'visible': False}})
+                ws.insert_chart('D2', chart)
+
+            # --- Growth Line Chart ---
+            if growth_dates:
+                growth_df = pd.DataFrame({
+                    'Date': growth_dates,
+                    'Growth Score': growth_scores
+                })
+                growth_df.to_excel(writer, sheet_name='Growth Trend', index=False)
+                ws = writer.sheets['Growth Trend']
+                chart = workbook.add_chart({'type': 'line'})
+                chart.add_series({
+                    'name': 'Growth Score',
+                    'categories': ['Growth Trend', 1, 0, len(growth_df), 0],
+                    'values':     ['Growth Trend', 1, 1, len(growth_df), 1],
+                })
+                chart.set_title({'name': 'Overall Growth Score by Day'})
+                chart.set_x_axis({'name': 'Date'})
+                chart.set_y_axis({'name': 'Growth Score', 'major_gridlines': {'visible': False}})
+                ws.insert_chart('D2', chart)
+
+            # --- Strengths sheet ---
             if strength_counts:
                 strengths_df = pd.DataFrame([
                     {"Strength": strength, "Count": count}
@@ -536,7 +625,7 @@ class MonthlyReportGenerator:
                 ])
                 strengths_df.to_excel(writer, sheet_name='Strengths', index=False)
 
-            # Development areas sheet
+            # --- Development areas sheet ---
             if development_counts:
                 development_df = pd.DataFrame([
                     {"Development Area": area, "Count": count}
@@ -544,7 +633,7 @@ class MonthlyReportGenerator:
                 ])
                 development_df.to_excel(writer, sheet_name='Development Areas', index=False)
 
-            # Goal progress sheet
+            # --- Goal progress sheet ---
             if goal_progress:
                 goals_df = pd.DataFrame([
                     {"Goal": g['goal_text'], "Average Score": g['avg_score'], "Observations": g['num_observations']}
@@ -554,3 +643,157 @@ class MonthlyReportGenerator:
 
         buffer.seek(0)
         return buffer
+
+    def generate_monthly_docx_report(self, observations, goal_progress, strength_counts, development_counts, summary_json):
+        doc = docx.Document()
+        style = doc.styles['Normal']
+        font = style.font
+        font.name = 'Segoe UI'
+        font.size = Pt(11)
+
+        # --- Narrative Section ---
+        doc.add_heading(f"Monthly Learning Progress Report", 0)
+        doc.add_paragraph(f"{summary_json.get('date', '')}")
+        doc.add_paragraph(f"Student: {summary_json.get('studentName', '')}")
+        doc.add_paragraph("")
+        doc.add_paragraph(summary_json.get('observations', ''))
+        doc.add_paragraph("")
+
+        # --- Strengths ---
+        doc.add_heading("Strengths Observed", level=1)
+        for s in summary_json.get('strengths', []):
+            doc.add_paragraph(s, style='List Bullet')
+        doc.add_paragraph("")
+
+        # --- Areas for Development ---
+        doc.add_heading("Areas for Development", level=1)
+        for a in summary_json.get('areasOfDevelopment', []):
+            doc.add_paragraph(a, style='List Bullet')
+        doc.add_paragraph("")
+
+        # --- Recommendations ---
+        doc.add_heading("Recommendations for Next Month", level=1)
+        for r in summary_json.get('recommendations', []):
+            doc.add_paragraph(r, style='List Bullet')
+        doc.add_paragraph("")
+
+        # --- Learning Analytics ---
+        doc.add_heading("Learning Analytics", level=1)
+        analytics = summary_json.get('learningAnalytics', {})
+        for k, v in analytics.items():
+            doc.add_paragraph(f"{k.replace('_', ' ').title()}: {v}")
+        doc.add_paragraph("")
+
+        # --- Progress Insights ---
+        doc.add_heading("Progress Insights", level=1)
+        for insight in summary_json.get('progressInsights', []):
+            doc.add_paragraph(insight, style='List Bullet')
+        doc.add_paragraph("")
+
+        # --- Graphs Section ---
+        doc.add_heading("Visual Analytics", level=1)
+
+        # Curiosity and Growth scores by day (parse from observations)
+        curiosity_by_date = {}
+        growth_by_date = {}
+        for obs in observations:
+            date = obs.get('date')
+            try:
+                full_data = json.loads(obs.get('full_data', '{}'))
+                report = full_data.get('formatted_report', '')
+            except Exception:
+                report = ''
+            curiosity_match = re.search(r'🌈 Curiosity Response Index: (\d{1,2}) ?/ ?10', report)
+            if curiosity_match:
+                curiosity_score = int(curiosity_match.group(1))
+                curiosity_by_date[date] = curiosity_score
+            growth_match = re.search(r'Overall Growth Score.*?(\d)\s*/\s*7', report)
+            if growth_match:
+                growth_score = int(growth_match.group(1))
+                growth_by_date[date] = growth_score
+        # Sort by date
+        curiosity_dates = sorted(curiosity_by_date.keys())
+        growth_dates = sorted(growth_by_date.keys())
+        curiosity_scores = [curiosity_by_date[d] for d in curiosity_dates]
+        growth_scores = [growth_by_date[d] for d in growth_dates]
+
+        # --- Curiosity Line Chart ---
+        if curiosity_dates:
+            fig, ax = plt.subplots()
+            ax.plot(curiosity_dates, curiosity_scores, marker='o', color='blue')
+            ax.set_title('Curiosity Response Index by Day')
+            ax.set_xlabel('Date')
+            ax.set_ylabel('Curiosity Score')
+            ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+            plt.xticks(rotation=45, ha='right')
+            plt.tight_layout()
+            img_stream = BytesIO()
+            plt.savefig(img_stream, format='png')
+            plt.close(fig)
+            img_stream.seek(0)
+            doc.add_picture(img_stream, width=Inches(5.5))
+            doc.add_paragraph("")
+
+        # --- Growth Line Chart ---
+        if growth_dates:
+            fig, ax = plt.subplots()
+            ax.plot(growth_dates, growth_scores, marker='o', color='green')
+            ax.set_title('Overall Growth Score by Day')
+            ax.set_xlabel('Date')
+            ax.set_ylabel('Growth Score')
+            ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+            plt.xticks(rotation=45, ha='right')
+            plt.tight_layout()
+            img_stream = BytesIO()
+            plt.savefig(img_stream, format='png')
+            plt.close(fig)
+            img_stream.seek(0)
+            doc.add_picture(img_stream, width=Inches(5.5))
+            doc.add_paragraph("")
+
+        # --- Other suggested graphs from summary_json ---
+        for graph in summary_json.get('suggestedGraphs', []):
+            if graph['type'] in ['line_chart', 'bar_chart']:
+                fig, ax = plt.subplots()
+                if graph['type'] == 'line_chart':
+                    x = list(graph['data'].keys())
+                    y = list(graph['data'].values())
+                    ax.plot(x, y, marker='o')
+                elif graph['type'] == 'bar_chart':
+                    x = list(graph['data'].keys())
+                    y = list(graph['data'].values())
+                    ax.bar(x, y)
+                ax.set_title(graph.get('title', ''))
+                ax.set_xlabel(graph.get('xAxis', ''))
+                ax.set_ylabel(graph.get('yAxis', ''))
+                plt.xticks(rotation=45, ha='right')
+                plt.tight_layout()
+                img_stream = BytesIO()
+                plt.savefig(img_stream, format='png')
+                plt.close(fig)
+                img_stream.seek(0)
+                doc.add_picture(img_stream, width=Inches(5.5))
+                doc.add_paragraph(graph.get('description', ''))
+                doc.add_paragraph("")
+
+        docx_bytes = BytesIO()
+        doc.save(docx_bytes)
+        docx_bytes.seek(0)
+        return docx_bytes
+
+    def generate_monthly_pdf_report(self, observations, goal_progress, strength_counts, development_counts, summary_json):
+        from docx2pdf import convert
+        import tempfile
+        import os
+        docx_bytes = self.generate_monthly_docx_report(observations, goal_progress, strength_counts, development_counts, summary_json)
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.docx') as tmp_docx:
+            tmp_docx.write(docx_bytes.read())
+            tmp_docx_path = tmp_docx.name
+        tmp_pdf_path = tmp_docx_path.replace('.docx', '.pdf')
+        convert(tmp_docx_path, tmp_pdf_path)
+        with open(tmp_pdf_path, 'rb') as f:
+            pdf_bytes = f.read()
+        os.remove(tmp_docx_path)
+        os.remove(tmp_pdf_path)
+        from io import BytesIO
+        return BytesIO(pdf_bytes)
