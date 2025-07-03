@@ -654,13 +654,14 @@ def submit_peer_review_route(observation_id):
         reviewer_id = session.get('user_id')
 
         # Get form data
-        review_score = request.form.get('review_score')
+        # review_score = request.form.get('review_score')  # REMOVE
         review_comments = request.form.get('review_comments')
         suggested_improvements = request.form.get('suggested_improvements')
         requires_changes = request.form.get('requires_changes') == 'on'
 
-        if not all([review_score, review_comments]):
-            flash('Review score and comments are required', 'error')
+        # Remove review_score from validation
+        if not review_comments:
+            flash('Review comments are required', 'error')
             return redirect(url_for('observer.review_observation', observation_id=observation_id))
 
         supabase = get_supabase_client()
@@ -681,13 +682,12 @@ def submit_peer_review_route(observation_id):
         observed_user = supabase.table('users').select('organization_id, name').eq('id', observed_by).execute()
         observed_user_org_id = observed_user.data[0]['organization_id'] if observed_user.data else None
 
-        # Create peer review record - ENSURE ALL REQUIRED FIELDS
+        # Create peer review record - REMOVE review_score
         review_data = {
             'id': str(uuid.uuid4()),  # Add explicit ID
             'observation_id': observation_id,
             'reviewer_id': reviewer_id,
             'observed_by': observed_by,
-            'review_score': int(review_score),
             'review_comments': review_comments,
             'suggested_improvements': suggested_improvements or '',
             'requires_changes': requires_changes,
