@@ -34,7 +34,6 @@
                             <th>Observer (Your Org)</th>
                             <th>Reviewer</th>
                             <th>Reviewer Org</th>
-                            <th>Score</th>
                             <th>Requires Changes</th>
                             <th>Comments</th>
                             <th>Date</th>
@@ -49,11 +48,6 @@
                             <td>
                                 <span class="badge bg-info">
                                     {{ review.reviewer_info.organization_id[:8] if review.reviewer_info.organization_id else 'N/A' }}...
-                                </span>
-                            </td>
-                            <td>
-                                <span class="badge bg-{% if review.review_score >= 4 %}success{% elif review.review_score >= 3 %}warning{% else %}danger{% endif %}">
-                                    {{ review.review_score }}/5
                                 </span>
                             </td>
                             <td>
