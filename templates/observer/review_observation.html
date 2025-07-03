@@ -92,18 +92,6 @@
                 <div class="card-body">
                     <form method="POST" action="{{ url_for('observer.submit_peer_review_route', observation_id=observation.id) }}" id="reviewForm">
                         <div class="mb-3">
-                            <label for="review_score" class="form-label">Overall Quality Score</label>
-                            <select class="form-select" id="review_score" name="review_score" required>
-                                <option value="">Select Score</option>
-                                <option value="5">5 - Excellent</option>
-                                <option value="4">4 - Good</option>
-                                <option value="3">3 - Satisfactory</option>
-                                <option value="2">2 - Needs Improvement</option>
-                                <option value="1">1 - Poor</option>
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
                             <label for="review_comments" class="form-label">Review Comments</label>
                             <textarea class="form-control" id="review_comments" name="review_comments"
                                     rows="4" required placeholder="Provide detailed feedback on the observation quality, accuracy, and completeness..."></textarea>
@@ -138,11 +126,10 @@
 document.getElementById('reviewForm').addEventListener('submit', function(e) {
     e.preventDefault();
 
-    const score = document.getElementById('review_score').value;
     const comments = document.getElementById('review_comments').value;
 
-    if (!score || !comments.trim()) {
-        alert('Please provide both a score and comments.');
+    if (!comments.trim()) {
+        alert('Please provide comments.');
         return;
     }
 
