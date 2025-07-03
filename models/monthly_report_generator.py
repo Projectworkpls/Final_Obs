@@ -14,7 +14,7 @@ from docx.shared import Inches, Pt
 from io import BytesIO
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
-
+from docx2pdf import convert
 
 class MonthlyReportGenerator:
     def __init__(self, supabase_client):
@@ -119,6 +119,96 @@ class MonthlyReportGenerator:
 
         return dict(sorted(development_counts.items(), key=lambda x: x[1], reverse=True))
 
+    def get_communication_skills(self, observations):
+        """Extract communication skills metrics from observations"""
+        comm_skills = {
+            'confidence': [],
+            'clarity': [],
+            'participation': [],
+            'sequencing': []
+        }
+
+        for obs in observations:
+            try:
+                full_data = json.loads(obs.get('full_data', '{}'))
+                report = full_data.get('formatted_report', '')
+
+                # Extract confidence level
+                confidence_match = re.search(r'Confidence level:.*?(Strong|Moderate|Weak)', report, re.IGNORECASE)
+                if confidence_match:
+                    level = confidence_match.group(1).lower()
+                    comm_skills['confidence'].append(level)
+
+                # Extract clarity of thought
+                clarity_match = re.search(r'Clarity of thought:.*?(Clear|Moderate|Unclear)', report, re.IGNORECASE)
+                if clarity_match:
+                    level = clarity_match.group(1).lower()
+                    comm_skills['clarity'].append(level)
+
+                # Extract participation
+                participation_match = re.search(r'Participation.*?:.*?(Active|Moderate|Passive)', report, re.IGNORECASE)
+                if participation_match:
+                    level = participation_match.group(1).lower()
+                    comm_skills['participation'].append(level)
+
+                # Extract sequence of explanation
+                sequence_match = re.search(r'Sequence of explanation:.*?(Logical|Moderate|Disorganized)', report,
+                                           re.IGNORECASE)
+                if sequence_match:
+                    level = sequence_match.group(1).lower()
+                    comm_skills['sequencing'].append(level)
+
+            except Exception as e:
+                continue
+
+        # Calculate most common values
+        comm_summary = {}
+        for skill, values in comm_skills.items():
+            if values:
+                comm_summary[skill] = max(set(values), key=values.count)
+            else:
+                comm_summary[skill] = 'no data'
+
+        return comm_summary
+
+    def get_growth_metrics(self, observations):
+        """Extract growth metrics from observations"""
+        growth_areas = {
+            'Intellectual': [],
+            'Emotional': [],
+            'Social': [],
+            'Creativity': [],
+            'Physical': [],
+            'Character/Values': [],
+            'Planning/Independence': []
+        }
+
+        for obs in observations:
+            try:
+                full_data = json.loads(obs.get('full_data', '{}'))
+                report = full_data.get('formatted_report', '')
+
+                # Extract growth area ratings
+                for area in growth_areas.keys():
+                    pattern = re.compile(rf'{area}.*?\|.*?(\w+)\s*\|', re.IGNORECASE)
+                    match = pattern.search(report)
+                    if match:
+                        rating = match.group(1).lower()
+                        growth_areas[area].append(rating)
+
+            except Exception as e:
+                continue
+
+        # Calculate most common ratings
+        growth_summary = {}
+        for area, ratings in growth_areas.items():
+            if ratings:
+                growth_summary[area] = max(set(ratings), key=ratings.count)
+            else:
+                growth_summary[area] = 'no data'
+
+        return growth_summary
+
     def generate_observation_frequency_chart(self, observations):
         """Generate a chart showing the frequency of observations by date"""
         date_counts = {}
@@ -143,7 +233,7 @@ class MonthlyReportGenerator:
             df,
             x='date',
             y='count',
-            title='Observation Frequency by Date',
+            title='📅 Observation Frequency by Date',
             labels={'date': 'Date', 'count': 'Number of Observations'}
         )
 
@@ -165,7 +255,7 @@ class MonthlyReportGenerator:
             df,
             x='count',
             y='strength',
-            title='Top Strengths Observed',
+            title='🌟 Top Strengths Observed',
             labels={'strength': 'Strength', 'count': 'Frequency'},
             orientation='h'
         )
@@ -188,7 +278,7 @@ class MonthlyReportGenerator:
             df,
             x='count',
             y='area',
-            title='Areas for Development',
+            title='📈 Areas for Development',
             labels={'area': 'Development Area', 'count': 'Frequency'},
             orientation='h'
         )
@@ -225,7 +315,7 @@ class MonthlyReportGenerator:
             )
 
         fig.update_layout(
-            title_text="Goal Progress",
+            title_text="🎯 Goal Progress",
             height=200 * len(goal_progress),
             margin=dict(l=0, r=0, t=50, b=0)
         )
@@ -250,25 +340,28 @@ class MonthlyReportGenerator:
             lowest_goal = None
 
         summary = f"""
-        ### Monthly Progress Summary
+        ### 📋 Monthly Progress Summary
 
-        **Total Observations:** {num_observations}
-        **Goals Tracked:** {num_goals_with_progress}
-        **Average Goal Progress:** {avg_goal_score:.1f}/10
+        **📊 Total Observations:** {num_observations}
+        **🎯 Goals Tracked:** {num_goals_with_progress}
+        **📈 Average Goal Progress:** {avg_goal_score:.1f}/10
         """
 
         if highest_goal:
             summary += f"""
-            **Strongest Goal Area:** {highest_goal['goal_text'][:50]}... (Score: {highest_goal['avg_score']:.1f}/10)
-            **Goal Needing Most Support:** {lowest_goal['goal_text'][:50]}... (Score: {lowest_goal['avg_score']:.1f}/10)
+            **🌟 Strongest Goal Area:** {highest_goal['goal_text'][:50]}... (Score: {highest_goal['avg_score']:.1f}/10)
+            **📉 Goal Needing Most Support:** {lowest_goal['goal_text'][:50]}... (Score: {lowest_goal['avg_score']:.1f}/10)
             """
 
         return summary
 
-    # NEW: Generate monthly summary in JSON format with graph suggestions
     def generate_monthly_summary_json_format(self, observations, goal_progress, child_name, year, month):
         """Generate monthly summary in the new JSON format with graph recommendations"""
         try:
+            # Get communication skills and growth metrics
+            comm_skills = self.get_communication_skills(observations)
+            growth_metrics = self.get_growth_metrics(observations)
+
             # Prepare data for analysis
             observation_texts = []
             all_strengths = []
@@ -328,7 +421,7 @@ class MonthlyReportGenerator:
             if total_observations > 0:
                 graph_suggestions.append({
                     "type": "line_chart",
-                    "title": "Weekly Observation Trends",
+                    "title": "📅 Weekly Observation Trends",
                     "description": f"Shows observation frequency across {len(weekly_trends)} weeks in the month",
                     "data": weekly_trends,
                     "xAxis": "Week",
@@ -337,7 +430,7 @@ class MonthlyReportGenerator:
 
                 graph_suggestions.append({
                     "type": "bar_chart",
-                    "title": "Daily Learning Activities",
+                    "title": "📚 Daily Learning Activities",
                     "description": f"Distribution of {total_observations} learning sessions throughout the month",
                     "data": {"total_sessions": total_observations},
                     "insights": f"Average of {total_observations / 30:.1f} sessions per day"
@@ -346,7 +439,7 @@ class MonthlyReportGenerator:
             if strength_counts:
                 graph_suggestions.append({
                     "type": "pie_chart",
-                    "title": "Strength Areas Distribution",
+                    "title": "🌟 Strength Areas Distribution",
                     "description": f"Breakdown of {len(strength_counts)} different strength categories",
                     "data": dict(list(strength_counts.items())[:8]),
                     "insights": f"Most frequent strength: {max(strength_counts.keys(), key=strength_counts.get)}"
@@ -354,7 +447,7 @@ class MonthlyReportGenerator:
 
                 graph_suggestions.append({
                     "type": "donut_chart",
-                    "title": "Top 5 Strengths Focus",
+                    "title": "🏆 Top 5 Strengths Focus",
                     "description": "Concentrated view of primary strength areas",
                     "data": dict(list(strength_counts.items())[:5])
                 })
@@ -362,7 +455,7 @@ class MonthlyReportGenerator:
             if development_counts:
                 graph_suggestions.append({
                     "type": "horizontal_bar",
-                    "title": "Development Priority Areas",
+                    "title": "📈 Development Priority Areas",
                     "description": f"Focus areas requiring attention with frequency analysis",
                     "data": dict(list(development_counts.items())[:6]),
                     "insights": f"Primary development focus: {max(development_counts.keys(), key=development_counts.get)}"
@@ -370,11 +463,11 @@ class MonthlyReportGenerator:
 
             if goal_progress:
                 goal_completion_rate = (completed_goals / (active_goals + completed_goals)) * 100 if (
-                                                                                                                 active_goals + completed_goals) > 0 else 0
+                                                                                                             active_goals + completed_goals) > 0 else 0
 
                 graph_suggestions.append({
                     "type": "gauge_chart",
-                    "title": "Goal Achievement Rate",
+                    "title": "🎯 Goal Achievement Rate",
                     "description": f"Monthly goal completion progress",
                     "data": {
                         "completion_rate": goal_completion_rate,
@@ -387,7 +480,7 @@ class MonthlyReportGenerator:
 
                 graph_suggestions.append({
                     "type": "progress_bars",
-                    "title": "Individual Goal Progress",
+                    "title": "📊 Individual Goal Progress",
                     "description": "Detailed progress tracking for each goal",
                     "data": [{"goal": g['goal_text'][:30], "progress": g['avg_score']} for g in goal_progress[:5]]
                 })
@@ -396,13 +489,13 @@ class MonthlyReportGenerator:
             if learning_metrics:
                 graph_suggestions.append({
                     "type": "radar_chart",
-                    "title": "Learning Engagement Profile",
+                    "title": "📊 Learning Engagement Profile",
                     "description": "Multi-dimensional view of learning engagement",
                     "data": learning_metrics,
                     "insights": "Comprehensive engagement across different learning domains"
                 })
 
-            # Create comprehensive prompt for JSON generation
+            # Create comprehensive prompt for JSON generation with new fields
             monthly_prompt = f"""
             You are an AI assistant for a learning observation system. Generate a comprehensive monthly report based on the provided observation data for educational assessment and progress tracking.
 
@@ -411,6 +504,9 @@ class MonthlyReportGenerator:
             TOTAL OBSERVATIONS: {total_observations}
             GOALS STATUS: {active_goals} active, {completed_goals} completed
             LEARNING SESSIONS ANALYZED: {len(observation_texts)}
+
+            COMMUNICATION SKILLS SUMMARY: {json.dumps(comm_skills, indent=2)}
+            GROWTH METRICS SUMMARY: {json.dumps(growth_metrics, indent=2)}
 
             OBSERVATION SAMPLE DATA: {json.dumps(observation_texts[:3], indent=2)}
             STRENGTHS IDENTIFIED: {list(strength_counts.keys())[:8]}
@@ -424,12 +520,14 @@ class MonthlyReportGenerator:
             {{
               "studentName": "{child_name}",
               "studentId": "Monthly-{year}-{month:02d}-Report",
-              "className": "Monthly Learning Progress Assessment",
+              "className": "📋 Monthly Learning Progress Assessment",
               "date": "{calendar.month_name[month]} {year}",
               "observations": "Comprehensive monthly learning summary combining all {total_observations} observation sessions. Detail the student's learning journey throughout {calendar.month_name[month]}, highlighting key educational milestones, skill development patterns, engagement levels, and notable learning breakthroughs. Include specific examples of learning activities, problem-solving approaches, creative expressions, and social interactions observed during the month.",
               "strengths": {json.dumps(list(strength_counts.keys())[:8])},
               "areasOfDevelopment": {json.dumps(list(development_counts.keys())[:6])},
               "recommendations": ["Specific actionable recommendations for {calendar.month_name[month + 1 if month < 12 else 1]} based on observed learning patterns", "Suggested learning activities to reinforce strengths", "Targeted interventions for development areas", "Parent engagement strategies", "Environmental modifications to support learning"],
+              "communicationSkills": {json.dumps(comm_skills)},
+              "growthMetrics": {json.dumps(growth_metrics)},
               "monthlyMetrics": {{
                 "totalObservations": {total_observations},
                 "activeGoals": {active_goals},
@@ -441,12 +539,12 @@ class MonthlyReportGenerator:
                 "averageSessionsPerWeek": {total_observations / 4.3 if total_observations > 0 else 0}
               }},
               "learningAnalytics": {{
-                "engagementLevel": "High/Medium/Low based on observation frequency and quality",
-                "learningVelocity": "Assessment of learning pace and skill acquisition speed",
-                "socialDevelopment": "Progress in social skills and peer interactions",
-                "cognitiveGrowth": "Intellectual development and problem-solving abilities",
-                "creativityIndex": "Creative expression and innovative thinking patterns",
-                "independenceLevel": "Self-directed learning and autonomous task completion"
+                "engagement Level": "High/Medium/Low based on observation frequency and quality",
+                "learning Velocity": "Assessment of learning pace and skill acquisition speed",
+                "social Development": "Progress in social skills and peer interactions",
+                "cognitive Growth": "Intellectual development and problem-solving abilities",
+                "creativity Index": "Creative expression and innovative thinking patterns",
+                "independence Level": "Self-directed learning and autonomous task completion"
               }},
               "suggestedGraphs": {graph_suggestions},
               "progressInsights": [
@@ -540,6 +638,7 @@ class MonthlyReportGenerator:
         # --- Extract curiosity and growth scores by date ---
         curiosity_by_date = {}
         growth_by_date = {}
+        comm_skills_by_date = {}
         for obs in observations:
             date = obs.get('date')
             try:
@@ -557,12 +656,31 @@ class MonthlyReportGenerator:
             if growth_match:
                 growth_score = int(growth_match.group(1))
                 growth_by_date[date] = growth_score
+            # Extract communication skills
+            comm_skills = {}
+            confidence_match = re.search(r'Confidence level:.*?(Strong|Moderate|Weak)', report, re.IGNORECASE)
+            if confidence_match:
+                comm_skills['confidence'] = confidence_match.group(1)
+            clarity_match = re.search(r'Clarity of thought:.*?(Clear|Moderate|Unclear)', report, re.IGNORECASE)
+            if clarity_match:
+                comm_skills['clarity'] = clarity_match.group(1)
+            participation_match = re.search(r'Participation.*?:.*?(Active|Moderate|Passive)', report, re.IGNORECASE)
+            if participation_match:
+                comm_skills['participation'] = participation_match.group(1)
+            sequence_match = re.search(r'Sequence of explanation:.*?(Logical|Moderate|Disorganized)', report,
+                                       re.IGNORECASE)
+            if sequence_match:
+                comm_skills['sequencing'] = sequence_match.group(1)
+            if comm_skills:
+                comm_skills_by_date[date] = comm_skills
 
         # Sort by date
         curiosity_dates = sorted(curiosity_by_date.keys())
         growth_dates = sorted(growth_by_date.keys())
+        comm_dates = sorted(comm_skills_by_date.keys())
         curiosity_scores = [curiosity_by_date[d] for d in curiosity_dates]
         growth_scores = [growth_by_date[d] for d in growth_dates]
+        comm_skills_data = [comm_skills_by_date[d] for d in comm_dates]
 
         with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
             workbook = writer.book
@@ -576,8 +694,9 @@ class MonthlyReportGenerator:
             summary_df.to_excel(writer, sheet_name='Summary', index=False)
             worksheet = writer.sheets['Summary']
             # Add a narrative summary at the top
-            worksheet.write('A1', 'Monthly Learning Progress Summary', workbook.add_format({'bold': True, 'font_size': 14}))
-            worksheet.write('A3', 'Key Metrics:', workbook.add_format({'bold': True}))
+            worksheet.write('A1', '📋 Monthly Learning Progress Summary',
+                            workbook.add_format({'bold': True, 'font_size': 14}))
+            worksheet.write('A3', '📊 Key Metrics:', workbook.add_format({'bold': True}))
 
             # --- Curiosity Line Chart ---
             if curiosity_dates:
@@ -591,9 +710,9 @@ class MonthlyReportGenerator:
                 chart.add_series({
                     'name': 'Curiosity Score',
                     'categories': ['Curiosity Trend', 1, 0, len(curiosity_df), 0],
-                    'values':     ['Curiosity Trend', 1, 1, len(curiosity_df), 1],
+                    'values': ['Curiosity Trend', 1, 1, len(curiosity_df), 1],
                 })
-                chart.set_title({'name': 'Curiosity Response Index by Day'})
+                chart.set_title({'name': '🌈 Curiosity Response Index by Day'})
                 chart.set_x_axis({'name': 'Date'})
                 chart.set_y_axis({'name': 'Curiosity Score', 'major_gridlines': {'visible': False}})
                 ws.insert_chart('D2', chart)
@@ -610,12 +729,23 @@ class MonthlyReportGenerator:
                 chart.add_series({
                     'name': 'Growth Score',
                     'categories': ['Growth Trend', 1, 0, len(growth_df), 0],
-                    'values':     ['Growth Trend', 1, 1, len(growth_df), 1],
+                    'values': ['Growth Trend', 1, 1, len(growth_df), 1],
                 })
-                chart.set_title({'name': 'Overall Growth Score by Day'})
+                chart.set_title({'name': '📈 Overall Growth Score by Day'})
                 chart.set_x_axis({'name': 'Date'})
                 chart.set_y_axis({'name': 'Growth Score', 'major_gridlines': {'visible': False}})
                 ws.insert_chart('D2', chart)
+
+            # --- Communication Skills Sheet ---
+            if comm_dates:
+                comm_df = pd.DataFrame({
+                    'Date': comm_dates,
+                    'Confidence': [d.get('confidence', '') for d in comm_skills_data],
+                    'Clarity': [d.get('clarity', '') for d in comm_skills_data],
+                    'Participation': [d.get('participation', '') for d in comm_skills_data],
+                    'Sequencing': [d.get('sequencing', '') for d in comm_skills_data]
+                })
+                comm_df.to_excel(writer, sheet_name='Communication Skills', index=False)
 
             # --- Strengths sheet ---
             if strength_counts:
@@ -623,7 +753,7 @@ class MonthlyReportGenerator:
                     {"Strength": strength, "Count": count}
                     for strength, count in strength_counts.items()
                 ])
-                strengths_df.to_excel(writer, sheet_name='Strengths', index=False)
+                strengths_df.to_excel(writer, sheet_name='🌟 Strengths', index=False)
 
             # --- Development areas sheet ---
             if development_counts:
@@ -631,7 +761,7 @@ class MonthlyReportGenerator:
                     {"Development Area": area, "Count": count}
                     for area, count in development_counts.items()
                 ])
-                development_df.to_excel(writer, sheet_name='Development Areas', index=False)
+                development_df.to_excel(writer, sheet_name='📈 Development Areas', index=False)
 
             # --- Goal progress sheet ---
             if goal_progress:
@@ -639,12 +769,13 @@ class MonthlyReportGenerator:
                     {"Goal": g['goal_text'], "Average Score": g['avg_score'], "Observations": g['num_observations']}
                     for g in goal_progress
                 ])
-                goals_df.to_excel(writer, sheet_name='Goal Progress', index=False)
+                goals_df.to_excel(writer, sheet_name='🎯 Goal Progress', index=False)
 
         buffer.seek(0)
         return buffer
 
-    def generate_monthly_docx_report(self, observations, goal_progress, strength_counts, development_counts, summary_json):
+    def generate_monthly_docx_report(self, observations, goal_progress, strength_counts, development_counts,
+                                     summary_json):
         doc = docx.Document()
         style = doc.styles['Normal']
         font = style.font
@@ -652,46 +783,64 @@ class MonthlyReportGenerator:
         font.size = Pt(11)
 
         # --- Narrative Section ---
-        doc.add_heading(f"Monthly Learning Progress Report", 0)
-        doc.add_paragraph(f"{summary_json.get('date', '')}")
-        doc.add_paragraph(f"Student: {summary_json.get('studentName', '')}")
+        doc.add_heading(f"📋 Monthly Growth Report", 0)
+        doc.add_paragraph(f"📅 {summary_json.get('date', '')}")
+        doc.add_paragraph(f"👧 Student: {summary_json.get('studentName', '')}")
         doc.add_paragraph("")
         doc.add_paragraph(summary_json.get('observations', ''))
         doc.add_paragraph("")
 
         # --- Strengths ---
-        doc.add_heading("Strengths Observed", level=1)
+        doc.add_heading("🌟 Strengths Observed", level=1)
         for s in summary_json.get('strengths', []):
             doc.add_paragraph(s, style='List Bullet')
         doc.add_paragraph("")
 
         # --- Areas for Development ---
-        doc.add_heading("Areas for Development", level=1)
+        doc.add_heading("📈 Areas for Development", level=1)
         for a in summary_json.get('areasOfDevelopment', []):
             doc.add_paragraph(a, style='List Bullet')
         doc.add_paragraph("")
 
+        # --- Communication Skills ---
+        doc.add_heading("🗣️ Communication Skills", level=1)
+        comm_skills = summary_json.get('communicationSkills', {})
+        if comm_skills:
+            doc.add_paragraph(f"Confidence level: {comm_skills.get('confidence', 'No data').title()}")
+            doc.add_paragraph(f"Clarity of thought: {comm_skills.get('clarity', 'No data').title()}")
+            doc.add_paragraph(f"Participation & engagement: {comm_skills.get('participation', 'No data').title()}")
+            doc.add_paragraph(f"Sequence of explanation: {comm_skills.get('sequencing', 'No data').title()}")
+        doc.add_paragraph("")
+
+        # --- Growth Metrics ---
+        doc.add_heading("📊 Growth Metrics", level=1)
+        growth_metrics = summary_json.get('growthMetrics', {})
+        if growth_metrics:
+            for area, rating in growth_metrics.items():
+                doc.add_paragraph(f"{area}: {rating.title()}")
+        doc.add_paragraph("")
+
         # --- Recommendations ---
-        doc.add_heading("Recommendations for Next Month", level=1)
+        doc.add_heading("📣 Recommendations for Next Month", level=1)
         for r in summary_json.get('recommendations', []):
             doc.add_paragraph(r, style='List Bullet')
         doc.add_paragraph("")
 
         # --- Learning Analytics ---
-        doc.add_heading("Learning Analytics", level=1)
+        doc.add_heading("📊 Learning Analytics", level=1)
         analytics = summary_json.get('learningAnalytics', {})
         for k, v in analytics.items():
             doc.add_paragraph(f"{k.replace('_', ' ').title()}: {v}")
         doc.add_paragraph("")
 
         # --- Progress Insights ---
-        doc.add_heading("Progress Insights", level=1)
+        doc.add_heading("🔍 Progress Insights", level=1)
         for insight in summary_json.get('progressInsights', []):
             doc.add_paragraph(insight, style='List Bullet')
         doc.add_paragraph("")
 
         # --- Graphs Section ---
-        doc.add_heading("Visual Analytics", level=1)
+        doc.add_heading("📈 Visual Analytics", level=1)
 
         # Curiosity and Growth scores by day (parse from observations)
         curiosity_by_date = {}
@@ -721,7 +870,7 @@ class MonthlyReportGenerator:
         if curiosity_dates:
             fig, ax = plt.subplots()
             ax.plot(curiosity_dates, curiosity_scores, marker='o', color='blue')
-            ax.set_title('Curiosity Response Index by Day')
+            ax.set_title('🌈 Curiosity Response Index by Day')
             ax.set_xlabel('Date')
             ax.set_ylabel('Curiosity Score')
             ax.xaxis.set_major_locator(MaxNLocator(integer=True))
@@ -738,7 +887,7 @@ class MonthlyReportGenerator:
         if growth_dates:
             fig, ax = plt.subplots()
             ax.plot(growth_dates, growth_scores, marker='o', color='green')
-            ax.set_title('Overall Growth Score by Day')
+            ax.set_title('📈 Overall Growth Score by Day')
             ax.set_xlabel('Date')
             ax.set_ylabel('Growth Score')
             ax.xaxis.set_major_locator(MaxNLocator(integer=True))
@@ -781,11 +930,13 @@ class MonthlyReportGenerator:
         docx_bytes.seek(0)
         return docx_bytes
 
-    def generate_monthly_pdf_report(self, observations, goal_progress, strength_counts, development_counts, summary_json):
-        from docx2pdf import convert
+    def generate_monthly_pdf_report(self, observations, goal_progress, strength_counts, development_counts,
+                                    summary_json):
+
         import tempfile
         import os
-        docx_bytes = self.generate_monthly_docx_report(observations, goal_progress, strength_counts, development_counts, summary_json)
+        docx_bytes = self.generate_monthly_docx_report(observations, goal_progress, strength_counts, development_counts,
+                                                       summary_json)
         with tempfile.NamedTemporaryFile(delete=False, suffix='.docx') as tmp_docx:
             tmp_docx.write(docx_bytes.read())
             tmp_docx_path = tmp_docx.name
