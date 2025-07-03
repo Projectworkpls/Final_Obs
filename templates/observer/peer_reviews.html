@@ -12,7 +12,7 @@
     <div class="alert alert-info">
         <i class="fas fa-info-circle me-2"></i>
         <strong>Review Limit:</strong> You can review up to {{ max_reviews_allowed }} observations (equal to your submitted reports).
-        Only observations from the last 24 hours that haven't been reviewed by anyone are shown.
+        Only observations from the last 1 week that haven't been reviewed by anyone are shown.
     </div>
 
     <!-- Statistics -->
@@ -160,7 +160,6 @@
                             <th>Student</th>
                             <th>Observer</th>
                             <th>Date</th>
-                            <th>Review Score</th>
                             <th>Requires Changes</th>
                             <th>Reviewed On</th>
                         </tr>
@@ -171,11 +170,6 @@
                             <td>{{ review.observations.student_name if review.observations else 'N/A' }}</td>
                             <td>{{ review.observations.observer_name if review.observations else 'N/A' }}</td>
                             <td>{{ review.observations.date if review.observations else 'N/A' }}</td>
-                            <td>
-                                <span class="badge bg-{% if review.review_score >= 4 %}success{% elif review.review_score >= 3 %}warning{% else %}danger{% endif %}">
-                                    {{ review.review_score }}/5
-                                </span>
-                            </td>
                             <td>
                                 {% if review.requires_changes %}
                                     <span class="badge bg-warning">Yes</span>
