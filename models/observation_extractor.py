@@ -924,3 +924,187 @@ CRITICAL INSTRUCTIONS FOR NAME AND GENDER USAGE:
 
         except Exception as e:
             return f"Error generating monthly summary: {str(e)}"
+
+    def generate_monthly_docx_report(self, observations, goal_progress, strength_counts, development_counts, summary_json):
+        """
+        Generate a narrative-rich monthly report as a Word document, with embedded charts.
+        """
+        import docx
+        from docx.shared import Inches, Pt
+        from io import BytesIO
+        import matplotlib.pyplot as plt
+        from matplotlib.ticker import MaxNLocator
+        import re
+        import json
+
+        doc = docx.Document()
+        style = doc.styles['Normal']
+        font = style.font
+        font.name = 'Segoe UI'
+        font.size = Pt(11)
+
+        # --- Narrative Section ---
+        doc.add_heading(f"Monthly Growth Report", 0)
+        doc.add_paragraph(f"{summary_json.get('date', '')}")
+        doc.add_paragraph(f"Student: {summary_json.get('studentName', '')}")
+        doc.add_paragraph("")
+        doc.add_paragraph(summary_json.get('observations', ''))
+        doc.add_paragraph("")
+
+        # --- Strengths ---
+        doc.add_heading("Strengths Observed", level=1)
+        for s in summary_json.get('strengths', []):
+            doc.add_paragraph(s, style='List Bullet')
+        doc.add_paragraph("")
+
+        # --- Areas for Development ---
+        doc.add_heading("Areas for Development", level=1)
+        for a in summary_json.get('areasOfDevelopment', []):
+            doc.add_paragraph(a, style='List Bullet')
+        doc.add_paragraph("")
+
+        # --- Recommendations ---
+        doc.add_heading("Recommendations for Next Month", level=1)
+        for r in summary_json.get('recommendations', []):
+            doc.add_paragraph(r, style='List Bullet')
+        doc.add_paragraph("")
+
+        # ---  Analytics ---
+        doc.add_heading("Learning Analytics", level=1)
+        analytics = summary_json.get('learningAnalytics', {})
+        for k, v in analytics.items():
+            doc.add_paragraph(f"{k.replace('_', ' ').title()}: {v}")
+        doc.add_paragraph("")
+
+        # --- Progress Insights ---
+        doc.add_heading("Progress Insights", level=1)
+        for insight in summary_json.get('progressInsights', []):
+            doc.add_paragraph(insight, style='List Bullet')
+        doc.add_paragraph("")
+
+        # --- Graphs Section ---
+        doc.add_heading("Visual Analytics", level=1)
+
+        # Curiosity and Growth scores by day (parse from observations)
+        curiosity_by_date = {}
+        growth_by_date = {}
+        for obs in observations:
+            date = obs.get('date')
+            try:
+                full_data = json.loads(obs.get('full_data', '{}'))
+                report = full_data.get('formatted_report', '')
+            except Exception:
+                report = ''
+            curiosity_match = re.search(r'🌈 Curiosity Response Index: (\\d{1,2}) ?/ ?10', report)
+            if curiosity_match:
+                curiosity_score = int(curiosity_match.group(1))
+                curiosity_by_date[date] = curiosity_score
+            growth_match = re.search(r'Overall Growth Score.*?(\\d)\\s*/\\s*7', report)
+            if growth_match:
+                growth_score = int(growth_match.group(1))
+                growth_by_date[date] = growth_score
+        # Sort by date
+        curiosity_dates = sorted(curiosity_by_date.keys())
+        growth_dates = sorted(growth_by_date.keys())
+        curiosity_scores = [curiosity_by_date[d] for d in curiosity_dates]
+        growth_scores = [growth_by_date[d] for d in growth_dates]
+
+        # --- Curiosity Line Chart ---
+        if curiosity_dates:
+            fig, ax = plt.subplots()
+            ax.plot(curiosity_dates, curiosity_scores, marker='o', color='blue')
+            ax.set_title('Curiosity Response Index by Day')
+            ax.set_xlabel('Date')
+            ax.set_ylabel('Curiosity Score')
+            ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+            plt.xticks(rotation=45, ha='right')
+            plt.tight_layout()
+            img_stream = BytesIO()
+            plt.savefig(img_stream, format='png')
+            plt.close(fig)
+            img_stream.seek(0)
+            doc.add_picture(img_stream, width=Inches(5.5))
+            doc.add_paragraph("")
+
+        # --- Growth Line Chart ---
+        if growth_dates:
+            fig, ax = plt.subplots()
+            ax.plot(growth_dates, growth_scores, marker='o', color='green')
+            ax.set_title('Overall Growth Score by Day')
+            ax.set_xlabel('Date')
+            ax.set_ylabel('Growth Score')
+            ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+            plt.xticks(rotation=45, ha='right')
+            plt.tight_layout()
+            img_stream = BytesIO()
+            plt.savefig(img_stream, format='png')
+            plt.close(fig)
+            img_stream.seek(0)
+            doc.add_picture(img_stream, width=Inches(5.5))
+            doc.add_paragraph("")
+
+        # --- Other suggested graphs from summary_json ---
+        for graph in summary_json.get('suggestedGraphs', []):
+            if graph['type'] in ['line_chart', 'bar_chart']:
+                fig, ax = plt.subplots()
+                if graph['type'] == 'line_chart':
+                    x = list(graph['data'].keys())
+                    y = list(graph['data'].values())
+                    ax.plot(x, y, marker='o')
+                elif graph['type'] == 'bar_chart':
+                    x = list(graph['data'].keys())
+                    y = list(graph['data'].values())
+                    ax.bar(x, y)
+                ax.set_title(graph.get('title', ''))
+                ax.set_xlabel(graph.get('xAxis', ''))
+                ax.set_ylabel(graph.get('yAxis', ''))
+                plt.xticks(rotation=45, ha='right')
+                plt.tight_layout()
+                img_stream = BytesIO()
+                plt.savefig(img_stream, format='png')
+                plt.close(fig)
+                img_stream.seek(0)
+                doc.add_picture(img_stream, width=Inches(5.5))
+                doc.add_paragraph(graph.get('description', ''))
+                doc.add_paragraph("")
+
+        docx_bytes = BytesIO()
+        doc.save(docx_bytes)
+        docx_bytes.seek(0)
+        return docx_bytes
+
+    def generate_monthly_pdf_report(self, observations, goal_progress, strength_counts, development_counts, summary_json):
+        """
+        Generate a PDF version of the monthly report by converting the Word doc.
+        """
+        from docx2pdf import convert
+        import tempfile
+        import os
+        docx_bytes = self.generate_monthly_docx_report(observations, goal_progress, strength_counts, development_counts, summary_json)
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.docx') as tmp_docx:
+            tmp_docx.write(docx_bytes.read())
+            tmp_docx_path = tmp_docx.name
+        tmp_pdf_path = tmp_docx_path.replace('.docx', '.pdf')
+        convert(tmp_docx_path, tmp_pdf_path)
+        with open(tmp_pdf_path, 'rb') as f:
+            pdf_bytes = f.read()
+        os.remove(tmp_docx_path)
+        os.remove(tmp_pdf_path)
+        from io import BytesIO
+        return BytesIO(pdf_bytes)
+
+    def preprocess_audio_for_student(self, file, student_id):
+        """Preprocess audio for students with known issues"""
+        if student_id == "08cd0c39-62b1-4931-a9bb-1106a5206a39":
+            # Add audio enhancement for this specific student
+            # This could include noise reduction, volume normalization, etc.
+            logger.info("Applying audio preprocessing for student with detection issues")
+            # Return processed file or original if preprocessing fails
+            pass
+        return file
+
+    def transcribe_with_whisper_fallback(self, file):
+        """Fallback transcription method using Whisper or similar"""
+        # Implement a backup transcription service
+        # This is a placeholder - you'll need to implement actual fallback logic
+        raise NotImplementedError("Fallback transcription not implemented yet")
