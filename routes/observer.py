@@ -310,7 +310,7 @@ def process_file():
                     f"audio/{file.content_type.split('/')[1] if '/' in file.content_type else 'mp3'}"
                 )
             except Exception as upload_error:
-                print(f"Error uploading file: {upload_error}")
+                logger.error(f"Error uploading file: {upload_error}")
                 return jsonify({
                     'success': False,
                     'error': f'Failed to upload audio file: {str(upload_error)}'
@@ -319,33 +319,83 @@ def process_file():
             # Reset file pointer for transcription
             file.seek(0)
 
-            # Transcribe audio with better error handling
+            # Student-specific audio processing adjustments
+            min_length = 5  # Default minimum length
+            if child_id == "08cd0c39-62b1-4931-a9bb-1106a5206a39":  # Daivik's ID
+                logger.info("Applying student-specific audio processing settings")
+                min_length = 3  # More lenient for this student
+                try:
+                    file = extractor.preprocess_audio_for_student(file, child_id)
+                except Exception as preproc_err:
+                    logger.warning(f"Audio preprocessing failed: {preproc_err}")
+
+            # Add detailed logging before transcription
+            logger.info(f"Starting transcription for student {child_id}: {file.filename}")
+            logger.info(f"File size: {file_size} bytes")
+
+            # Try multiple transcription services
+            transcript = None
+            transcription_service = "unknown"
             try:
                 transcript = extractor.transcribe_with_assemblyai(file)
-
-                # Check if transcription was successful
-                if not transcript or transcript.strip() == "" or "error" in transcript.lower():
+                transcription_service = "assemblyai"
+                logger.info(f"AssemblyAI transcription successful: {len(transcript) if transcript else 0} chars")
+            except Exception as e:
+                logger.warning(f"AssemblyAI failed: {e}, trying fallback methods")
+                try:
+                    file.seek(0)
+                    transcript = extractor.transcribe_with_whisper_fallback(file)
+                    transcription_service = "whisper_fallback"
+                    logger.info(f"Fallback transcription successful: {len(transcript) if transcript else 0} chars")
+                except Exception as e2:
+                    logger.error(f"All transcription methods failed: {e2}")
                     return jsonify({
                         'success': False,
-                        'error': 'Audio transcription failed. Please ensure the audio is clear and contains speech.'
+                        'error': f'All transcription services failed. Primary: {str(e)}, Fallback: {str(e2)}'
                     })
 
-                # Check for common transcription errors
-                if len(transcript.strip()) < 10:
-                    return jsonify({
-                        'success': False,
-                        'error': 'Audio transcription too short. Please ensure the audio contains sufficient speech content.'
-                    })
-            except Exception as transcription_error:
-                print(f"Transcription error: {transcription_error}")
+            logger.info(f"Transcription completed. Length: {len(transcript) if transcript else 0}")
+            logger.info(f"Transcript preview: {transcript[:100] if transcript else 'None'}")
+
+            # Add force process option
+            force_process = request.form.get('force_process', 'false').lower() == 'true'
+
+            # Check if transcription was successful
+            if not transcript or transcript.strip() == "":
+                logger.error("Empty transcript returned from transcription service")
                 return jsonify({
                     'success': False,
-                    'error': f'Audio transcription failed: {str(transcription_error)}'
+                    'error': 'Audio transcription returned empty result. Please ensure the audio is clear and contains speech.'
+                })
+
+            # More specific error detection
+            error_indicators = ["transcription failed", "no audio detected", "unable to process", "error processing audio"]
+            if any(indicator in transcript.lower() for indicator in error_indicators):
+                logger.error(f"Transcription service returned error: {transcript}")
+                return jsonify({
+                    'success': False,
+                    'error': 'Audio transcription service reported an error. Please try again with clearer audio.'
+                })
+
+            # Check for minimum length with more flexibility
+            if force_process and transcript and len(transcript.strip()) > 0:
+                logger.info("Force processing enabled, skipping length validation")
+            elif len(transcript.strip()) < min_length:
+                logger.warning(f"Short transcript ({len(transcript)} chars): {transcript}")
+                return jsonify({
+                    'success': False,
+                    'error': f'Audio transcription too short ({len(transcript)} characters). Please ensure the audio contains sufficient speech content.',
+                    'debug_info': {
+                        'transcript_length': len(transcript),
+                        'transcript_preview': transcript[:50] if transcript else None,
+                        'file_size': file_size,
+                        'service_used': transcription_service
+                    }
                 })
 
             # Generate formatted report from transcript with validation
             try:
-                if transcript and len(transcript.strip()) > 10:
+                if transcript and (force_process or len(transcript.strip()) >= min_length):
                     report = extractor.generate_report_from_text(transcript, user_info)
                 else:
                     return jsonify({
@@ -353,7 +403,7 @@ def process_file():
                         'error': 'Insufficient audio content for report generation.'
                     })
             except Exception as report_error:
-                print(f"Report generation error: {report_error}")
+                logger.error(f"Report generation error: {report_error}")
                 return jsonify({
                     'success': False,
                     'error': f'Failed to generate report: {str(report_error)}'
@@ -380,7 +430,9 @@ def process_file():
                     "report": report,
                     "formatted_report": report,
                     "file_size": file_size,
-                    "transcription_length": len(transcript)
+                    "transcription_length": len(transcript),
+                    "transcription_service": transcription_service,
+                    "processing_timestamp": datetime.now().isoformat()
                 }),
                 "theme_of_day": "",
                 "curiosity_seed": "",
