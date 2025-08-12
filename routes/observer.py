@@ -1456,11 +1456,12 @@ def download_monthly_report():
         summary_json = report_generator.generate_monthly_summary_json_format(
             observations, goal_progress, child_name, year, month
         )
+        
         if isinstance(summary_json, str):
             import json as _json
             try:
                 summary_json = _json.loads(summary_json)
-            except Exception:
+            except Exception as e:
                 flash('Could not generate a valid summary for this report. Please check if there are enough daily reports for the selected month.', 'error')
                 return redirect(url_for('observer.monthly_reports'))
 
@@ -1501,30 +1502,9 @@ def download_monthly_report():
 @login_required
 @observer_required
 def download_monthly_pdf():
-    try:
-        monthly_report = session.get('last_monthly_report')
-        if not monthly_report:
-            flash('No monthly report available for download', 'error')
-            return redirect(url_for('observer.monthly_reports'))
-
-        # Create PDF
-        extractor = ObservationExtractor()
-        pdf_buffer = extractor.create_pdf_alternative(monthly_report)
-
-        # Create filename
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        filename = f"monthly_report_{timestamp}.pdf"
-
-        return send_file(
-            pdf_buffer,
-            as_attachment=True,
-            download_name=filename,
-            mimetype='application/pdf'
-        )
-
-    except Exception as e:
-        flash(f'Error downloading monthly PDF: {str(e)}', 'error')
-        return redirect(url_for('observer.monthly_reports'))
+    """DEPRECATED: Use /download_monthly_report?filetype=pdf instead"""
+    flash('This route is deprecated. Please use the new download format.', 'warning')
+    return redirect(url_for('observer.monthly_reports'))
 
 
 @observer_bp.route('/email_monthly_report', methods=['POST'])
