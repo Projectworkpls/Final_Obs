@@ -432,7 +432,7 @@ function refreshMessages() {
 }
 
 // FIXED: Enhanced monthly report generation with proper JSON parsing and display
-function generateMonthlyReport() {
+function generateMonthlyReport(event) {
     const childId = document.getElementById('monthly-child-select').value;
     const year = document.getElementById('monthly-year').value;
     const month = document.getElementById('monthly-month').value;
@@ -448,7 +448,7 @@ function generateMonthlyReport() {
     button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating...';
     button.disabled = true;
 
-    showSpinner();
+    showProcessingStatus();
 
     const formData = new FormData();
     formData.append('child_id', childId);
@@ -461,306 +461,198 @@ function generateMonthlyReport() {
     })
     .then(response => response.json())
     .then(data => {
-        hideSpinner();
+        hideProcessingStatus();
 
-        if (data.success || data.summary) {
-            // Parse JSON summary - Enhanced parsing
-            let summaryData;
-            try {
-                let summaryText = data.summary;
+        if (!(data.success || data.summary)) {
+            showToast('error', data.error || "Error generating monthly report");
+            return;
+        }
 
-                // Remove "Monthly Summary" prefix if present
-                summaryText = summaryText.replace(/^Monthly Summary\s*/i, '');
-
-                // Extract JSON from code blocks
-                const jsonMatch = summaryText.match(/``````/);
-                if (jsonMatch) {
-                    summaryData = JSON.parse(jsonMatch[1].trim());
-                } else {
-                    // Try to find JSON object directly
-                    const jsonStart = summaryText.indexOf('{');
-                    const jsonEnd = summaryText.lastIndexOf('}');
-                    if (jsonStart !== -1 && jsonEnd !== -1) {
-                        const jsonString = summaryText.substring(jsonStart, jsonEnd + 1);
-                        summaryData = JSON.parse(jsonString);
-                    } else {
-                        throw new Error('No JSON found');
-                    }
-                }
-            } catch (e) {
-                console.log('Failed to parse JSON, treating as plain text:', e);
-                summaryData = { observations: data.summary };
-            }
-
-            // Display the monthly report with structured format
-            const reportSection = document.getElementById('monthly-report-section');
-            const reportContent = document.getElementById('monthly-report-content');
-
-            let reportHtml = '';
-
-            if (typeof summaryData === 'object' && summaryData.studentName) {
-                reportHtml = `
-                    <div class="card mb-4">
-                        <div class="card-header bg-primary text-white">
-                            <h5 class="mb-0"><i class="fas fa-user me-2"></i>Student Information</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <p><strong>Name:</strong> ${summaryData.studentName}</p>
-                                    <p><strong>Period:</strong> ${summaryData.date}</p>
-                                </div>
-                                <div class="col-md-6">
-                                    <p><strong>Report Type:</strong> ${summaryData.className}</p>
-                                    <p><strong>Report ID:</strong> ${summaryData.studentId}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    ${summaryData.monthlyMetrics ? `
-                        <div class="card mb-4">
-                            <div class="card-header bg-info text-white">
-                                <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Monthly Metrics</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-3">
-                                        <div class="text-center">
-                                            <h4 class="text-primary">${summaryData.monthlyMetrics.totalObservations}</h4>
-                                            <small>Total Observations</small>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="text-center">
-                                            <h4 class="text-success">${summaryData.monthlyMetrics.completedGoals}</h4>
-                                            <small>Completed Goals</small>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="text-center">
-                                            <h4 class="text-warning">${summaryData.monthlyMetrics.activeGoals}</h4>
-                                            <small>Active Goals</small>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="text-center">
-                                            <h4 class="text-info">${summaryData.monthlyMetrics.goalCompletionRate?.toFixed(1) || 0}%</h4>
-                                            <small>Completion Rate</small>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    ` : ''}
-
-                    <div class="card mb-4">
-                        <div class="card-header bg-success text-white">
-                            <h5 class="mb-0"><i class="fas fa-eye me-2"></i>Monthly Learning Summary</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="p-3 bg-light rounded" style="max-height: 400px; overflow-y: auto; line-height: 1.6;">
-                                ${summaryData.observations || 'No observations summary available'}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <div class="card h-100">
-                                <div class="card-header bg-warning text-white">
-                                    <h6 class="mb-0"><i class="fas fa-star me-2"></i>Strengths Observed</h6>
-                                </div>
-                                <div class="card-body">
-                                    ${summaryData.strengths && summaryData.strengths.length > 0 ? `
-                                        <ul class="list-unstyled">
-                                            ${summaryData.strengths.map(strength => `
-                                                <li class="mb-2">
-                                                    <i class="fas fa-check-circle text-success me-2"></i>${strength}
-                                                </li>
-                                            `).join('')}
-                                        </ul>
-                                    ` : '<p class="text-muted"><i class="fas fa-info-circle me-2"></i>No specific strengths data available for this period</p>'}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="card h-100">
-                                <div class="card-header bg-danger text-white">
-                                    <h6 class="mb-0"><i class="fas fa-arrow-up me-2"></i>Areas for Development</h6>
-                                </div>
-                                <div class="card-body">
-                                    ${summaryData.areasOfDevelopment && summaryData.areasOfDevelopment.length > 0 ? `
-                                        <ul class="list-unstyled">
-                                            ${summaryData.areasOfDevelopment.map(area => `
-                                                <li class="mb-2">
-                                                    <i class="fas fa-arrow-circle-up text-warning me-2"></i>${area}
-                                                </li>
-                                            `).join('')}
-                                        </ul>
-                                    ` : '<p class="text-muted"><i class="fas fa-info-circle me-2"></i>No specific development areas identified for this period</p>'}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card mb-4">
-                        <div class="card-header bg-secondary text-white">
-                            <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Recommendations for Next Month</h5>
-                        </div>
-                        <div class="card-body">
-                            ${summaryData.recommendations && summaryData.recommendations.length > 0 ? `
-                                <ul>
-                                    ${summaryData.recommendations.map(rec => `
-                                        <li class="mb-2">${rec}</li>
-                                    `).join('')}
-                                </ul>
-                            ` : '<p class="text-muted">No specific recommendations available</p>'}
-                        </div>
-                    </div>
-
-                    ${summaryData.learningAnalytics ? `
-                        <div class="card mb-4">
-                            <div class="card-header bg-dark text-white">
-                                <h5 class="mb-0"><i class="fas fa-brain me-2"></i>Learning Analytics</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <p><strong>Engagement Level:</strong> 
-                                            <span class="badge bg-${summaryData.learningAnalytics.engagementLevel === 'High' ? 'success' : summaryData.learningAnalytics.engagementLevel === 'Medium' ? 'warning' : 'secondary'} ms-2">
-                                                ${summaryData.learningAnalytics.engagementLevel}
-                                            </span>
-                                        </p>
-                                        <p><strong>Learning Velocity:</strong><br>
-                                            <small class="text-muted">${summaryData.learningAnalytics.learningVelocity}</small>
-                                        </p>
-                                        <p><strong>Independence Level:</strong> 
-                                            <span class="badge bg-primary ms-2">${summaryData.learningAnalytics.independenceLevel}</span>
-                                        </p>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <p><strong>Social Development:</strong><br>
-                                            <small class="text-muted">${summaryData.learningAnalytics.socialDevelopment}</small>
-                                        </p>
-                                        <p><strong>Cognitive Growth:</strong><br>
-                                            <small class="text-muted">${summaryData.learningAnalytics.cognitiveGrowth}</small>
-                                        </p>
-                                        <p><strong>Creativity Index:</strong><br>
-                                            <small class="text-muted">${summaryData.learningAnalytics.creativityIndex}</small>
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    ` : ''}
-
-                    ${summaryData.progressInsights ? `
-                        <div class="card mb-4">
-                            <div class="card-header bg-info text-white">
-                                <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Progress Insights</h5>
-                            </div>
-                            <div class="card-body">
-                                <ul>
-                                    ${summaryData.progressInsights.map(insight => `
-                                        <li class="mb-2">${insight}</li>
-                                    `).join('')}
-                                </ul>
-                            </div>
-                        </div>
-                    ` : ''}
-
-                    ${summaryData.suggestedGraphs ? `
-                        <div class="card">
-                            <div class="card-header bg-purple text-white" style="background-color: #6f42c1 !important;">
-                                <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Suggested Visual Analytics</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    ${summaryData.suggestedGraphs.map(graph => `
-                                        <div class="col-md-6 mb-3">
-                                            <div class="card border-primary">
-                                                <div class="card-body">
-                                                    <h6 class="card-title text-primary">${graph.title}</h6>
-                                                    <p class="card-text small">${graph.description}</p>
-                                                    <span class="badge bg-info">${graph.type.replace('_', ' ').toUpperCase()}</span>
-                                                    ${graph.insights ? `<br><small class="text-muted mt-2 d-block"><i class="fas fa-info-circle me-1"></i>${graph.insights}</small>` : ''}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        </div>
-                    ` : ''}
-                `;
+        // --- Parse and order the summary JSON ---
+        let summaryData;
+        try {
+            let summaryText = data.summary || '';
+            summaryText = summaryText.replace(/^Monthly Summary\s*/i, '');
+            const jsonStart = summaryText.indexOf('{');
+            const jsonEnd = summaryText.lastIndexOf('}');
+            if (jsonStart !== -1 && jsonEnd !== -1) {
+                const jsonString = summaryText.substring(jsonStart, jsonEnd + 1);
+                summaryData = JSON.parse(jsonString);
             } else {
-                // Fallback display
-                const cleanedSummary = data.summary ? data.summary.replace(/``````/g, '').replace(/^Monthly Summary\s*/i, '').trim() : 'Report generated successfully';
-                reportHtml = `
-                    <div class="card">
-                        <div class="card-header">
-                            <h5>Monthly Summary</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="p-3 bg-light rounded">
-                                ${cleanedSummary}
-                            </div>
-                        </div>
+                throw new Error('No JSON found');
+            }
+        } catch (e) {
+            summaryData = { observations: data.summary || "No data available." };
+        }
+
+        // ---- Build the new report display in required order ----
+        let reportHtml = '';
+
+        // Student Info Header (always)
+        reportHtml += `
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-user me-2"></i>Student Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Name:</strong> ${summaryData.studentName || '-'}</p>
+                        <p><strong>Period:</strong> ${summaryData.date || '-'}</p>
                     </div>
-                `;
-            }
+                    <div class="col-md-6">
+                        <p><strong>Report Type:</strong> ${summaryData.className || '-'}</p>
+                        <p><strong>Report ID:</strong> ${summaryData.studentId || '-'}</p>
+                    </div>
+                </div>
+            </div>
+        </div>`;
 
-            reportContent.innerHTML = reportHtml;
-            reportSection.style.display = 'block';
-            reportSection.classList.add('fade-in');
+        // 1. Progress Insights
+        if (summaryData.progressInsights && summaryData.progressInsights.length > 0) {
+            reportHtml += `
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Progress Insights</h5>
+                </div>
+                <div class="card-body">
+                    <ul>
+                        ${summaryData.progressInsights.map(insight => `<li>${insight}</li>`).join('')}
+                    </ul>
+                </div>
+            </div>`;
+        }
 
-            // Show charts section
-            const chartsSection = document.getElementById('monthly-report-display');
-            if (chartsSection) {
-                chartsSection.style.display = 'block';
-            }
+        // 2. Strengths Observed
+        reportHtml += `
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-white">
+                <h5 class="mb-0"><i class="fas fa-star me-2"></i>Strengths Observed</h5>
+            </div>
+            <div class="card-body">
+                ${summaryData.strengths && summaryData.strengths.length > 0 ? `
+                    <ul class="list-unstyled">
+                        ${summaryData.strengths.map(strength =>
+            `<li class="mb-2">
+                <i class="fas fa-check-circle text-success me-2"></i>${strength}
+            </li>`).join('')}
+                    </ul>
+                ` : '<p class="text-muted"><i class="fas fa-info-circle me-2"></i>No specific strengths data available for this period.</p>'}
+            </div>
+        </div>`;
 
-            // Update statistics cards if they exist
-            if (data.data) {
-                const totalObs = document.getElementById('total-observations');
-                const activeGoals = document.getElementById('active-goals');
-                const strengthAreas = document.getElementById('strength-areas');
-                const developmentAreas = document.getElementById('development-areas');
+        // 3. Communication Skills TABLE
+        if (summaryData.communicationSkills) {
+            reportHtml += `
+            <div class="card mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="fas fa-comments me-2"></i>Communication Skills</h5>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-striped mb-0">
+                        <thead class="table-dark">
+                        <tr>
+                            <th>Skill</th>
+                            <th>Rating</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td>Confidence Level</td>
+                            <td>${capitalize(summaryData.communicationSkills.confidence)}</td>
+                        </tr>
+                        <tr>
+                            <td>Clarity of Thought</td>
+                            <td>${capitalize(summaryData.communicationSkills.clarity)}</td>
+                        </tr>
+                        <tr>
+                            <td>Participation & Engagement</td>
+                            <td>${capitalize(summaryData.communicationSkills.participation)}</td>
+                        </tr>
+                        <tr>
+                            <td>Sequence of Explanation</td>
+                            <td>${capitalize(summaryData.communicationSkills.sequencing)}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>`;
+        }
 
-                if (totalObs) totalObs.textContent = data.data.observations_count;
-                if (activeGoals) activeGoals.textContent = data.data.goals_count;
-                if (strengthAreas) strengthAreas.textContent = Object.keys(data.data.strengths || {}).length;
-                if (developmentAreas) developmentAreas.textContent = Object.keys(data.data.development || {}).length;
-            }
+        // 4. Growth Metrics TABLE
+        if (summaryData.growthMetrics) {
+            reportHtml += `
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Growth Metrics</h5>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-striped mb-0">
+                        <thead class="table-dark">
+                        <tr>
+                            <th>Area</th>
+                            <th>Rating</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        ${Object.entries(summaryData.growthMetrics || {})
+                            .map(([area, rating]) =>
+                                `<tr><td>${area}</td><td>${capitalize(rating)}</td></tr>`
+                            ).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>`;
+        }
 
-            // Render charts if available
-            if (data.charts && typeof Plotly !== 'undefined') {
-                Object.keys(data.charts).forEach(chartType => {
-                    if (data.charts[chartType]) {
-                        try {
-                            const chartData = JSON.parse(data.charts[chartType]);
-                            const chartElement = document.getElementById(`${chartType}-chart`);
-                            if (chartElement) {
-                                Plotly.newPlot(chartElement, chartData.data, chartData.layout, {responsive: true});
-                            }
-                        } catch (e) {
-                            console.error('Error rendering chart:', e);
-                        }
-                    }
-                });
-            }
+        // 5. Areas for Development
+        reportHtml += `
+        <div class="card mb-4">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="fas fa-arrow-up me-2"></i>Areas for Development</h5>
+            </div>
+            <div class="card-body">
+                ${summaryData.areasOfDevelopment && summaryData.areasOfDevelopment.length > 0 ? `
+                    <ul class="list-unstyled">
+                        ${summaryData.areasOfDevelopment.map(area =>
+            `<li class="mb-2">
+                <i class="fas fa-arrow-circle-up text-warning me-2"></i>${area}
+            </li>`).join('')}
+                    </ul>
+                ` : '<p class="text-muted"><i class="fas fa-info-circle me-2"></i>No specific development areas identified for this period.</p>'}
+            </div>
+        </div>`;
 
-            // Scroll to the report
-            reportSection.scrollIntoView({ behavior: 'smooth' });
-            showAlert('Monthly report generated successfully!', 'success');
-        } else {
-            showAlert(data.error || 'Error generating monthly report', 'danger');
+        // 6. Recommendations (heading: Recommendation)
+        reportHtml += `
+        <div class="card mb-4">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Recommendation</h5>
+            </div>
+            <div class="card-body">
+                ${summaryData.recommendations && summaryData.recommendations.length > 0 ? `
+                    <ul>
+                        ${summaryData.recommendations.map(rec =>
+            `<li class="mb-2">${rec}</li>`).join('')}
+                    </ul>
+                ` : '<p class="text-muted">No specific recommendations available.</p>'}
+            </div>
+        </div>`;
+
+        // Insert into DOM
+        document.getElementById('monthly-report-content').innerHTML = reportHtml;
+        document.getElementById('monthly-report-section').style.display = 'block';
+
+        showToast('success', 'Monthly report generated successfully!');
+
+        function capitalize(value) {
+            if (!value) return 'No data';
+            return value.charAt(0).toUpperCase() + value.slice(1);
         }
     })
     .catch(error => {
-        hideSpinner();
-        showAlert('Error generating monthly report', 'danger');
+        hideProcessingStatus();
+        showToast('error', 'Error generating monthly report');
         console.error('Error:', error);
     })
     .finally(() => {
@@ -768,6 +660,7 @@ function generateMonthlyReport() {
         button.disabled = false;
     });
 }
+
 
 // NEW: Download monthly reports
 function downloadMonthlyReport(type) {
@@ -1114,3 +1007,64 @@ window.showToast = showToast;
 window.refreshScheduleStatus = refreshScheduleStatus;
 window.showScheduleModal = showScheduleModal;
 window.saveSchedule = saveSchedule;
+
+function displayEnhancedMonthlyReport(data) {
+    const reportContainer = document.getElementById('monthly-summary');
+    
+    if (!reportContainer) {
+        console.error('Report container not found');
+        return;
+    }
+    
+    const reportHTML = `
+        <div class="creative-report">
+            <div class="report-header">
+                <h2>📖 ${data.studentName}'s Learning Story</h2>
+                <p class="report-period">${data.reportPeriod} -  ${data.totalSessions} Learning Sessions</p>
+                <span class="report-type">${data.reportType}</span>
+            </div>
+            
+            <div class="narrative-section">
+                <h3>🌟 This Month's Journey</h3>
+                <div class="story-content">${data.creativeNarrative}</div>
+            </div>
+            
+            <div class="insights-grid">
+                <div class="insight-card positive">
+                    <h4>✨ Standout Qualities</h4>
+                    <ul>
+                        ${data.standoutQualities.map(q => `<li>${q}</li>`).join('')}
+                    </ul>
+                </div>
+                
+                <div class="insight-card growth">
+                    <h4>📈 Growth Areas</h4>
+                    <ul>
+                        ${data.growthAreas.map(g => `<li>${g}</li>`).join('')}
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="memorable-moments">
+                <h4>🎯 Memorable Moments</h4>
+                <div class="moments-grid">
+                    ${data.memorableMoments.map(m => `<div class="moment-item">${m}</div>`).join('')}
+                </div>
+            </div>
+            
+            <div class="recommendations">
+                <h4>💡 Strategic Recommendations</h4>
+                <ul>
+                    ${data.strategicRecommendations.map(r => `<li>${r}</li>`).join('')}
+                </ul>
+            </div>
+            
+            <div class="learning-style">
+                <h4>🧠 Learning Style Insight</h4>
+                <p>${data.learningStyleInsight}</p>
+            </div>
+        </div>
+    `;
+    
+    reportContainer.innerHTML = reportHTML;
+}
