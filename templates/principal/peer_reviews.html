@@ -132,6 +132,97 @@
         </div>
     </div>
 
+    <!-- Automatic AI Reviews Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-robot me-2"></i>🔍 Automatic AI Reviews of Observer–Student Conversations</h5>
+        </div>
+        <div class="card-body">
+            <p class="text-muted">Only observations with an AI review are listed below.</p>
+            {% if auto_reviews %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width:120px;">Date</th>
+                            <th style="width:210px;">Student</th>
+                            <th style="width:210px;">Observer</th>
+                            <th>AI Review (Preview)</th>
+                            <th style="width:230px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for obs in auto_reviews %}
+                        <tr>
+                            <td>{{ obs.date }}</td>
+                            <td>{{ obs.student_name }}</td>
+                            <td>{{ obs.observer_name }}</td>
+                            <td>
+                                <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#ai_review_{{ obs.id }}">
+                                    View AI Review
+                                </button>
+                                <div id="ai_review_{{ obs.id }}" class="collapse mt-2">
+                                    <div class="border rounded p-3 ai-review-box">
+                                        <article class="ai-review-content">{{ obs.communication_review|markdown_to_html|safe }}</article>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <a class="btn btn-sm btn-secondary" href="{{ url_for('principal.download_ai_review_docx', observation_id=obs.id) }}">
+                                        Download DOCX
+                                    </a>
+                                    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#emailAIReviewModal" data-observation="{{ obs.id }}">
+                                        Email
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="5" class="text-center text-muted">No AI reviews available yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-robot fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No AI reviews available</h5>
+                <p class="text-muted">AI reviews of observer-student conversations will appear here once they are generated.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Email Modal -->
+    <div class="modal fade" id="emailAIReviewModal" tabindex="-1" aria-labelledby="emailAIReviewModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="emailAIReviewModalLabel">Email AI Review</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="emailAIReviewForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="email_ai_observation_id" name="observation_id">
+                        <div class="mb-3">
+                            <label for="recipient_email" class="form-label">Recipient Email</label>
+                            <input type="email" class="form-control" id="recipient_email" name="recipient_email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="message" class="form-label">Additional Message (Optional)</label>
+                            <textarea class="form-control" id="message" name="message" rows="3" placeholder="Add any additional context or message..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Send Email</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Observer Feedback History Section -->
     <div class="card">
         <div class="card-header">
@@ -180,6 +271,117 @@
     </div>
 </div>
 
+<style>
+.ai-review-box {
+    max-height: 460px;
+    overflow:auto;
+    background:#fff;
+}
+.ai-review-content {
+    line-height:1.6;
+    font-size:0.95rem;
+    color: #333;
+}
+.ai-review-content .ai-review-p {
+    margin-bottom: 1rem;
+    line-height: 1.6;
+}
+.ai-review-content .ai-review-h1 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 1.5rem 0 1rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #3498db;
+}
+.ai-review-content .ai-review-h2 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #34495e;
+    margin: 1.2rem 0 0.8rem 0;
+    padding-left: 0.5rem;
+    border-left: 3px solid #3498db;
+}
+.ai-review-content .ai-review-h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 1rem 0 0.6rem 0;
+}
+.ai-review-content .ai-review-strong {
+    font-weight: 700;
+    color: #2c3e50;
+}
+.ai-review-content .ai-review-em {
+    font-style: italic;
+    color: #7f8c8d;
+}
+.ai-review-content .ai-review-ul, .ai-review-content .ai-review-ol {
+    padding-left: 1.5rem;
+    margin: 0.8rem 0;
+}
+.ai-review-content .ai-review-li {
+    margin-bottom: 0.4rem;
+    line-height: 1.5;
+}
+.ai-review-content .ai-review-ul .ai-review-li {
+    list-style-type: disc;
+}
+.ai-review-content .ai-review-ol .ai-review-li {
+    list-style-type: decimal;
+}
+.ai-review-content table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+    border: 1px solid #e1e8ed;
+    border-radius: 6px;
+    overflow: hidden;
+}
+.ai-review-content table th, .ai-review-content table td {
+    border: 1px solid #e1e8ed;
+    padding: 0.75rem;
+    vertical-align: top;
+    text-align: left;
+}
+.ai-review-content table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+}
+.ai-review-content table tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+.ai-review-content table tr:hover {
+    background-color: #e9ecef;
+}
+.ai-review-content code {
+    background-color: #f8f9fa;
+    padding: 0.2rem 0.4rem;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+    color: #e83e8c;
+}
+.ai-review-content pre {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 6px;
+    overflow-x: auto;
+    border: 1px solid #e9ecef;
+    margin: 1rem 0;
+}
+.ai-review-content blockquote {
+    border-left: 4px solid #3498db;
+    padding-left: 1rem;
+    margin: 1rem 0;
+    color: #6c757d;
+    font-style: italic;
+}
+</style>
+
 <script>
 function showComments(reviewId) {
     const commentsDiv = document.getElementById('comments-' + reviewId);
@@ -189,5 +391,37 @@ function showComments(reviewId) {
         commentsDiv.style.display = 'none';
     }
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const emailModal = document.getElementById('emailAIReviewModal');
+    if (emailModal) {
+        emailModal.addEventListener('show.bs.modal', function (event) {
+            const btn = event.relatedTarget;
+            const obsId = btn ? btn.getAttribute('data-observation') : '';
+            document.getElementById('email_ai_observation_id').value = obsId;
+        });
+    }
+    
+    const form = document.getElementById('emailAIReviewForm');
+    if (form) {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const fd = new FormData(form);
+            const resp = await fetch('{{ url_for("principal.email_ai_review") }}', {
+                method:'POST',
+                body: fd
+            });
+            const data = await resp.json();
+            if (data.success) {
+                alert('Email sent successfully.');
+                const modal = bootstrap.Modal.getInstance(document.getElementById('emailAIReviewModal'));
+                modal.hide();
+                form.reset();
+            } else {
+                alert('Failed to send email: ' + (data.error || data.message || 'Unknown error'));
+            }
+        });
+    }
+});
 </script>
 {% endblock %}
