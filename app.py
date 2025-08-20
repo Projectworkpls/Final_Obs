@@ -13,6 +13,13 @@ from routes.messages import messages_bp
 from routes.principal import principal_bp
 import logging
 import sys
+from flask_mail import Mail, Message
+from flask_apscheduler import APScheduler
+
+mail = Mail()
+scheduler = APScheduler()
+
+
 
 # Fix Unicode encoding for Windows
 if sys.platform.startswith('win'):
@@ -32,11 +39,81 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger(__name__)
+from models.database import get_supabase_client
+from datetime import datetime, timedelta
+
+def send_reminder_email(to, child_name, scheduled_time):
+    # Should be run in Flask app context!
+    subject = f"Session Reminder: Observation for {child_name}"
+    body = (
+        f"Dear Observer,\n\n"
+        f"This is a reminder: you have an upcoming observation session for {child_name} scheduled at {scheduled_time} today.\n"
+        f"Please submit your report after the session.\n\n"
+        f"Thank you!"
+    )
+    try:
+        msg = Message(subject, recipients=[to], body=body)
+        mail.send(msg)
+        print(f"[MAIL] Sent reminder to {to} for session at {scheduled_time}.")
+    except Exception as e:
+        print(f"[MAIL] Failed to send email to {to}: {e}")
+
+from datetime import datetime, timedelta
+
+def check_and_send_observer_reminders():
+    with scheduler.app.app_context():
+        now = datetime.now()
+        print(f"[SCHEDULER] Running reminder check at: {now}")
+        supabase = get_supabase_client()
+        schedules = supabase.table('scheduled_reports').select('*').eq('is_active', True).execute().data or []
+        print(f"[SCHEDULER] Found {len(schedules)} active schedules")
+        for sched in schedules:
+            print(f"[SCHEDULER] Checking schedule: {sched}")
+            observer_id = sched['observer_id']
+            child_id = sched['child_id']
+            scheduled_time = sched['scheduled_time']
+            session_dt = now.replace(hour=int(scheduled_time.split(':')[0]),
+                                     minute=int(scheduled_time.split(':')[1]), second=0, microsecond=0)
+            mins_to_session = (session_dt - now).total_seconds() / 60.0
+            print(f"[SCHEDULER] Minutes to session: {mins_to_session}")
+            if 29.5 <= mins_to_session <= 30.5:
+                print(f"[SCHEDULER] Session within 30 min reminder window")
+                today_str = now.strftime('%Y-%m-%d')
+                obs = supabase.table('observations').select('*').eq('student_id', child_id).eq('username', observer_id).eq('date', today_str).execute().data
+                if not obs:
+                    observer = supabase.table('users').select('*').eq('id', observer_id).single().execute().data
+                    child = supabase.table('children').select('*').eq('id', child_id).single().execute().data
+                    if observer and child:
+                        print(f"[SCHEDULER] Sending email to {observer['email']} for child {child['name']}")
+                        send_reminder_email(observer['email'], child['name'], scheduled_time)
+                    else:
+                        print("[SCHEDULER] Observer or child not found")
+                else:
+                    print("[SCHEDULER] Observation already submitted today")
+            else:
+                print("[SCHEDULER] Outside reminder window")
+
+
+
 
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
+    mail.init_app(app)
+    scheduler.init_app(app)
+    scheduler.start()
+    scheduler.add_job(
+        id='observer-reminders',
+        func=check_and_send_observer_reminders,
+        trigger='interval',
+        minutes=1
+    )
+
+    @app.route('/test_reminder')
+    def test_reminder():
+        send_reminder_email("sanketbbt7@gmail.com", "Demo Child", "19:45")
+        return "Test email sent!"
 
     # Register datetimeformat filter for Jinja2 templates
     def datetimeformat(value, format='%Y-%m-%d %H:%M'):
