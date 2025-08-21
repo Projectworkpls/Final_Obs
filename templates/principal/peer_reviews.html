@@ -163,7 +163,8 @@
                                 </button>
                                 <div id="ai_review_{{ obs.id }}" class="collapse mt-2">
                                     <div class="border rounded p-3 ai-review-box">
-                                        <article class="ai-review-content">{{ obs.communication_review|markdown_to_html|safe }}</article>
+                                        <!-- FIXED: Remove the markdown_to_html filter -->
+                                        <article class="ai-review-content">{{ obs.communication_review }}</article>
                                     </div>
                                 </div>
                             </td>
@@ -278,6 +279,7 @@
     background:#fff;
 }
 .ai-review-content {
+    white-space: pre-wrap;
     line-height:1.6;
     font-size:0.95rem;
     color: #333;
@@ -380,6 +382,8 @@
     color: #6c757d;
     font-style: italic;
 }
+
+
 </style>
 
 <script>
