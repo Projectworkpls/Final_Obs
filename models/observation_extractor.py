@@ -392,6 +392,76 @@ Format it as a natural dialogue where:
         except Exception as e:
             return f"Error generating report: {str(e)}"
 
+    def generate_ai_communication_review(self, transcript, user_info):
+        """Generate AI communication review for peer review system"""
+        prompt = f"""
+        You are an AI assistant analyzing observer-student communication sessions for educational quality assessment. 
+        Generate a comprehensive communication review in a professional report format based on the provided transcript.
+
+        STUDENT: {user_info['student_name']}
+        OBSERVER: {user_info['observer_name']}
+        TRANSCRIPT: {transcript}
+
+        Generate a detailed AI communication review in the following professional format:
+
+        Analysis of Observer's Communication Style
+        This report analyzes the conversation transcripts to evaluate the observer's adherence to non-judgmental and non-teaching communication techniques with {user_info['student_name']}.
+
+        1. Instances of Direct Advice, Judgment, or Teaching
+        [Analyze specific examples where the observer provided direct advice, made judgments, or acted as a teacher rather than a listener]
+
+        ● 🚩 Red Flag: [Specific issue identified]
+        ○ Instances: [Describe specific examples from the transcript]
+        ■ [Date if available]: "[Exact quote from transcript]"
+        ○ Analysis: [Explain why this is problematic and its impact]
+
+        ● 🚩 Red Flag: [Another specific issue]
+        ○ Instance: [Describe the instance]
+        ○ Analysis: [Explain the impact and why it's concerning]
+
+        2. Suggested Rephrasing for Non-Judgmental Communication
+        [Provide specific examples of how the observer could rephrase their interactions]
+
+        ● For [specific issue]:
+        ○ Instead of: "[Current problematic phrase]"
+        ○ Ask: "[Suggested non-judgmental alternative]"
+
+        3. Missed Opportunities for Deeper Conversation
+        [Identify moments where the observer could have explored topics more deeply]
+
+        ● Date: [if available]
+        ○ Missed Opportunity: [Describe what the student shared that could have been explored further]
+        ○ Suggested Question: "[Specific question the observer could have asked]"
+
+        4. Adherence to Non-Judgmental Listening: A Summary
+        [Create a summary table of the observer's performance]
+
+        Date | Adherence (✅/❌) | Red Flags | Suggested Improvements
+        [Date] | ✅/❌ | Yes/No | [Brief description of what went well or needs improvement]
+
+        5. Findings and Recommendations for Program Managers
+        [Provide actionable insights and recommendations]
+
+        Observer Improvement Areas
+        [Summarize the main areas where the observer needs to improve]
+
+        Impact on the Student ({user_info['student_name']})
+        [Analyze how the observer's communication style affects the student]
+
+        Recommendation: [Provide specific, actionable recommendations for improvement]
+
+        Format the review with proper hierarchical structure using the bullet points (●, ○, ■) and numbered sections as shown above. Include specific quotes from the transcript when relevant. Be constructive and educational in tone while being honest about areas that need improvement.
+        """
+
+        try:
+            model = genai.GenerativeModel('gemini-2.0-flash')
+            response = model.generate_content([
+                {"role": "user", "parts": [{"text": prompt}]}
+            ])
+            return response.text
+        except Exception as e:
+            return f"Error generating AI communication review: {str(e)}"
+
     def create_word_document_with_emojis(self, report_content):
         """Create a Word document from the report content with emoji support"""
         doc = docx.Document()
