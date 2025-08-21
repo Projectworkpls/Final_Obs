@@ -543,6 +543,8 @@ def peer_reviews():
         org_users = supabase.table('users').select('id,name,role').eq('organization_id', org_id).execute()
         org_users_data = org_users.data or []
         org_user_ids = [user['id'] for user in org_users_data]
+        
+        logger.info(f"Principal {principal_id} in org {org_id}: Found {len(org_users_data)} users in organization")
 
         # 2. Get ALL organization observations for peer reviews
         all_org_observations = []
@@ -554,6 +556,8 @@ def peer_reviews():
                 'id, student_name, observer_name, date, full_data'
             ).in_('username', org_user_ids).order('timestamp', desc=True).execute()
             all_obs = obs_response.data or []
+            
+            logger.info(f"Principal {principal_id} in org {org_id}: Found {len(all_obs)} total observations")
             
             # Create observation map for peer reviews
             for ob in all_obs:
@@ -567,14 +571,19 @@ def peer_reviews():
             
             # Filter observations WITH AI review only for the AI reviews section
             filtered = []
+            ai_review_count = 0
+            no_ai_review_count = 0
             for ob in all_obs:
                 try:
                     fd = json.loads(ob.get('full_data') or "{}")
-                except Exception:
+                except Exception as e:
+                    logger.warning(f"Could not parse full_data for observation {ob.get('id')}: {e}")
                     fd = {}
                 ai_review = fd.get('communication_review')
                 if not ai_review:
+                    no_ai_review_count += 1
                     continue  # SHOW ONLY ONES THAT ALREADY HAVE AI REVIEW
+                ai_review_count += 1
                 # Normalize whitespace for nicer display (do not alter stored text)
                 clean_text = ai_review.strip()
                 # Attach derived fields for template and actions
@@ -586,7 +595,21 @@ def peer_reviews():
                     'communication_review': clean_text
                 })
             org_observations = filtered
-            logger.info(f"Found {len(org_observations)} observations with AI reviews")
+            logger.info(f"Principal {principal_id} in org {org_id}: {ai_review_count} observations with AI reviews, {no_ai_review_count} without AI reviews")
+            
+            # If no AI reviews found, log additional debugging info
+            if ai_review_count == 0 and len(all_obs) > 0:
+                logger.warning(f"Principal {principal_id} in org {org_id}: No AI reviews found despite having {len(all_obs)} observations")
+                # Log sample of full_data to debug
+                for i, ob in enumerate(all_obs[:3]):  # Check first 3 observations
+                    try:
+                        fd = json.loads(ob.get('full_data') or "{}")
+                        logger.info(f"Sample observation {i+1}: has full_data={bool(fd)}, keys={list(fd.keys()) if fd else 'None'}")
+                    except Exception as e:
+                        logger.warning(f"Sample observation {i+1}: Error parsing full_data: {e}")
+        else:
+            logger.warning(f"Principal {principal_id} in org {org_id}: No users found in organization")
+            org_observations = []
 
         # 3. Get peer reviews for org observations
         org_peer_reviews = []
@@ -629,6 +652,16 @@ def peer_reviews():
                 'created_at', desc=True).execute()
             principal_feedback = feedback_res.data or []
 
+        # 5. Get AI review notifications for this principal
+        notifications = []
+        try:
+            notifications_res = supabase.table('notifications').select('*').eq('recipient_id', principal_id).eq('type', 'ai_review_generated').eq('read', False).order('created_at', desc=True).execute()
+            notifications = notifications_res.data or []
+            logger.info(f"Found {len(notifications)} unread AI review notifications for principal {principal_id}")
+        except Exception as notif_error:
+            logger.warning(f"Failed to fetch notifications: {notif_error}")
+            notifications = []
+
         logger.info(f"Rendering template with {len(org_peer_reviews)} peer reviews, {len(principal_feedback)} feedback items, {len(observers)} observers, {len(org_users_data)} users, {len(org_observations)} AI reviews")
         
         return render_template('principal/peer_reviews.html',
@@ -636,7 +669,8 @@ def peer_reviews():
                                principal_feedback=principal_feedback,
                                observers=observers,
                                users=org_users_data,
-                               auto_reviews=org_observations # only AI‑reviewed items now
+                               auto_reviews=org_observations, # only AI‑reviewed items now
+                               notifications=notifications
                                )
 
     except Exception as e:
@@ -646,7 +680,8 @@ def peer_reviews():
                                peer_reviews=[],
                                principal_feedback=[],
                                observers=[],
-                               users=[]
+                               users=[],
+                               notifications=[]
                                )
 
 
@@ -929,6 +964,7 @@ def download_ai_review_docx(observation_id):
         from docx import Document
         from docx.shared import Pt
         from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
+        from docx.shared import RGBColor
         from io import BytesIO
 
         doc = Document()
@@ -1083,6 +1119,47 @@ def download_ai_review_docx(observation_id):
 
             while i < len(lines):
                 ln = lines[i].rstrip()
+                
+                # Document title (first line)
+                if i == 0 and not ln.startswith(('#', '##', '###')):
+                    flush_paragraph_buffer(buffer); buffer = []
+                    title = doc.add_heading(ln, level=0)
+                    title.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+                    i += 1; continue
+                
+                # Numbered sections (1. 2. 3. etc.)
+                if re.match(r'^\d+\.\s+', ln):
+                    flush_paragraph_buffer(buffer); buffer = []
+                    add_heading(ln, level=1)
+                    i += 1; continue
+                
+                # Red flag items
+                if ln.startswith('● 🚩'):
+                    flush_paragraph_buffer(buffer); buffer = []
+                    p = doc.add_paragraph()
+                    run = p.add_run(ln)
+                    run.bold = True
+                    run.font.color.rgb = RGBColor(231, 76, 60)  # Red color
+                    i += 1; continue
+                
+                # Sub-bullets
+                if ln.startswith('○'):
+                    flush_paragraph_buffer(buffer); buffer = []
+                    doc.add_paragraph(ln, style='List Bullet 2')
+                    i += 1; continue
+                
+                # Sub-sub-bullets
+                if ln.startswith('■'):
+                    flush_paragraph_buffer(buffer); buffer = []
+                    doc.add_paragraph(ln, style='List Bullet 3')
+                    i += 1; continue
+                
+                # Regular bullets
+                if ln.startswith('●'):
+                    flush_paragraph_buffer(buffer); buffer = []
+                    doc.add_paragraph(ln, style='List Bullet')
+                    i += 1; continue
+                
                 # Headings
                 if ln.startswith('### '):
                     flush_paragraph_buffer(buffer); buffer = []
@@ -1093,21 +1170,29 @@ def download_ai_review_docx(observation_id):
                 if ln.startswith('# '):
                     flush_paragraph_buffer(buffer); buffer = []
                     add_heading(ln[2:], level=1); i += 1; continue
-
-                # Pipe table detection: header + separator + rows
-                if '|' in ln and (i+1 < len(lines) and set(lines[i+1].strip()) <= set('|-: ')):
-                    table_block = [ln, lines[i+1]]
-                    i += 2
+                
+                # Table detection
+                if '|' in ln and 'Date' in ln and 'Adherence' in ln:
+                    table_block = [ln]
+                    i += 1
                     while i < len(lines) and '|' in lines[i]:
                         table_block.append(lines[i]); i += 1
                     flush_paragraph_buffer(buffer); buffer = []
                     add_table_from_pipe(table_block)
                     continue
-
-                # Bold section titles like **1. ...**
-                if ln.strip().startswith('**') and ln.strip().endswith('**') and len(ln.strip()) > 4:
+                
+                # Bold text
+                if '**' in ln:
                     flush_paragraph_buffer(buffer); buffer = []
-                    add_paragraph(ln.strip().strip('* ').strip(), bold=True)
+                    # Replace **text** with bold formatting
+                    parts = ln.split('**')
+                    p = doc.add_paragraph()
+                    for j, part in enumerate(parts):
+                        if j % 2 == 1:  # Bold text
+                            run = p.add_run(part)
+                            run.bold = True
+                        else:  # Regular text
+                            p.add_run(part)
                     i += 1; continue
 
                 buffer.append(ln)
@@ -1131,6 +1216,228 @@ def download_ai_review_docx(observation_id):
         logger.exception(f"Error downloading AI review: {e}")
         flash('Error downloading AI review', 'error')
         return redirect(url_for('principal.peer_reviews'))
+
+
+@principal_bp.route('/debug_ai_reviews')
+@principal_required
+def debug_ai_reviews():
+    """Debug route to check AI review data for principals"""
+    try:
+        org_id = session.get('organization_id')
+        principal_id = session.get('user_id')
+        
+        supabase = get_supabase_client()
+        
+        # Get organization users
+        org_users = supabase.table('users').select('id,name,role').eq('organization_id', org_id).execute()
+        org_users_data = org_users.data or []
+        org_user_ids = [user['id'] for user in org_users_data]
+        
+        # Get all observations
+        all_obs = []
+        if org_user_ids:
+            obs_response = supabase.table('observations').select(
+                'id, student_name, observer_name, date, full_data, username'
+            ).in_('username', org_user_ids).order('timestamp', desc=True).execute()
+            all_obs = obs_response.data or []
+        
+        # Analyze AI reviews
+        ai_review_data = []
+        for ob in all_obs:
+            try:
+                fd = json.loads(ob.get('full_data') or "{}")
+                ai_review = fd.get('communication_review')
+                ai_review_data.append({
+                    'id': ob.get('id'),
+                    'student_name': ob.get('student_name'),
+                    'observer_name': ob.get('observer_name'),
+                    'date': ob.get('date'),
+                    'username': ob.get('username'),
+                    'has_ai_review': bool(ai_review),
+                    'ai_review_length': len(ai_review) if ai_review else 0,
+                    'ai_review_preview': ai_review[:100] + '...' if ai_review and len(ai_review) > 100 else ai_review,
+                    'full_data_keys': list(fd.keys()) if fd else []
+                })
+            except Exception as e:
+                ai_review_data.append({
+                    'id': ob.get('id'),
+                    'student_name': ob.get('student_name'),
+                    'observer_name': ob.get('observer_name'),
+                    'date': ob.get('date'),
+                    'username': ob.get('username'),
+                    'has_ai_review': False,
+                    'ai_review_length': 0,
+                    'ai_review_preview': f'Error parsing: {str(e)}',
+                    'full_data_keys': []
+                })
+        
+        # Get organization info
+        org_info = supabase.table('organizations').select('name').eq('id', org_id).execute()
+        org_name = org_info.data[0]['name'] if org_info.data else 'Unknown'
+        
+        debug_info = {
+            'principal_id': principal_id,
+            'organization_id': org_id,
+            'organization_name': org_name,
+            'total_org_users': len(org_users_data),
+            'total_observations': len(all_obs),
+            'observations_with_ai_reviews': len([obs for obs in ai_review_data if obs['has_ai_review']]),
+            'observations_without_ai_reviews': len([obs for obs in ai_review_data if not obs['has_ai_review']]),
+            'ai_review_details': ai_review_data[:10],  # Show first 10 for debugging
+            'org_users': [{'id': u['id'], 'name': u['name'], 'role': u['role']} for u in org_users_data[:5]]  # Show first 5 users
+        }
+        
+        return jsonify(debug_info)
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
+
+@principal_bp.route('/debug_all_orgs_ai_reviews')
+@principal_required
+def debug_all_orgs_ai_reviews():
+    """Admin-level debug route to check AI review status across all organizations"""
+    try:
+        # Check if this principal has admin privileges (you can modify this check as needed)
+        principal_id = session.get('user_id')
+        
+        supabase = get_supabase_client()
+        
+        # Get all organizations
+        orgs_response = supabase.table('organizations').select('id,name').execute()
+        all_orgs = orgs_response.data or []
+        
+        org_ai_review_summary = []
+        
+        for org in all_orgs:
+            org_id = org['id']
+            org_name = org['name']
+            
+            # Get users in this organization
+            org_users = supabase.table('users').select('id').eq('organization_id', org_id).execute()
+            org_user_ids = [user['id'] for user in org_users.data or []]
+            
+            # Get observations for this organization
+            total_obs = 0
+            ai_review_obs = 0
+            
+            if org_user_ids:
+                obs_response = supabase.table('observations').select('full_data').in_('username', org_user_ids).execute()
+                all_obs = obs_response.data or []
+                total_obs = len(all_obs)
+                
+                # Count observations with AI reviews
+                for ob in all_obs:
+                    try:
+                        fd = json.loads(ob.get('full_data') or "{}")
+                        if fd.get('communication_review'):
+                            ai_review_obs += 1
+                    except:
+                        pass
+            
+            org_ai_review_summary.append({
+                'organization_id': org_id,
+                'organization_name': org_name,
+                'total_observations': total_obs,
+                'observations_with_ai_reviews': ai_review_obs,
+                'ai_review_percentage': round((ai_review_obs / total_obs * 100) if total_obs > 0 else 0, 1)
+            })
+        
+        return jsonify({
+            'total_organizations': len(all_orgs),
+            'organization_summary': org_ai_review_summary
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
+
+@principal_bp.route('/generate_ai_reviews', methods=['POST'])
+@principal_required
+def generate_ai_reviews():
+    """Generate AI reviews for observations that don't have them"""
+    try:
+        org_id = session.get('organization_id')
+        principal_id = session.get('user_id')
+        
+        supabase = get_supabase_client()
+        
+        # Get organization users
+        org_users = supabase.table('users').select('id').eq('organization_id', org_id).execute()
+        org_user_ids = [user['id'] for user in org_users.data or []]
+        
+        if not org_user_ids:
+            return jsonify({'success': False, 'error': 'No users found in organization'})
+        
+        # Get observations without AI reviews
+        obs_response = supabase.table('observations').select(
+            'id, student_name, observer_name, date, full_data'
+        ).in_('username', org_user_ids).execute()
+        
+        all_obs = obs_response.data or []
+        observations_to_process = []
+        
+        for ob in all_obs:
+            try:
+                fd = json.loads(ob.get('full_data') or "{}")
+                if not fd.get('communication_review') and fd.get('transcript'):
+                    observations_to_process.append(ob)
+            except:
+                continue
+        
+        if not observations_to_process:
+            return jsonify({'success': False, 'error': 'No observations found that need AI review generation'})
+        
+        # Initialize AI review generator
+        from models.observation_extractor import ObservationExtractor
+        extractor = ObservationExtractor()
+        
+        processed_count = 0
+        errors = []
+        
+        for ob in observations_to_process[:10]:  # Process max 10 at a time
+            try:
+                fd = json.loads(ob.get('full_data') or "{}")
+                transcript = fd.get('transcript', '')
+                
+                if not transcript:
+                    continue
+                
+                # Generate AI review using the existing report generation logic
+                user_info = {
+                    'student_name': ob.get('student_name', 'Student'),
+                    'observer_name': ob.get('observer_name', 'Observer')
+                }
+                
+                # Generate AI review
+                ai_review = extractor.generate_ai_communication_review(transcript, user_info)
+                
+                if ai_review:
+                    # Update the observation with AI review
+                    fd['communication_review'] = ai_review
+                    fd['ai_review_generated_at'] = datetime.now().isoformat()
+                    
+                    supabase.table('observations').update({
+                        'full_data': json.dumps(fd)
+                    }).eq('id', ob.get('id')).execute()
+                    
+                    processed_count += 1
+                else:
+                    errors.append(f"Failed to generate AI review for observation {ob.get('id')}")
+                    
+            except Exception as e:
+                errors.append(f"Error processing observation {ob.get('id')}: {str(e)}")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Successfully generated AI reviews for {processed_count} observations',
+            'processed_count': processed_count,
+            'total_found': len(observations_to_process),
+            'errors': errors[:5]  # Show first 5 errors
+        })
+        
+    except Exception as e:
+        logger.exception(f"Error generating AI reviews: {e}")
+        return jsonify({'success': False, 'error': str(e)})
 
 
 @principal_bp.route('/email_ai_review', methods=['POST'])
