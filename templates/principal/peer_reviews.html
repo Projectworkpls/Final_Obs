@@ -9,6 +9,16 @@
         </a>
     </div>
 
+    <!-- AI Review Notifications -->
+    {% if notifications %}
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-robot me-2"></i>
+        <strong>New AI Reviews Available!</strong>
+        You have {{ notifications|length }} new AI communication review{{ 's' if notifications|length > 1 else '' }} ready for analysis.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+
     <!-- Debug Information -->
     <div class="alert alert-info">
         <strong>Debug Info:</strong>
@@ -162,9 +172,8 @@
                                     View AI Review
                                 </button>
                                 <div id="ai_review_{{ obs.id }}" class="collapse mt-2">
-                                    <div class="border rounded p-3 ai-review-box">
-                                        <!-- FIXED: Remove the markdown_to_html filter -->
-                                        <article class="ai-review-content">{{ obs.communication_review }}</article>
+                                    <div class="border rounded p-4 ai-review-box">
+                                        <article class="ai-review-content formatted-review">{{ obs.communication_review }}</article>
                                     </div>
                                 </div>
                             </td>
@@ -188,8 +197,27 @@
             {% else %}
             <div class="text-center py-4">
                 <i class="fas fa-robot fa-3x text-muted mb-3"></i>
-                <h5 class="text-muted">No AI reviews available</h5>
+                <h5 class="text-muted">No AI reviews available for your organization</h5>
                 <p class="text-muted">AI reviews of observer-student conversations will appear here once they are generated.</p>
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        This could mean:
+                    </small>
+                    <ul class="list-unstyled mt-2 text-muted small">
+                        <li><i class="fas fa-check-circle text-success me-1"></i>No observations have been processed for AI review yet</li>
+                        <li><i class="fas fa-check-circle text-success me-1"></i>Observations are still being processed</li>
+                        <li><i class="fas fa-check-circle text-success me-1"></i>AI review generation is pending</li>
+                    </ul>
+                </div>
+                <div class="mt-3">
+                    <a href="{{ url_for('principal.debug_ai_reviews') }}" class="btn btn-outline-info btn-sm me-2">
+                        <i class="fas fa-bug me-1"></i>Debug AI Review Status
+                    </a>
+                    <button onclick="generateAIReviews()" class="btn btn-outline-success btn-sm">
+                        <i class="fas fa-magic me-1"></i>Generate AI Reviews
+                    </button>
+                </div>
             </div>
             {% endif %}
         </div>
@@ -274,15 +302,22 @@
 
 <style>
 .ai-review-box {
-    max-height: 460px;
-    overflow:auto;
-    background:#fff;
+    max-height: 500px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid #e3e6f0 !important;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    border-radius: 8px;
 }
 .ai-review-content {
-    white-space: pre-wrap;
-    line-height:1.6;
-    font-size:0.95rem;
+    white-space: pre-line;
+    line-height: 1.7;
+    font-size: 0.95rem;
     color: #333;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    padding: 1rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-radius: 8px;
 }
 .ai-review-content .ai-review-p {
     margin-bottom: 1rem;
@@ -375,6 +410,143 @@
     border: 1px solid #e9ecef;
     margin: 1rem 0;
 }
+
+/* Professional Report Formatting Styles */
+.review-document-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #2c3e50;
+    text-align: center;
+    margin: 0 0 1.5rem 0;
+    padding: 1rem 0;
+    border-bottom: 2px solid #3498db;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-radius: 8px 8px 0 0;
+}
+
+.review-section-heading {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 2rem 0 1rem 0;
+    padding: 0.8rem 1rem;
+    background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+    color: white;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(52, 73, 94, 0.2);
+}
+
+.review-numbered-section {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #34495e;
+    margin: 1.5rem 0 0.8rem 0;
+    padding: 0.6rem 1rem;
+    background: linear-gradient(135deg, #ecf0f1 0%, #bdc3c7 100%);
+    border-left: 4px solid #3498db;
+    border-radius: 4px;
+}
+
+.review-red-flag {
+    font-weight: 600;
+    color: #e74c3c;
+    margin: 1rem 0 0.5rem 0;
+    padding: 0.5rem 1rem;
+    background: rgba(231, 76, 60, 0.1);
+    border-left: 4px solid #e74c3c;
+    border-radius: 4px;
+}
+
+.review-bullet {
+    margin: 0.8rem 0 0.4rem 0;
+    padding: 0.4rem 0 0.4rem 1.5rem;
+    line-height: 1.6;
+    position: relative;
+}
+
+.review-sub-bullet {
+    margin: 0.6rem 0 0.3rem 0;
+    padding: 0.3rem 0 0.3rem 2.5rem;
+    line-height: 1.6;
+    color: #555;
+    position: relative;
+}
+
+.review-sub-sub-bullet {
+    margin: 0.4rem 0 0.2rem 0;
+    padding: 0.2rem 0 0.2rem 3.5rem;
+    line-height: 1.6;
+    color: #666;
+    font-size: 0.95rem;
+    position: relative;
+}
+
+.review-bold {
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.review-italic {
+    font-style: italic;
+    color: #7f8c8d;
+    background: rgba(127, 140, 141, 0.1);
+    padding: 0.1rem 0.3rem;
+    border-radius: 3px;
+}
+
+.review-paragraph {
+    margin-bottom: 1rem;
+    line-height: 1.7;
+    text-align: justify;
+    color: #333;
+}
+
+/* Table Styling */
+.review-table-header {
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 1.5rem 0 0.8rem 0;
+    padding: 0.8rem 1rem;
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    color: white;
+    border-radius: 6px 6px 0 0;
+    display: grid;
+    grid-template-columns: 1fr 0.5fr 1fr 2fr;
+    gap: 1rem;
+}
+
+.review-table-row {
+    display: grid;
+    grid-template-columns: 1fr 0.5fr 1fr 2fr;
+    gap: 1rem;
+    padding: 0.6rem 1rem;
+    border-bottom: 1px solid #e9ecef;
+    background: #fff;
+    line-height: 1.5;
+}
+
+.review-table-row:nth-child(even) {
+    background: #f8f9fa;
+}
+
+.review-table-row:hover {
+    background: #e3f2fd;
+}
+
+.review-date {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.review-status {
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.review-description {
+    color: #555;
+    font-size: 0.95rem;
+}
 .ai-review-content blockquote {
     border-left: 4px solid #3498db;
     padding-left: 1rem;
@@ -426,6 +598,100 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+    
+    // Format AI review content
+    formatAIReviewContent();
+    
+    // Also format when collapse is shown
+    document.querySelectorAll('[data-bs-toggle="collapse"]').forEach(button => {
+        button.addEventListener('click', function() {
+            setTimeout(() => {
+                formatAIReviewContent();
+            }, 100);
+        });
+    });
 });
+
+function formatAIReviewContent() {
+    const reviewElements = document.querySelectorAll('.ai-review-content.formatted-review');
+    
+    reviewElements.forEach(element => {
+        let content = element.textContent;
+        
+        // Format the content with professional report styling
+        content = content
+            // Convert main title (first line) to document title
+            .replace(/^([^#\n]+?)(?=\n|$)/, '<div class="review-document-title">$1</div>')
+            // Convert ## headings to section headings
+            .replace(/^## (.+)$/gm, '<div class="review-section-heading">$1</div>')
+            // Convert numbered sections (1. 2. 3. etc.)
+            .replace(/^(\d+)\.\s+(.+)$/gm, '<div class="review-numbered-section">$1. $2</div>')
+            // Convert red flag items with emoji
+            .replace(/^● 🚩\s+(.+)$/gm, '<div class="review-red-flag">● 🚩 $1</div>')
+            // Convert bullet points with proper hierarchy
+            .replace(/^○\s+(.+)$/gm, '<div class="review-sub-bullet">○ $1</div>')
+            .replace(/^■\s+(.+)$/gm, '<div class="review-sub-sub-bullet">■ $1</div>')
+            .replace(/^●\s+(.+)$/gm, '<div class="review-bullet">● $1</div>')
+            // Convert **text** to bold emphasis
+            .replace(/\*\*(.+?)\*\*/g, '<strong class="review-bold">$1</strong>')
+            // Convert italic text (quotes)
+            .replace(/\*([^*]+)\*/g, '<em class="review-italic">$1</em>')
+            // Convert table-like structures
+            .replace(/^Date\s+Adherence\s+Red\s+Flags\s+Suggested Improvements$/gm, 
+                '<div class="review-table-header">Date | Adherence | Red Flags | Suggested Improvements</div>')
+            // Convert table rows with checkmarks/crosses
+            .replace(/^(\d{4}-\d{2}-\d{2})\s+(✅|❌)\s+(.+)$/gm, 
+                '<div class="review-table-row"><span class="review-date">$1</span><span class="review-status">$2</span><span class="review-description">$3</span></div>')
+            // Add paragraph breaks for empty lines
+            .replace(/\n\n/g, '</div><div class="review-paragraph">')
+            // Clean up extra line breaks
+            .replace(/\n/g, '<br>');
+        
+        // Wrap content in paragraph div
+        content = '<div class="review-paragraph">' + content + '</div>';
+        
+        // Clean up empty divs
+        content = content.replace(/<div class="review-paragraph"><\/div>/g, '');
+        content = content.replace(/<div class="review-paragraph"><br><\/div>/g, '');
+        
+        element.innerHTML = content;
+    });
+}
+
+function generateAIReviews() {
+    if (!confirm('This will generate AI reviews for up to 10 observations in your organization. This may take a few minutes. Continue?')) {
+        return;
+    }
+    
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Generating...';
+    button.disabled = true;
+    
+    fetch('{{ url_for("principal.generate_ai_reviews") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`Success! ${data.message}\n\nProcessed: ${data.processed_count} observations\nTotal found: ${data.total_found} observations`);
+            // Reload the page to show new AI reviews
+            location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Unknown error occurred'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error generating AI reviews. Please try again.');
+    })
+    .finally(() => {
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
 </script>
 {% endblock %}
