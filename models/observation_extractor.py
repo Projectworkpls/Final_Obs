@@ -12,6 +12,9 @@ import re
 from datetime import datetime
 from config import Config
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class ObservationExtractor:
@@ -995,7 +998,8 @@ CRITICAL INSTRUCTIONS FOR NAME AND GENDER USAGE:
         except Exception as e:
             return f"Error generating monthly summary: {str(e)}"
 
-    def generate_monthly_docx_report(self, observations, goal_progress, strength_counts, development_counts, summary_json):
+    def generate_monthly_docx_report(self, observations, goal_progress, strength_counts, development_counts,
+                                     summary_json):
         """
         Generate a narrative-rich monthly report as a Word document, with embedded charts.
         """
@@ -1143,14 +1147,16 @@ CRITICAL INSTRUCTIONS FOR NAME AND GENDER USAGE:
         docx_bytes.seek(0)
         return docx_bytes
 
-    def generate_monthly_pdf_report(self, observations, goal_progress, strength_counts, development_counts, summary_json):
+    def generate_monthly_pdf_report(self, observations, goal_progress, strength_counts, development_counts,
+                                    summary_json):
         """
         Generate a PDF version of the monthly report by converting the Word doc.
         """
         from docx2pdf import convert
         import tempfile
         import os
-        docx_bytes = self.generate_monthly_docx_report(observations, goal_progress, strength_counts, development_counts, summary_json)
+        docx_bytes = self.generate_monthly_docx_report(observations, goal_progress, strength_counts, development_counts,
+                                                       summary_json)
         with tempfile.NamedTemporaryFile(delete=False, suffix='.docx') as tmp_docx:
             tmp_docx.write(docx_bytes.read())
             tmp_docx_path = tmp_docx.name
@@ -1178,3 +1184,126 @@ CRITICAL INSTRUCTIONS FOR NAME AND GENDER USAGE:
         # Implement a backup transcription service
         # This is a placeholder - you'll need to implement actual fallback logic
         raise NotImplementedError("Fallback transcription not implemented yet")
+
+    def generate_topic_suggestions(self, observer_data, child_data, child_name):
+        """Generate topic suggestions using Gemini AI based on observation history"""
+        try:
+            # Prepare data for analysis
+            recent_themes = []
+            recent_strengths = []
+            recent_developments = []
+            recent_curiosities = []
+            learning_patterns = []
+
+            # Process observer's recent observations
+            for obs in observer_data:
+                if obs.get('theme_of_day'):
+                    recent_themes.append(obs['theme_of_day'])
+                if obs.get('curiosity_seed'):
+                    recent_curiosities.append(obs['curiosity_seed'])
+
+                # Parse JSON fields safely
+                try:
+                    if obs.get('strengths'):
+                        strengths = json.loads(obs['strengths']) if isinstance(obs['strengths'], str) else obs[
+                            'strengths']
+                        recent_strengths.extend(strengths[:3])  # Top 3 strengths per observation
+
+                    if obs.get('areas_of_development'):
+                        developments = json.loads(obs['areas_of_development']) if isinstance(
+                            obs['areas_of_development'], str) else obs['areas_of_development']
+                        recent_developments.extend(developments[:2])  # Top 2 development areas
+                except:
+                    continue
+
+                # Extract learning patterns from observations
+                if obs.get('observations'):
+                    learning_patterns.append(obs['observations'][:200] + "...")
+
+            # Process child-specific data
+            child_themes = []
+            child_curiosities = []
+            child_patterns = []
+
+            for obs in child_data:
+                if obs.get('theme_of_day'):
+                    child_themes.append(obs['theme_of_day'])
+                if obs.get('curiosity_seed'):
+                    child_curiosities.append(obs['curiosity_seed'])
+                if obs.get('observations'):
+                    child_patterns.append(obs['observations'][:150] + "...")
+
+            # Create comprehensive prompt for Gemini
+            prompt = f"""
+You are an educational consultant helping an Observer plan engaging learning sessions. Based on the learning history below, suggest 5-7 specific, actionable topics or activities for today's observation session with {child_name}.
+
+OBSERVER'S RECENT TEACHING HISTORY:
+Recent Themes Covered: {', '.join(recent_themes[-8:]) if recent_themes else 'None available'}
+Recent Curiosity Seeds: {', '.join(recent_curiosities[-5:]) if recent_curiosities else 'None available'}
+Observed Strengths: {', '.join(list(set(recent_strengths[-10:]))) if recent_strengths else 'None available'}
+Areas for Development: {', '.join(list(set(recent_developments[-8:]))) if recent_developments else 'None available'}
+
+CHILD'S SPECIFIC LEARNING HISTORY:
+Child's Previous Themes: {', '.join(child_themes[-6:]) if child_themes else 'None available'}
+Child's Curiosity Patterns: {', '.join(child_curiosities[-4:]) if child_curiosities else 'None available'}
+Recent Learning Patterns: {chr(10).join(child_patterns[-3:]) if child_patterns else 'None available'}
+
+GUIDELINES FOR SUGGESTIONS:
+1. Build upon previous themes but introduce fresh perspectives
+2. Address identified development areas through engaging activities
+3. Leverage the child's demonstrated strengths and interests
+4. Suggest age-appropriate, hands-on learning experiences
+5. Include variety: academic, creative, social-emotional, and practical life skills
+6. Consider seasonal relevance and current events when appropriate
+7. Ensure topics can be explored in a 30-45 minute session
+8. IMPORTANT: The conversation between teacher and student is happening over a voice call, so suggest activities that are possible and engaging in a remote setting
+
+Please provide suggestions in this exact format:
+
+🎯 **SUGGESTED TOPICS FOR TODAY'S SESSION**
+
+1. **[Topic Title]** - [Brief description of the activity and learning objective]
+2. **[Topic Title]** - [Brief description of the activity and learning objective]
+3. **[Topic Title]** - [Brief description of the activity and learning objective]
+4. **[Topic Title]** - [Brief description of the activity and learning objective]
+5. **[Topic Title]** - [Brief description of the activity and learning objective]
+
+💡 **FOCUS AREAS TO EMPHASIZE:**
+- [Specific strength to build upon]
+- [Development area to address]
+- [Curiosity pattern to explore further]
+
+🌟 **SESSION TIP:** [One practical tip for making today's session particularly engaging based on the child's learning patterns]
+"""
+
+            # Generate suggestions using Gemini
+            model = genai.GenerativeModel('gemini-2.0-flash')
+            response = model.generate_content([
+                {"role": "user", "parts": [{"text": prompt}]}
+            ])
+
+            if response and response.text:
+                return response.text.strip()
+            else:
+                return self._fallback_suggestions(child_name)
+
+        except Exception as e:
+            logger.error(f"Error generating topic suggestions: {str(e)}")
+            return self._fallback_suggestions(child_name)
+
+    def _fallback_suggestions(self, child_name):
+        """Fallback suggestions when AI fails"""
+        return f"""🎯 **SUGGESTED TOPICS FOR TODAY'S SESSION**
+
+1. **Creative Storytelling** - Have {child_name} create and narrate a story using everyday objects
+2. **Nature Exploration** - Observe and discuss plants, weather, or seasonal changes
+3. **Math in Daily Life** - Practice counting, sorting, or measuring with household items
+4. **Science Experiments** - Simple experiments using safe household materials
+5. **Cultural Learning** - Explore traditions, festivals, or geography through interactive discussion
+
+💡 **FOCUS AREAS TO EMPHASIZE:**
+- Encourage curiosity and questioning
+- Build confidence through hands-on activities
+- Develop communication and expression skills
+
+🌟 **SESSION TIP:** Start with what interests {child_name} most and build the lesson around their natural curiosity!"""
