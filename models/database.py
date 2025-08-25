@@ -20,6 +20,49 @@ logger = logging.getLogger(__name__)
 supabase = None
 
 
+def get_observer_suggestion_data(observer_id, child_id=None, limit=10):
+    """Get recent observations for generating topic suggestions"""
+    try:
+        client = get_supabase_client()
+
+        # Get recent observations by this observer
+        query = client.table('observations').select("""
+            id, student_id, student_name, date, observations, 
+            theme_of_day, curiosity_seed, full_data,
+            strengths, areas_of_development, recommendations
+        """).eq('username', observer_id).order('date', desc=True)
+
+        # If specific child is selected, filter by child
+        if child_id:
+            query = query.eq('student_id', child_id)
+
+        query = query.limit(limit)
+
+        response = query.execute()
+        return response.data if response.data else []
+
+    except Exception as e:
+        logger.error(f"Error getting suggestion data: {str(e)}")
+        return []
+
+
+def get_child_learning_history(child_id, limit=15):
+    """Get comprehensive learning history for a specific child"""
+    try:
+        client = get_supabase_client()
+
+        response = client.table('observations').select("""
+            id, date, observations, theme_of_day, curiosity_seed,
+            strengths, areas_of_development, recommendations, full_data
+        """).eq('student_id', child_id).order('date', desc=True).limit(limit).execute()
+
+        return response.data if response.data else []
+
+    except Exception as e:
+        logger.error(f"Error getting child learning history: {str(e)}")
+        return []
+
+
 def test_network_connectivity():
     """Test basic network connectivity"""
     try:
@@ -991,10 +1034,10 @@ def auto_assign_parent_to_organization(child_id, organization_id):
     """Auto-assign parent to organization when child is assigned - FIXED"""
     try:
         client = get_supabase_client()
-        
+
         # Find parent associated with this child
         parent_result = client.table('users').select('*').eq('child_id', child_id).eq('role', 'Parent').execute()
-        
+
         if parent_result.data:
             success_count = 0
             for parent in parent_result.data:
@@ -1003,22 +1046,23 @@ def auto_assign_parent_to_organization(child_id, organization_id):
                     update_result = client.table('users').update({
                         'organization_id': organization_id
                     }).eq('id', parent['id']).execute()
-                    
+
                     if update_result.data:
-                        logger.info(f"Auto-assigned parent {parent['id']} ({parent.get('name', 'Unknown')}) to organization {organization_id}")
+                        logger.info(
+                            f"Auto-assigned parent {parent['id']} ({parent.get('name', 'Unknown')}) to organization {organization_id}")
                         success_count += 1
                     else:
                         logger.warning(f"Failed to auto-assign parent {parent['id']} - no data returned")
                 except Exception as parent_update_error:
                     logger.error(f"Error updating parent {parent['id']}: {parent_update_error}")
-            
+
             if success_count > 0:
                 logger.info(f"Successfully auto-assigned {success_count} parent(s) to organization {organization_id}")
             else:
                 logger.warning(f"No parents were successfully assigned to organization {organization_id}")
         else:
             logger.info(f"No parent found for child {child_id}")
-        
+
         return True
     except Exception as e:
         logger.error(f"Error auto-assigning parent: {e}")
