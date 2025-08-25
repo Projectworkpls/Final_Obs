@@ -8,7 +8,9 @@ from models.database import (
     check_if_report_processed_today, save_scheduled_report, log_report_processing,
     get_child_schedule_status, get_signed_audio_url,
     # Multi-tenant functions
-    get_observer_review_assignments, submit_observer_application, get_organizations
+    get_observer_review_assignments, submit_observer_application, get_organizations,
+    # Suggestion functions
+    get_observer_suggestion_data, get_child_learning_history
 )
 from models.observation_extractor import ObservationExtractor
 from models.monthly_report_generator import MonthlyReportGenerator
@@ -150,10 +152,15 @@ def process_observation():
     last_report = session.get('last_report')
     last_report_id = session.get('last_report_id')
 
+    # Get today's date for the form
+    from datetime import datetime
+    today_date = datetime.now().strftime('%Y-%m-%d')
+
     return render_template('observer/process_observation.html',
                            children=children,
                            last_report=last_report,
-                           last_report_id=last_report_id)
+                           last_report_id=last_report_id,
+                           today_date=today_date)
 
 
 @observer_bp.route('/process_file', methods=['POST'])
@@ -246,7 +253,7 @@ def process_file():
                 logger.info(f"Generating AI communication review for OCR observation {observation_id}")
                 # For OCR, we'll use the extracted text as the "transcript"
                 ai_review = extractor.generate_ai_communication_review(observations_text, user_info)
-                
+
                 # Update the observation with AI review
                 supabase.table('observations').update({
                     'full_data': json.dumps({
@@ -256,20 +263,22 @@ def process_file():
                         "ai_review_generated_at": datetime.now().isoformat()
                     })
                 }).eq('id', observation_id).execute()
-                
+
                 logger.info(f"AI communication review generated successfully for OCR observation {observation_id}")
-                
+
                 # Send notification to principal about new AI review (OCR)
                 try:
                     # Get the principal for this observer's organization
-                    observer_org = supabase.table('users').select('organization_id').eq('id', observer_id).single().execute()
+                    observer_org = supabase.table('users').select('organization_id').eq('id',
+                                                                                        observer_id).single().execute()
                     if observer_org.data:
                         org_id = observer_org.data['organization_id']
-                        principal = supabase.table('users').select('id,name').eq('organization_id', org_id).eq('role', 'Principal').single().execute()
+                        principal = supabase.table('users').select('id,name').eq('organization_id', org_id).eq('role',
+                                                                                                               'Principal').single().execute()
                         if principal.data:
                             principal_id = principal.data['id']
                             principal_name = principal.data['name']
-                            
+
                             # Create notification
                             notification_data = {
                                 'id': str(uuid.uuid4()),
@@ -287,12 +296,12 @@ def process_file():
                                 'created_at': datetime.now().isoformat(),
                                 'read': False
                             }
-                            
+
                             supabase.table('notifications').insert(notification_data).execute()
                             logger.info(f"Sent AI review notification to principal {principal_name}")
                 except Exception as notif_error:
                     logger.warning(f"Failed to send AI review notification: {notif_error}")
-                    
+
             except Exception as ai_error:
                 logger.error(f"Failed to generate AI communication review for OCR: {ai_error}")
                 # Continue without AI review - don't fail the entire process
@@ -425,7 +434,8 @@ def process_file():
                 })
 
             # More specific error detection
-            error_indicators = ["transcription failed", "no audio detected", "unable to process", "error processing audio"]
+            error_indicators = ["transcription failed", "no audio detected", "unable to process",
+                                "error processing audio"]
             if any(indicator in transcript.lower() for indicator in error_indicators):
                 logger.error(f"Transcription service returned error: {transcript}")
                 return jsonify({
@@ -507,7 +517,7 @@ def process_file():
             try:
                 logger.info(f"Generating AI communication review for observation {observation_id}")
                 ai_review = extractor.generate_ai_communication_review(transcript, user_info)
-                
+
                 # Update the observation with AI review
                 supabase.table('observations').update({
                     'full_data': json.dumps({
@@ -522,20 +532,22 @@ def process_file():
                         "ai_review_generated_at": datetime.now().isoformat()
                     })
                 }).eq('id', observation_id).execute()
-                
+
                 logger.info(f"AI communication review generated successfully for observation {observation_id}")
-                
+
                 # Send notification to principal about new AI review
                 try:
                     # Get the principal for this observer's organization
-                    observer_org = supabase.table('users').select('organization_id').eq('id', observer_id).single().execute()
+                    observer_org = supabase.table('users').select('organization_id').eq('id',
+                                                                                        observer_id).single().execute()
                     if observer_org.data:
                         org_id = observer_org.data['organization_id']
-                        principal = supabase.table('users').select('id,name').eq('organization_id', org_id).eq('role', 'Principal').single().execute()
+                        principal = supabase.table('users').select('id,name').eq('organization_id', org_id).eq('role',
+                                                                                                               'Principal').single().execute()
                         if principal.data:
                             principal_id = principal.data['id']
                             principal_name = principal.data['name']
-                            
+
                             # Create notification
                             notification_data = {
                                 'id': str(uuid.uuid4()),
@@ -553,12 +565,12 @@ def process_file():
                                 'created_at': datetime.now().isoformat(),
                                 'read': False
                             }
-                            
+
                             supabase.table('notifications').insert(notification_data).execute()
                             logger.info(f"Sent AI review notification to principal {principal_name}")
                 except Exception as notif_error:
                     logger.warning(f"Failed to send AI review notification: {notif_error}")
-                    
+
             except Exception as ai_error:
                 logger.error(f"Failed to generate AI communication review: {ai_error}")
                 # Continue without AI review - don't fail the entire process
@@ -619,13 +631,13 @@ def peer_reviews():
         observer_reports_count = supabase.table('observations').select("id", count="exact").eq('username',
                                                                                                observer_id).execute()
         max_reviews_allowed = observer_reports_count.count if observer_reports_count.count else 0
-        
+
         logger.info(f"Observer {observer_id} has made {max_reviews_allowed} observations")
 
         # Calculate 24 hours ago and 7 days ago for more flexible filtering
         twenty_four_hours_ago = (datetime.now() - timedelta(hours=24)).isoformat()
         seven_days_ago = (datetime.now() - timedelta(days=7)).isoformat()
-        
+
         logger.info(f"Looking for observations from {twenty_four_hours_ago} to now")
 
         # Get ALL observations from OTHER observers (any organization) for review
@@ -636,15 +648,15 @@ def peer_reviews():
         """).neq('username', observer_id).order('timestamp', desc=True).execute()
 
         all_observations = observations_response.data if observations_response.data else []
-        
+
         logger.info(f"Found {len(all_observations)} total observations from other observers")
-        
+
         # Filter by date more flexibly - include observations from last 7 days
         recent_observations = []
         for obs in all_observations:
             obs_date = obs.get('date')
             obs_timestamp = obs.get('timestamp')
-            
+
             # Try to parse the date
             try:
                 if obs_date:
@@ -653,7 +665,7 @@ def peer_reviews():
                         obs_datetime = datetime.strptime(obs_date, '%Y-%m-%d')
                     else:
                         obs_datetime = datetime.fromisoformat(obs_date.replace('Z', '+00:00'))
-                    
+
                     # Check if observation is from last 7 days
                     if obs_datetime >= datetime.now() - timedelta(days=7):
                         recent_observations.append(obs)
@@ -666,7 +678,7 @@ def peer_reviews():
                 logger.warning(f"Could not parse date/timestamp for observation {obs.get('id')}: {e}")
                 # Include observation if we can't parse the date (better to show than hide)
                 recent_observations.append(obs)
-        
+
         logger.info(f"Found {len(recent_observations)} observations from last 7 days")
 
         # Get all observation IDs that have already been reviewed by ANY observer
@@ -678,7 +690,7 @@ def peer_reviews():
 
         # Filter out observations that have already been reviewed by anyone
         unreviewed_observations = [obs for obs in recent_observations if obs['id'] not in reviewed_observation_ids]
-        
+
         logger.info(f"Found {len(unreviewed_observations)} unreviewed observations")
 
         # Process observations similar to admin dashboard
@@ -769,19 +781,21 @@ def debug_peer_review_data():
     try:
         observer_id = session.get('user_id')
         supabase = get_supabase_client()
-        
+
         # Get observer's own reports
-        own_reports = supabase.table('observations').select('id, student_name, date, timestamp').eq('username', observer_id).execute()
-        
+        own_reports = supabase.table('observations').select('id, student_name, date, timestamp').eq('username',
+                                                                                                    observer_id).execute()
+
         # Get all observations from other observers
-        other_observations = supabase.table('observations').select('id, student_name, observer_name, date, timestamp, username').neq('username', observer_id).execute()
-        
+        other_observations = supabase.table('observations').select(
+            'id, student_name, observer_name, date, timestamp, username').neq('username', observer_id).execute()
+
         # Get all peer reviews
         all_reviews = supabase.table('peer_reviews').select('*').execute()
-        
+
         # Get completed reviews by this observer
         my_reviews = supabase.table('peer_reviews').select('*').eq('reviewer_id', observer_id).execute()
-        
+
         debug_data = {
             'observer_id': observer_id,
             'own_reports_count': len(own_reports.data) if own_reports.data else 0,
@@ -792,7 +806,7 @@ def debug_peer_review_data():
             'my_reviews_count': len(my_reviews.data) if my_reviews.data else 0,
             'my_reviews': my_reviews.data[:5] if my_reviews.data else []  # Show first 5
         }
-        
+
         return jsonify(debug_data)
     except Exception as e:
         return jsonify({'error': str(e)})
@@ -1647,13 +1661,15 @@ def download_monthly_report():
         summary_json = report_generator.generate_monthly_summary_json_format(
             observations, goal_progress, child_name, year, month
         )
-        
+
         if isinstance(summary_json, str):
             import json as _json
             try:
                 summary_json = _json.loads(summary_json)
             except Exception as e:
-                flash('Could not generate a valid summary for this report. Please check if there are enough daily reports for the selected month.', 'error')
+                flash(
+                    'Could not generate a valid summary for this report. Please check if there are enough daily reports for the selected month.',
+                    'error')
                 return redirect(url_for('observer.monthly_reports'))
 
         import calendar
@@ -1685,7 +1701,9 @@ def download_monthly_report():
                 mimetype=mimetype
             )
     except Exception as e:
-        flash(f'Error downloading report: {str(e)}. If you see no curiosity/growth charts, it may be due to missing scores in daily reports.', 'error')
+        flash(
+            f'Error downloading report: {str(e)}. If you see no curiosity/growth charts, it may be due to missing scores in daily reports.',
+            'error')
         return redirect(url_for('observer.monthly_reports'))
 
 
@@ -1822,3 +1840,87 @@ def apply():
         flash('Error loading organizations. Please try again later.', 'error')
 
     return render_template('observer/apply.html', organizations=organizations)
+
+
+@observer_bp.route('/get_topic_suggestions', methods=['POST'])
+@login_required
+@observer_required
+def get_topic_suggestions():
+    """Generate AI-powered topic suggestions based on observation history"""
+    try:
+        observer_id = session.get('user_id')
+        child_id = request.json.get('child_id')
+
+        if not child_id:
+            return jsonify({
+                'success': False,
+                'error': 'Child ID is required'
+            })
+
+        # Get child name
+        supabase = get_supabase_client()
+        child_data = supabase.table('children').select("name").eq('id', child_id).execute()
+        child_name = child_data.data[0]['name'] if child_data.data else 'Student'
+
+        # Get observation history for suggestions
+        observer_data = get_observer_suggestion_data(observer_id, child_id, limit=8)
+        child_history = get_child_learning_history(child_id, limit=12)
+
+        # Generate suggestions using AI
+        extractor = ObservationExtractor()
+        suggestions = extractor.generate_topic_suggestions(observer_data, child_history, child_name)
+
+        return jsonify({
+            'success': True,
+            'suggestions': suggestions,
+            'child_name': child_name,
+            'data_points': {
+                'observer_observations': len(observer_data),
+                'child_history_count': len(child_history)
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"Error generating suggestions: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to generate suggestions. Please try again.'
+        })
+
+
+@observer_bp.route('/refresh_suggestions', methods=['POST'])
+@login_required
+@observer_required
+def refresh_suggestions():
+    """Refresh topic suggestions with different perspective"""
+    try:
+        observer_id = session.get('user_id')
+        child_id = request.json.get('child_id')
+
+        if not child_id:
+            return jsonify({'success': False, 'error': 'Child ID required'})
+
+        # Get more comprehensive data for refreshed suggestions
+        supabase = get_supabase_client()
+        child_data = supabase.table('children').select("name").eq('id', child_id).execute()
+        child_name = child_data.data[0]['name'] if child_data.data else 'Student'
+
+        # Get broader observation data
+        observer_data = get_observer_suggestion_data(observer_id, None, limit=15)  # All children
+        child_history = get_child_learning_history(child_id, limit=20)
+
+        extractor = ObservationExtractor()
+        suggestions = extractor.generate_topic_suggestions(observer_data, child_history, child_name)
+
+        return jsonify({
+            'success': True,
+            'suggestions': suggestions,
+            'refreshed': True
+        })
+
+    except Exception as e:
+        logger.error(f"Error refreshing suggestions: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to refresh suggestions'
+        })
