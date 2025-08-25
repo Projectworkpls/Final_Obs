@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-
 {% block title %}Process Observation{% endblock %}
 
 {% block content %}
@@ -68,7 +67,7 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="session_date" class="form-label">Session Date</label>
-                                    <input type="date" class="form-control" id="session_date" name="session_date">
+                                    <input type="date" class="form-control" id="session_date" name="session_date" value="{{ today_date }}">
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -178,64 +177,53 @@
         </div>
     </div>
 
-    <!-- Sidebar -->
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-header">
-                <h5><i class="fas fa-info-circle me-2"></i>Instructions</h5>
-            </div>
-            <div class="card-body">
-                <h6>OCR Mode</h6>
-                <ul class="small">
-                    <li>Upload clear images of observation sheets</li>
-                    <li>Ensure text is readable and well-lit</li>
-                    <li>Supported: JPG, PNG</li>
-                </ul>
+        <!-- Right Column: Topic Suggestions -->
+        <div class="col-lg-4 col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">💡 AI Topic Suggestions</h5>
+                </div>
+                <div class="card-body">
+                    <div id="suggestionsContainer">
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-lightbulb fa-2x mb-3"></i>
+                            <p>Select a child to get AI-powered topic suggestions based on their learning history!</p>
+                        </div>
+                    </div>
 
-                <h6>Audio Mode</h6>
-                <ul class="small">
-                    <li>Upload audio recordings of sessions</li>
-                    <li>Clear audio quality recommended</li>
-                    <li>Supported: MP3, WAV, M4A</li>
-                </ul>
+                    <!-- Suggestions Controls -->
+                    <div id="suggestionsControls" style="display: none;" class="mt-3">
+                        <div class="d-grid gap-2">
+                            <button type="button" id="getSuggestionsBtn" class="btn btn-info btn-sm">
+                                <i class="fas fa-magic me-1"></i>Get Suggestions
+                            </button>
+                            <button type="button" id="refreshSuggestionsBtn" class="btn btn-outline-info btn-sm">
+                                <i class="fas fa-sync-alt me-1"></i>Refresh Ideas
+                            </button>
+                        </div>
+                    </div>
 
-                <div class="alert alert-info">
-                    <i class="fas fa-lightbulb me-2"></i>
-                    <strong>Tip:</strong> Processing may take a few minutes.
+                    <!-- Loading Indicator -->
+                    <div id="suggestionsLoading" style="display: none;" class="text-center py-3">
+                        <div class="spinner-border spinner-border-sm text-info me-2"></div>
+                        <small>Generating suggestions...</small>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Quick Actions -->
-        <div class="card mt-3">
-            <div class="card-header">
-                <h5><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
-            </div>
-            <div class="card-body">
-                <div class="d-grid gap-2">
-                    <a href="{{ url_for('observer.dashboard') }}" class="btn btn-outline-primary btn-sm">
-                        <i class="fas fa-home me-1"></i>Back to Dashboard
-                    </a>
-                    <a href="{{ url_for('observer.goals') }}" class="btn btn-outline-success btn-sm">
-                        <i class="fas fa-bullseye me-1"></i>Manage Goals
-                    </a>
-                    <a href="{{ url_for('observer.messages') }}" class="btn btn-outline-info btn-sm">
-                        <i class="fas fa-envelope me-1"></i>Messages
-                    </a>
+            <!-- Quick Tips Card -->
+            <div class="card shadow-sm mt-3">
+                <div class="card-header bg-warning text-dark">
+                    <h6 class="mb-0">💡 Quick Tips</h6>
                 </div>
-            </div>
-        </div>
-
-        <!-- Processing Status -->
-        <div class="card mt-3" id="processing-status" style="display: none;">
-            <div class="card-header">
-                <h5><i class="fas fa-cogs me-2"></i>Processing Status</h5>
-            </div>
-            <div class="card-body">
-                <div class="progress mb-2">
-                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0 small">
+                        <li class="mb-2">• Use suggestions as conversation starters</li>
+                        <li class="mb-2">• Build on the child's natural interests</li>
+                        <li class="mb-2">• Keep sessions interactive and engaging</li>
+                        <li>• Document what sparks curiosity</li>
+                    </ul>
                 </div>
-                <small class="text-muted" id="status-text">Ready to process...</small>
             </div>
         </div>
     </div>
@@ -290,7 +278,491 @@
     </div>
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const childSelect = document.getElementById('child_id');
+    const processingModes = document.querySelectorAll('input[name="processing_mode"]');
+    const fileInput = document.getElementById('file-input');
+    const fileUploadArea = document.querySelector('.file-upload-area');
+    const processBtn = document.getElementById('process-btn');
+    const getSuggestionsBtn = document.getElementById('getSuggestionsBtn');
+    const refreshSuggestionsBtn = document.getElementById('refreshSuggestionsBtn');
+    const suggestionsContainer = document.getElementById('suggestionsContainer');
+    const suggestionsControls = document.getElementById('suggestionsControls');
+    const suggestionsLoading = document.getElementById('suggestionsLoading');
+
+    // Show suggestion controls when child is selected
+    childSelect.addEventListener('change', function() {
+        if (this.value) {
+            suggestionsControls.style.display = 'block';
+            updateSuggestionsPlaceholder();
+        } else {
+            suggestionsControls.style.display = 'none';
+            showDefaultSuggestionsMessage();
+        }
+    });
+
+    // Get suggestions
+    getSuggestionsBtn.addEventListener('click', function() {
+        const childId = childSelect.value;
+        if (!childId) {
+            alert('Please select a child first');
+            return;
+        }
+        fetchSuggestions(childId, false);
+    });
+
+    // Refresh suggestions
+    refreshSuggestionsBtn.addEventListener('click', function() {
+        const childId = childSelect.value;
+        if (!childId) {
+            alert('Please select a child first');
+            return;
+        }
+        fetchSuggestions(childId, true);
+    });
+
+    function fetchSuggestions(childId, isRefresh = false) {
+        suggestionsLoading.style.display = 'block';
+        suggestionsContainer.innerHTML = '';
+
+        const endpoint = isRefresh ? '/observer/refresh_suggestions' : '/observer/get_topic_suggestions';
+
+        fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ child_id: childId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            suggestionsLoading.style.display = 'none';
+
+            if (data.success) {
+                displaySuggestions(data.suggestions, data.child_name, data.data_points);
+            } else {
+                suggestionsContainer.innerHTML = `
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        ${data.error || 'Failed to generate suggestions'}
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            suggestionsLoading.style.display = 'none';
+            suggestionsContainer.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    Network error. Please try again.
+                </div>
+            `;
+        });
+    }
+
+    function displaySuggestions(suggestions, childName, dataPoints) {
+        // Clean up the suggestions and format them properly
+        let formattedSuggestions = suggestions;
+
+        // Remove markdown formatting
+        formattedSuggestions = formattedSuggestions.replace(/\*\*/g, '');
+
+        // Split into lines and process each line
+        const lines = formattedSuggestions.split('\n');
+        let inList = false;
+        let htmlContent = '';
+        let itemCount = 0;
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+
+            // Check if this is a numbered list item (any number followed by a dot)
+            if (/^\d+\./.test(line)) {
+                if (!inList) {
+                    htmlContent += '<ul>';
+                    inList = true;
+                }
+                // Extract the content after the number and make the first part bold
+                const content = line.replace(/^\d+\.\s*/, '');
+
+                // Split by first period or dash to separate title from description
+                const parts = content.split(/[.:-]/);
+                if (parts.length > 1) {
+                    const title = parts[0].trim();
+                    const description = parts.slice(1).join('.').trim();
+                    htmlContent += `<li><strong>${title}</strong>${description ? ': ' + description : ''}</li>`;
+                } else {
+                    htmlContent += `<li><strong>${content}</strong></li>`;
+                }
+                itemCount++;
+            } else if (line === '') {
+                // Empty line - close list if we're in one
+                if (inList) {
+                    htmlContent += '</ul>';
+                    inList = false;
+                }
+                htmlContent += '<br>';
+            } else {
+                // Regular text line
+                if (inList) {
+                    htmlContent += '</ul>';
+                    inList = false;
+                }
+                htmlContent += `<p>${line}</p>`;
+            }
+        }
+
+        // Close any open list
+        if (inList) {
+            htmlContent += '</ul>';
+        }
+
+        suggestionsContainer.innerHTML = `
+            <div class="suggestions-content">
+                <div class="suggestions-text">
+                    ${htmlContent}
+                </div>
+            </div>
+        `;
+    }
+
+    function updateSuggestionsPlaceholder() {
+        const selectedOption = childSelect.options[childSelect.selectedIndex];
+        const childName = selectedOption ? selectedOption.text : 'the selected child';
+
+        suggestionsContainer.innerHTML = `
+            <div class="text-center text-muted py-3">
+                <i class="fas fa-magic fa-2x mb-3"></i>
+                <p>Ready to generate AI-powered topic suggestions for <strong>${childName}</strong>!</p>
+                <small>Click "Get Suggestions" to see personalized ideas based on learning history.</small>
+            </div>
+        `;
+    }
+
+    function showDefaultSuggestionsMessage() {
+        suggestionsContainer.innerHTML = `
+            <div class="text-center text-muted py-4">
+                <i class="fas fa-lightbulb fa-2x mb-3"></i>
+                <p>Select a child to get AI-powered topic suggestions based on their learning history!</p>
+            </div>
+        `;
+    }
+
+    // Processing mode change handler
+    processingModes.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.checked) {
+                updateFileUploadArea(this.value);
+                processBtn.disabled = false;
+            }
+        });
+    });
+
+    function updateFileUploadArea(mode) {
+        const uploadSection = document.getElementById('upload-section');
+        const fileTypes = document.getElementById('file-types');
+
+        // Show the upload section
+        uploadSection.style.display = 'block';
+
+        if (mode === 'ocr') {
+            fileInput.accept = '.jpg,.jpeg,.png,.gif,.bmp,.tiff';
+            fileTypes.textContent = 'Images: JPG, PNG, GIF, BMP, TIFF';
+        } else if (mode === 'audio') {
+            fileInput.accept = '.mp3,.wav,.m4a,.ogg,.flac';
+            fileTypes.textContent = 'Audio: MP3, WAV, M4A, OGG, FLAC';
+        }
+    }
+
+    // File upload handling
+    fileInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            const file = this.files[0];
+            const filePreview = document.getElementById('file-preview');
+            filePreview.innerHTML = `
+                <div class="alert alert-info">
+                    <i class="fas fa-file me-2"></i>
+                    Selected: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)
+                </div>
+            `;
+        }
+    });
+
+    // Set current date and time
+    document.getElementById('session_date').value = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    document.getElementById('session_start').value = now.toTimeString().slice(0,5);
+
+    // Handle form submission
+    document.getElementById('process-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const form = this;
+        const processBtn = document.getElementById('process-btn');
+        const originalBtnText = processBtn.innerHTML;
+
+        // Show loading state
+        processBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+        processBtn.disabled = true;
+
+        // Submit form
+        fetch(form.action, {
+            method: 'POST',
+            body: new FormData(form)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Remove existing report if any
+                const existingReport = document.getElementById('generated-report');
+                if (existingReport) {
+                    existingReport.remove();
+                }
+
+                // Create new report section
+                const reportSection = document.createElement('div');
+                reportSection.className = 'card mt-4 fade-in';
+                reportSection.id = 'generated-report';
+                reportSection.innerHTML = `
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5><i class="fas fa-file-alt me-2"></i>Generated Report</h5>
+                        <div class="btn-group">
+                            <a href="${data.download_urls.word}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-download me-1"></i>Download Word
+                            </a>
+                            <a href="${data.download_urls.pdf}" class="btn btn-outline-danger btn-sm">
+                                <i class="fas fa-file-pdf me-1"></i>Download PDF
+                            </a>
+                            <button class="btn btn-outline-success btn-sm" onclick="showEmailModal('regular')">
+                                <i class="fas fa-envelope me-1"></i>Email
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="report-content" style="white-space: pre-wrap; background: #f8f9fa; padding: 1rem; border-radius: 8px; max-height: 500px; overflow-y: auto; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6;">
+                            ${data.report}
+                        </div>
+                    </div>
+                `;
+
+                // Insert the new report section after the form card
+                const formCard = document.querySelector('.card');
+                formCard.parentNode.insertBefore(reportSection, formCard.nextSibling);
+
+                // Scroll to report
+                reportSection.scrollIntoView({ behavior: 'smooth' });
+            } else {
+                alert('Error: ' + data.error);
+            }
+
+            // Reset form and button
+            resetForm();
+            processBtn.innerHTML = originalBtnText;
+            processBtn.disabled = true;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error processing observation. Please try again.');
+            processBtn.innerHTML = originalBtnText;
+            processBtn.disabled = false;
+        });
+    });
+
+    function resetForm() {
+        document.getElementById('process-form').reset();
+        document.getElementById('file-preview').innerHTML = '';
+        document.getElementById('upload-section').style.display = 'none';
+        document.getElementById('file-types').textContent = 'Select a processing mode first';
+    }
+
+    // Custom report generation
+    function generateCustomReport() {
+        const childId = document.getElementById('custom-child-select').value;
+        const prompt = document.getElementById('custom-prompt').value;
+
+        if (!childId || !prompt.trim()) {
+            alert('Please select a child and enter a prompt');
+            return;
+        }
+
+        // Show loading
+        const button = event.target;
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating...';
+        button.disabled = true;
+
+        const formData = new FormData();
+        formData.append('child_id', childId);
+        formData.append('prompt', prompt);
+
+        fetch('/observer/custom_report', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Display the custom report with download buttons
+                document.getElementById('custom-report-content').textContent = data.report;
+                document.getElementById('custom-report-section').style.display = 'block';
+                document.getElementById('custom-report-section').classList.add('fade-in');
+
+                // Scroll to the report
+                document.getElementById('custom-report-section').scrollIntoView({ behavior: 'smooth' });
+            } else {
+                alert('Error generating report: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Error generating report');
+            console.error('Error:', error);
+        })
+        .finally(() => {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        });
+    }
+
+    // Download custom reports
+    function downloadCustomReport(type) {
+        const url = type === 'word' ? '/observer/download_custom_report' : '/observer/download_custom_pdf';
+        window.open(url, '_blank');
+    }
+
+    // Email custom report
+    function emailCustomReport() {
+        showEmailModal('custom');
+    }
+
+    // Email modal functions
+    function showEmailModal(reportType = 'regular') {
+        const modal = document.getElementById('emailModal');
+        if (modal) {
+            modal.setAttribute('data-report-type', reportType);
+            const bootstrapModal = new bootstrap.Modal(modal);
+            bootstrapModal.show();
+        }
+    }
+
+    function sendEmail() {
+        const email = document.getElementById('recipient-email').value;
+        const modal = document.getElementById('emailModal');
+        const reportType = modal ? modal.getAttribute('data-report-type') || 'regular' : 'regular';
+
+        if (!email) {
+            alert('Please enter an email address');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('recipient_email', email);
+
+        let endpoint = '/observer/email_report';
+        if (reportType === 'custom') {
+            endpoint = '/observer/email_custom_report';
+        }
+
+        fetch(endpoint, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Email sent successfully!');
+                bootstrap.Modal.getInstance(modal).hide();
+            } else {
+                alert('Error sending email: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Error sending email');
+            console.error('Error:', error);
+        });
+    }
+});
+</script>
+
 <style>
+.suggestions-content {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.suggestions-text {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 12px;
+    border-left: 4px solid #17a2b8;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6;
+}
+
+.suggestions-text ul {
+    padding-left: 1.5rem;
+    margin-bottom: 0;
+    list-style-type: disc;
+}
+
+.suggestions-text li {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e9ecef;
+    line-height: 1.6;
+}
+
+.suggestions-text li:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.suggestions-text h1,
+.suggestions-text h2,
+.suggestions-text h3,
+.suggestions-text h4,
+.suggestions-text h5,
+.suggestions-text h6 {
+    font-weight: bold;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    font-size: 1.2em;
+}
+
+.suggestions-text strong {
+    color: #2c3e50;
+    font-weight: 700;
+    font-size: 1.1em;
+}
+
+.suggestions-text p {
+    margin-top: 0.5rem;
+    margin-bottom: 0;
+    color: #495057;
+    font-size: 0.95em;
+}
+
+.suggestions-text h1,
+.suggestions-text h2,
+.suggestions-text h3,
+.suggestions-text h4,
+.suggestions-text h5,
+.suggestions-text h6 {
+    font-weight: bold;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.suggestions-text strong {
+    font-weight: bold;
+    color: #2c3e50;
+}
+
 .file-upload-area {
     border: 2px dashed #ddd;
     border-radius: 8px;
@@ -315,26 +787,6 @@
     line-height: 1.6;
 }
 
-.processing-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-}
-
-.processing-spinner {
-    background: white;
-    padding: 2rem;
-    border-radius: 8px;
-    text-align: center;
-}
-
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
@@ -343,408 +795,11 @@
 .fade-in {
     animation: fadeIn 0.5s ease-in;
 }
+
+@media (max-width: 768px) {
+    .col-lg-4 {
+        margin-top: 1rem;
+    }
+}
 </style>
-
-<script>
-let selectedFile = null;
-let processingInterval = null;
-
-// Handle form submission
-document.getElementById('process-form').addEventListener('submit', function(e) {
-    e.preventDefault();
-
-    const form = this;
-    const processBtn = document.getElementById('process-btn');
-    const originalBtnText = processBtn.innerHTML;
-
-    // Show processing status
-    showProcessingStatus();
-
-    // Show loading state
-    processBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
-    processBtn.disabled = true;
-
-    // Submit form
-    fetch(form.action, {
-        method: 'POST',
-        body: new FormData(form)
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.json();
-    })
-    .then(data => {
-        hideProcessingStatus();
-
-        if (data.success) {
-            // Remove existing report if any
-            const existingReport = document.getElementById('generated-report');
-            if (existingReport) {
-                existingReport.remove();
-            }
-
-            // Create new report section
-            const reportSection = document.createElement('div');
-            reportSection.className = 'card mt-4 fade-in';
-            reportSection.id = 'generated-report';
-            reportSection.innerHTML = `
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5><i class="fas fa-file-alt me-2"></i>Generated Report</h5>
-                    <div class="btn-group">
-                        <a href="${data.download_urls.word}" class="btn btn-outline-primary btn-sm">
-                            <i class="fas fa-download me-1"></i>Download Word
-                        </a>
-                        <a href="${data.download_urls.pdf}" class="btn btn-outline-danger btn-sm">
-                            <i class="fas fa-file-pdf me-1"></i>Download PDF
-                        </a>
-                        <button class="btn btn-outline-success btn-sm" onclick="showEmailModal('regular')">
-                            <i class="fas fa-envelope me-1"></i>Email
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="report-content" style="white-space: pre-wrap; background: #f8f9fa; padding: 1rem; border-radius: 8px; max-height: 500px; overflow-y: auto; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6;">
-                        ${data.report}
-                    </div>
-                </div>
-            `;
-
-            // Insert the new report section after the form card
-            const formCard = document.querySelector('.card');
-            formCard.parentNode.insertBefore(reportSection, formCard.nextSibling);
-
-            // Show success toast
-            showToast('success', data.message);
-
-            // Scroll to report
-            reportSection.scrollIntoView({ behavior: 'smooth' });
-        } else {
-            showToast('error', data.error);
-        }
-
-        // Reset form and button
-        resetForm();
-        processBtn.innerHTML = originalBtnText;
-        processBtn.disabled = true;
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        hideProcessingStatus();
-        showToast('error', 'Error processing observation. Please try again.');
-        processBtn.innerHTML = originalBtnText;
-        processBtn.disabled = false;
-    });
-});
-
-function showProcessingStatus() {
-    const statusCard = document.getElementById('processing-status');
-    const progressBar = statusCard.querySelector('.progress-bar');
-    const statusText = document.getElementById('status-text');
-
-    statusCard.style.display = 'block';
-    let progress = 0;
-
-    const steps = [
-        'Uploading file...',
-        'Processing content...',
-        'Generating report...',
-        'Finalizing...'
-    ];
-
-    let stepIndex = 0;
-    statusText.textContent = steps[stepIndex];
-
-    processingInterval = setInterval(() => {
-        progress += Math.random() * 15;
-        if (progress > 90) progress = 90;
-
-        progressBar.style.width = progress + '%';
-
-        if (progress > 25 && stepIndex === 0) {
-            stepIndex = 1;
-            statusText.textContent = steps[stepIndex];
-        } else if (progress > 50 && stepIndex === 1) {
-            stepIndex = 2;
-            statusText.textContent = steps[stepIndex];
-        } else if (progress > 75 && stepIndex === 2) {
-            stepIndex = 3;
-            statusText.textContent = steps[stepIndex];
-        }
-    }, 500);
-}
-
-function hideProcessingStatus() {
-    if (processingInterval) {
-        clearInterval(processingInterval);
-        processingInterval = null;
-    }
-
-    const statusCard = document.getElementById('processing-status');
-    const progressBar = statusCard.querySelector('.progress-bar');
-    const statusText = document.getElementById('status-text');
-
-    progressBar.style.width = '100%';
-    statusText.textContent = 'Complete!';
-
-    setTimeout(() => {
-        statusCard.style.display = 'none';
-        progressBar.style.width = '0%';
-        statusText.textContent = 'Ready to process...';
-    }, 1000);
-}
-
-function showToast(type, message) {
-    const toastId = type === 'success' ? 'successToast' : 'errorToast';
-    const messageId = type === 'success' ? 'successMessage' : 'errorMessage';
-
-    document.getElementById(messageId).textContent = message;
-
-    const toast = new bootstrap.Toast(document.getElementById(toastId));
-    toast.show();
-}
-
-function resetForm() {
-    document.getElementById('process-form').reset();
-    document.getElementById('file-preview').innerHTML = '';
-    selectedFile = null;
-    document.getElementById('upload-section').style.display = 'none';
-    document.getElementById('file-types').textContent = 'Select a processing mode first';
-}
-
-function initializeEventListeners() {
-    // Handle processing mode change
-    document.querySelectorAll('input[name="processing_mode"]').forEach(radio => {
-        radio.addEventListener('change', function() {
-            const uploadSection = document.getElementById('upload-section');
-            const fileTypes = document.getElementById('file-types');
-            const fileInput = document.getElementById('file-input');
-
-            uploadSection.style.display = 'block';
-
-            if (this.value === 'ocr') {
-                fileTypes.textContent = 'Images: JPG, PNG';
-                fileInput.accept = '.jpg,.jpeg,.png';
-            } else if (this.value === 'audio') {
-                fileTypes.textContent = 'Audio: MP3, WAV, M4A';
-                fileInput.accept = '.mp3,.wav,.m4a';
-            }
-
-            updateProcessButton();
-        });
-    });
-
-    // Handle file selection
-    document.getElementById('file-input').addEventListener('change', function(e) {
-        selectedFile = e.target.files[0];
-        const preview = document.getElementById('file-preview');
-
-        if (selectedFile) {
-            preview.innerHTML = `
-                <div class="alert alert-info">
-                    <i class="fas fa-file me-2"></i>
-                    Selected: ${selectedFile.name} (${(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
-                </div>
-            `;
-        }
-
-        updateProcessButton();
-    });
-
-    // Handle child selection
-    document.getElementById('child_id').addEventListener('change', function() {
-        updateProcessButton();
-
-        // Auto-populate student name when child is selected
-        const selectedOption = this.options[this.selectedIndex];
-        if (selectedOption.value) {
-            document.getElementById('student_name').value = selectedOption.text;
-        }
-    });
-
-    // Drag and drop functionality
-    const uploadArea = document.querySelector('.file-upload-area');
-
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        uploadArea.addEventListener(eventName, preventDefaults, false);
-    });
-
-    function preventDefaults(e) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
-
-    ['dragenter', 'dragover'].forEach(eventName => {
-        uploadArea.addEventListener(eventName, highlight, false);
-    });
-
-    ['dragleave', 'drop'].forEach(eventName => {
-        uploadArea.addEventListener(eventName, unhighlight, false);
-    });
-
-    function highlight(e) {
-        uploadArea.classList.add('dragover');
-    }
-
-    function unhighlight(e) {
-        uploadArea.classList.remove('dragover');
-    }
-
-    uploadArea.addEventListener('drop', handleDrop, false);
-
-    function handleDrop(e) {
-        const dt = e.dataTransfer;
-        const files = dt.files;
-
-        if (files.length > 0) {
-            document.getElementById('file-input').files = files;
-            document.getElementById('file-input').dispatchEvent(new Event('change'));
-        }
-    }
-}
-
-// Initialize event listeners on page load
-document.addEventListener('DOMContentLoaded', function() {
-    initializeEventListeners();
-    document.getElementById('session_date').valueAsDate = new Date();
-
-    // Handle URL parameters for pre-selection
-    const urlParams = new URLSearchParams(window.location.search);
-    const childId = urlParams.get('child_id');
-
-    if (childId) {
-        const childSelect = document.getElementById('child_id');
-        childSelect.value = childId;
-        childSelect.dispatchEvent(new Event('change'));
-    }
-
-    // Handle scheduled child from session
-    {% if session.get('scheduled_child_id') %}
-    const scheduledChildId = '{{ session.get("scheduled_child_id") }}';
-    if (scheduledChildId) {
-        const childSelect = document.getElementById('child_id');
-        childSelect.value = scheduledChildId;
-        childSelect.dispatchEvent(new Event('change'));
-    }
-    {% endif %}
-});
-
-function updateProcessButton() {
-    const childSelected = document.getElementById('child_id').value;
-    const modeSelected = document.querySelector('input[name="processing_mode"]:checked');
-    const processBtn = document.getElementById('process-btn');
-
-    processBtn.disabled = !(childSelected && modeSelected && selectedFile);
-}
-
-// UPDATED: Enhanced email modal handling for different report types
-function showEmailModal(reportType = 'regular') {
-    const modal = document.getElementById('emailModal');
-    if (modal) {
-        // Store report type for use in sendEmail
-        modal.setAttribute('data-report-type', reportType);
-        const bootstrapModal = new bootstrap.Modal(modal);
-        bootstrapModal.show();
-    }
-}
-
-// UPDATED: Enhanced email sending for different report types
-function sendEmail() {
-    const email = document.getElementById('recipient-email').value;
-    const modal = document.getElementById('emailModal');
-    const reportType = modal ? modal.getAttribute('data-report-type') || 'regular' : 'regular';
-
-    if (!email) {
-        showToast('error', 'Please enter an email address');
-        return;
-    }
-
-    const formData = new FormData();
-    formData.append('recipient_email', email);
-
-    let endpoint = '/observer/email_report';
-    if (reportType === 'custom') {
-        endpoint = '/observer/email_custom_report';
-    }
-
-    fetch(endpoint, {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showToast('success', 'Email sent successfully!');
-            bootstrap.Modal.getInstance(modal).hide();
-        } else {
-            showToast('error', 'Error sending email: ' + data.error);
-        }
-    })
-    .catch(error => {
-        showToast('error', 'Error sending email');
-        console.error('Error:', error);
-    });
-}
-
-// UPDATED: Enhanced custom report generation with display and download functionality
-function generateCustomReport() {
-    const childId = document.getElementById('custom-child-select').value;
-    const prompt = document.getElementById('custom-prompt').value;
-
-    if (!childId || !prompt.trim()) {
-        showToast('error', 'Please select a child and enter a prompt');
-        return;
-    }
-
-    // Show loading
-    const button = event.target;
-    const originalText = button.innerHTML;
-    button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating...';
-    button.disabled = true;
-
-    const formData = new FormData();
-    formData.append('child_id', childId);
-    formData.append('prompt', prompt);
-
-    fetch('/observer/custom_report', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Display the custom report with download buttons
-            document.getElementById('custom-report-content').textContent = data.report;
-            document.getElementById('custom-report-section').style.display = 'block';
-            document.getElementById('custom-report-section').classList.add('fade-in');
-
-            // Scroll to the report
-            document.getElementById('custom-report-section').scrollIntoView({ behavior: 'smooth' });
-            showToast('success', 'Custom report generated successfully!');
-        } else {
-            showToast('error', 'Error generating report: ' + data.error);
-        }
-    })
-    .catch(error => {
-        showToast('error', 'Error generating report');
-        console.error('Error:', error);
-    })
-    .finally(() => {
-        button.innerHTML = originalText;
-        button.disabled = false;
-    });
-}
-
-// NEW: Download custom reports
-function downloadCustomReport(type) {
-    const url = type === 'word' ? '/observer/download_custom_report' : '/observer/download_custom_pdf';
-    window.open(url, '_blank');
-}
-
-// NEW: Email custom report
-function emailCustomReport() {
-    showEmailModal('custom');
-}
-</script>
 {% endblock %}
