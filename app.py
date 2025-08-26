@@ -36,13 +36,18 @@ logging.basicConfig(
         logging.FileHandler('app.log', encoding='utf-8')
     ]
 )
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(_name_)
 
 from models.database import get_supabase_client
 from datetime import datetime, timedelta
-
 def send_reminder_email(to, child_name, scheduled_time):
-    """Send reminder email to observer"""
+    """Send reminder email to observer with logging"""
+    # Check if email is configured
+    if not Config.is_email_configured():
+        logger.error("[MAIL] Email configuration missing! Please set EMAIL_USER and EMAIL_PASSWORD environment variables.")
+        print("[MAIL] ❌ Email configuration missing! Please set EMAIL_USER and EMAIL_PASSWORD environment variables.")
+        return False
+    
     subject = f"Session Reminder: Observation for {child_name}"
     body = (
         f"Dear Observer,\n\n"
@@ -53,10 +58,12 @@ def send_reminder_email(to, child_name, scheduled_time):
     try:
         msg = Message(subject, recipients=[to], body=body)
         mail.send(msg)
-        print(f"[MAIL] Sent reminder to {to} for session at {scheduled_time}.")
+        logger.info(f"[MAIL] Sent reminder to {to} for session at {scheduled_time}.")
+        print(f"[MAIL] ✅ Sent reminder to {to} for session at {scheduled_time}.")
         return True
     except Exception as e:
-        print(f"[MAIL] Failed to send email to {to}: {e}")
+        logger.error(f"[MAIL] Failed to send email to {to}: {e}", exc_info=True)
+        print(f"[MAIL] ❌ Failed to send email to {to}: {e}")
         return False
 
 def check_and_send_observer_reminders():
@@ -108,8 +115,11 @@ def check_and_send_observer_reminders():
                     today_str = now_ist.strftime('%Y-%m-%d')
                     obs_check = supabase.table('observations').select('id').eq('student_id', child_id).eq('username', observer_id).eq('date', today_str).execute()
                     
+                    print(f"[SCHEDULER] Checking for existing observation on {today_str} for child {child_id}, observer {observer_id}")
+                    print(f"[SCHEDULER] Found {len(obs_check.data) if obs_check.data else 0} existing observations")
+                    
                     if not obs_check.data:
-                        print(f"[SCHEDULER] No observation found for today, sending reminder")
+                        print(f"[SCHEDULER] ✅ No observation found for today - sending reminder (this is correct!)")
                         
                         # Get observer and child details
                         observer_response = supabase.table('users').select('email, name').eq('id', observer_id).execute()
@@ -117,7 +127,7 @@ def check_and_send_observer_reminders():
                         
                         if observer_response.data and child_response.data:
                             observer = observer_response.data[0]
-                            child = child_response.data
+                            child = child_response.data[0]  # Fixed: was missing [0]
                             
                             print(f"[SCHEDULER] Sending email to {observer['email']} for child {child['name']}")
                             success = send_reminder_email(
@@ -133,7 +143,7 @@ def check_and_send_observer_reminders():
                         else:
                             print("[SCHEDULER] Observer or child not found in database")
                     else:
-                        print("[SCHEDULER] Observation already submitted today - no reminder needed")
+                        print(f"[SCHEDULER] ℹ Observation already submitted today - no reminder needed")
                 else:
                     print(f"[SCHEDULER] Outside reminder window (need 25-35 min, got {mins_to_session:.1f} min)")
                     
@@ -141,7 +151,7 @@ def check_and_send_observer_reminders():
                 print(f"[SCHEDULER] Error processing schedule {sched.get('id', 'unknown')}: {e}")
 
 def create_app():
-    app = Flask(__name__)
+    app = Flask(_name_)
     app.config.from_object(Config)
     
     mail.init_app(app)
@@ -164,6 +174,19 @@ def create_app():
         """Test endpoint for reminder emails"""
         success = send_reminder_email("sanketbbt7@gmail.com", "Demo Child", "7:45 PM")
         return f"Test email {'sent successfully' if success else 'failed'}!"
+    
+    @app.route('/email_status')
+    def email_status():
+        """Debug endpoint to check email configuration status"""
+        status = {
+            'email_configured': Config.is_email_configured(),
+            'email_user': Config.EMAIL_USER if Config.EMAIL_USER else 'Not set',
+            'email_password': 'Set' if Config.EMAIL_PASSWORD else 'Not set',
+            'mail_server': Config.MAIL_SERVER,
+            'mail_port': Config.MAIL_PORT,
+            'mail_use_tls': Config.MAIL_USE_TLS
+        }
+        return jsonify(status)
     
     @app.route('/scheduler_status')
     def scheduler_status():
@@ -399,7 +422,7 @@ def create_app():
     
     return app
 
-if __name__ == '__main__':
+if _name_ == '_main_':
     try:
         app = create_app()
         logger.info("Starting Flask application...")
