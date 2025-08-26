@@ -36,7 +36,7 @@ logging.basicConfig(
         logging.FileHandler('app.log', encoding='utf-8')
     ]
 )
-logger = logging.getLogger(_name_)
+logger = logging.getLogger(__name__)
 
 from models.database import get_supabase_client
 from datetime import datetime, timedelta
@@ -151,7 +151,7 @@ def check_and_send_observer_reminders():
                 print(f"[SCHEDULER] Error processing schedule {sched.get('id', 'unknown')}: {e}")
 
 def create_app():
-    app = Flask(_name_)
+    app = Flask(__name__)
     app.config.from_object(Config)
     
     mail.init_app(app)
@@ -422,7 +422,7 @@ def create_app():
     
     return app
 
-if _name_ == '_main_':
+if __name__ == '__main__':
     try:
         app = create_app()
         logger.info("Starting Flask application...")
