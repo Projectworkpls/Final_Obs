@@ -1242,9 +1242,48 @@ def download_custom_report():
             flash('No custom report available for download', 'error')
             return redirect(url_for('observer.process_observation'))
 
+        # Check if the report is in JSON format and needs formatting
+        formatted_report = custom_report
+        if custom_report.strip().startswith('📋 Daily Growth Report') and '```json' in custom_report:
+            # This is the problematic format - extract and format the JSON
+            try:
+                import json
+                # Extract JSON from the markdown
+                start_idx = custom_report.find('```json') + 7
+                end_idx = custom_report.find('```', start_idx)
+                if start_idx > 6 and end_idx > start_idx:
+                    json_text = custom_report[start_idx:end_idx].strip()
+                    json_data = json.loads(json_text)
+                    
+                    # Format it properly
+                    formatted_report = f"""
+📋 Custom Report: {json_data.get('className', 'Custom Analysis Report')}
+
+🧒 Student Name: {json_data.get('studentName', 'Student')}
+📅 Date: {json_data.get('date', datetime.now().strftime('%Y-%m-%d'))}
+📝 Report Type: Custom Analysis
+
+📊 Observations Summary:
+{json_data.get('observations', 'No observations available')}
+
+⭐ Strengths Identified:
+{chr(10).join([f"• {strength}" for strength in json_data.get('strengths', [])])}
+
+📈 Areas for Development:
+{chr(10).join([f"• {area}" for area in json_data.get('areasOfDevelopment', [])])}
+
+💡 Recommendations:
+{chr(10).join([f"• {rec}" for rec in json_data.get('recommendations', [])])}
+
+📋 Report Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+                    """.strip()
+            except Exception as format_error:
+                # If formatting fails, use the original report
+                formatted_report = custom_report
+
         # Create Word document
         extractor = ObservationExtractor()
-        doc_buffer = extractor.create_word_document_with_emojis(custom_report)
+        doc_buffer = extractor.create_word_document_with_emojis(formatted_report)
 
         # Create filename
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -1272,9 +1311,48 @@ def download_custom_pdf():
             flash('No custom report available for download', 'error')
             return redirect(url_for('observer.process_observation'))
 
+        # Check if the report is in JSON format and needs formatting
+        formatted_report = custom_report
+        if custom_report.strip().startswith('📋 Daily Growth Report') and '```json' in custom_report:
+            # This is the problematic format - extract and format the JSON
+            try:
+                import json
+                # Extract JSON from the markdown
+                start_idx = custom_report.find('```json') + 7
+                end_idx = custom_report.find('```', start_idx)
+                if start_idx > 6 and end_idx > start_idx:
+                    json_text = custom_report[start_idx:end_idx].strip()
+                    json_data = json.loads(json_text)
+                    
+                    # Format it properly
+                    formatted_report = f"""
+📋 Custom Report: {json_data.get('className', 'Custom Analysis Report')}
+
+🧒 Student Name: {json_data.get('studentName', 'Student')}
+📅 Date: {json_data.get('date', datetime.now().strftime('%Y-%m-%d'))}
+📝 Report Type: Custom Analysis
+
+📊 Observations Summary:
+{json_data.get('observations', 'No observations available')}
+
+⭐ Strengths Identified:
+{chr(10).join([f"• {strength}" for strength in json_data.get('strengths', [])])}
+
+📈 Areas for Development:
+{chr(10).join([f"• {area}" for area in json_data.get('areasOfDevelopment', [])])}
+
+💡 Recommendations:
+{chr(10).join([f"• {rec}" for rec in json_data.get('recommendations', [])])}
+
+📋 Report Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+                    """.strip()
+            except Exception as format_error:
+                # If formatting fails, use the original report
+                formatted_report = custom_report
+
         # Create PDF using alternative method
         extractor = ObservationExtractor()
-        pdf_buffer = extractor.create_pdf_alternative(custom_report)
+        pdf_buffer = extractor.create_pdf_alternative(formatted_report)
 
         # Create filename
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -1677,17 +1755,32 @@ def download_monthly_report():
         filename_base = f"{child_name}_Progress_Report_{month_name}_{year}"
 
         if filetype == 'pdf':
-            pdf_buffer = report_generator.generate_monthly_pdf_report(
-                observations, goal_progress, strength_counts, development_counts, summary_json
-            )
-            filename = filename_base + '.pdf'
-            mimetype = 'application/pdf'
-            return send_file(
-                pdf_buffer,
-                as_attachment=True,
-                download_name=filename,
-                mimetype=mimetype
-            )
+            try:
+                pdf_buffer = report_generator.generate_monthly_pdf_report(
+                    observations, goal_progress, strength_counts, development_counts, summary_json
+                )
+                filename = filename_base + '.pdf'
+                mimetype = 'application/pdf'
+                return send_file(
+                    pdf_buffer,
+                    as_attachment=True,
+                    download_name=filename,
+                    mimetype=mimetype
+                )
+            except Exception as pdf_error:
+                # Fallback to Word document if PDF generation fails
+                flash(f'PDF generation failed, downloading as Word document instead. Error: {str(pdf_error)}', 'warning')
+                docx_buffer = report_generator.generate_monthly_docx_report(
+                    observations, goal_progress, strength_counts, development_counts, summary_json
+                )
+                filename = filename_base + '.docx'
+                mimetype = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                return send_file(
+                    docx_buffer,
+                    as_attachment=True,
+                    download_name=filename,
+                    mimetype=mimetype
+                )
         else:
             docx_buffer = report_generator.generate_monthly_docx_report(
                 observations, goal_progress, strength_counts, development_counts, summary_json
