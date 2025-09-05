@@ -1936,6 +1936,29 @@ def create_admin_audit_log(admin_id, action, description):
         supabase.table('admin_audit_log').insert(audit_data).execute()
     except Exception as e:
         logger.error(f"Error creating audit log: {e}")
+@admin_bp.route('/observer_report_counts')
+@admin_required
+def observer_report_counts():
+    try:
+        supabase = get_supabase_client()
+        # Get all observers
+        observers = supabase.table('users').select('id, name, email').eq('role', 'Observer').execute().data
+        # Count processed reports for each observer
+        data = []
+        for obs in observers:
+            processed_reports = supabase.table('observations').select('id').eq('username', obs['id']).eq('processed_by_admin', False).execute().data
+            admin_processed = supabase.table('observations').select('id').eq('username', obs['id']).eq('processed_by_admin', True).execute().data
+            data.append({
+                'observer': obs,
+                'count_observer': len(processed_reports),
+                'count_admin': len(admin_processed),
+                'total': len(processed_reports) + len(admin_processed)
+            })
+        return render_template('admin/observer_report_counts.html', data=data)
+    except Exception as e:
+        return render_template('admin/observer_report_counts.html', data=[], error=str(e))
+
+
 @admin_bp.route('/view_principal_application/<application_id>')
 @admin_required
 def view_principal_application(application_id):
@@ -1960,7 +1983,7 @@ def view_principal_application(application_id):
         # Get organization info if assigned
         organization_info = None
         if app_data.get('organization_id'):
-            org = supabase.table('organizations').select('name').eq('id', app_data['organization_id']).execute()
+            org = supabase.table('organizations').select('id', 'name').eq('id', app_data['organization_id']).execute()
             organization_info = org.data[0] if org.data else None
 
         # Get organizations for assignment dropdown
