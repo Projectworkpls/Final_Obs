@@ -1258,7 +1258,7 @@ GUIDELINES FOR SUGGESTIONS:
 6. Consider seasonal relevance and current events when appropriate
 7. Ensure topics can be explored in a 30-45 minute session
 8. IMPORTANT: The conversation between teacher and student is happening over a voice call, so suggest activities that are possible and engaging in a remote setting
-9. Also, provide proper reasoning or a reference for why you are suggesting the particular activity.
+9. Also, provide proper reasoning or a reference for why you are suggesting the particular activity based on the past reports (the activity should have some co-relation to the past reports).
 
 Please provide suggestions in this exact format:
 
@@ -1309,4 +1309,5 @@ Please provide suggestions in this exact format:
 - Develop communication and expression skills
 
 🌟 **SESSION TIP:** Start with what interests {child_name} most and build the lesson around their natural curiosity!"""
+
 
