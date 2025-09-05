@@ -16,12 +16,14 @@
 <div class="row mb-4">
     <!-- Analytics Cards -->
     <div class="col-md-2">
-        <div class="card bg-primary text-white">
-            <div class="card-body text-center">
-                <h4>{{ analytics.observers_count }}</h4>
-                <p class="mb-0">Total Observers</p>
+        <a href="{{ url_for('admin.observer_report_counts') }}" class="text-decoration-none">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body text-center d-flex flex-column justify-content-center">
+                    <h4>{{ analytics.observers_count }}</h4>
+                    <p class="mb-0">Total Observers</p>
+                </div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-md-2">
         <div class="card bg-success text-white">
