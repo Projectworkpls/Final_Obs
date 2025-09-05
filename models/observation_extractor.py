@@ -1237,7 +1237,7 @@ CRITICAL INSTRUCTIONS FOR NAME AND GENDER USAGE:
             # Create comprehensive prompt for Gemini
             prompt = f"""
 You are an educational consultant helping an Observer plan engaging learning sessions. Based on the learning history below, suggest 5-7 specific, actionable topics or activities for today's observation session with {child_name}.
-
+Also, provide a brief rationale for each suggestion. For example, indicate which theme, curiosity, past mention/instance, or learning pattern from the child’s or Observer’s history informed your recommendation.
 OBSERVER'S RECENT TEACHING HISTORY:
 Recent Themes Covered: {', '.join(recent_themes[-8:]) if recent_themes else 'None available'}
 Recent Curiosity Seeds: {', '.join(recent_curiosities[-5:]) if recent_curiosities else 'None available'}
@@ -1309,5 +1309,6 @@ Please provide suggestions in this exact format:
 - Develop communication and expression skills
 
 🌟 **SESSION TIP:** Start with what interests {child_name} most and build the lesson around their natural curiosity!"""
+
 
 
