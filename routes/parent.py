@@ -388,11 +388,15 @@ def monthly_report():
         strength_counts = report_generator.get_strength_areas(observations)
         development_counts = report_generator.get_development_areas(observations)
 
-        # Generate summary
-        summary = report_generator.generate_monthly_summary(observations, goal_progress)
+        # Generate monthly report
+        child_data = supabase.table('children').select("name").eq('id', child_id).execute().data
+        child_name = child_data[0]['name'] if child_data else 'Child'
+        final_summary = report_generator.generate_monthly_report(
+            observations, goal_progress, strength_counts, development_counts, child_name, year, month
+        )
 
         report_data = {
-            'summary': summary,
+            'summary': final_summary,
             'observations_count': len(observations),
             'goals_count': len(goal_progress),
             'strengths': strength_counts,
@@ -430,7 +434,7 @@ def download_monthly_report():
         strength_counts = report_generator.get_strength_areas(observations)
         development_counts = report_generator.get_development_areas(observations)
 
-        # Generate JSON summary for narrative/analytics
+        # Generate monthly report
         child_data = supabase.table('children').select("name").eq('id', child_id).execute().data
         child_name = child_data[0]['name'] if child_data else 'Child'
         summary_json = report_generator.generate_monthly_summary_json_format(
@@ -449,17 +453,32 @@ def download_monthly_report():
         filename_base = f"{child_name}_Progress_Report_{month_name}_{year}"
 
         if filetype == 'pdf':
-            pdf_buffer = report_generator.generate_monthly_pdf_report(
-                observations, goal_progress, strength_counts, development_counts, summary_json
-            )
-            filename = filename_base + '.pdf'
-            mimetype = 'application/pdf'
-            return send_file(
-                pdf_buffer,
-                as_attachment=True,
-                download_name=filename,
-                mimetype=mimetype
-            )
+            try:
+                pdf_buffer = report_generator.generate_monthly_pdf_report(
+                    observations, goal_progress, strength_counts, development_counts, summary_json
+                )
+                filename = filename_base + '.pdf'
+                mimetype = 'application/pdf'
+                return send_file(
+                    pdf_buffer,
+                    as_attachment=True,
+                    download_name=filename,
+                    mimetype=mimetype
+                )
+            except Exception as pdf_error:
+                # Fallback to Word document if PDF generation fails
+                flash(f'PDF generation failed, downloading as Word document instead. Error: {str(pdf_error)}', 'warning')
+                docx_buffer = report_generator.generate_monthly_docx_report(
+                    observations, goal_progress, strength_counts, development_counts, summary_json
+                )
+                filename = filename_base + '.docx'
+                mimetype = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                return send_file(
+                    docx_buffer,
+                    as_attachment=True,
+                    download_name=filename,
+                    mimetype=mimetype
+                )
         else:
             docx_buffer = report_generator.generate_monthly_docx_report(
                 observations, goal_progress, strength_counts, development_counts, summary_json
