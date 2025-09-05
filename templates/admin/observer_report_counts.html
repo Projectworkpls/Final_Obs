@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Observer Report Counts{% endblock %}
+{% block content %}
+<h2>Observer Processed Report Counts</h2>
+{% if error %}
+  <div class="alert alert-danger">{{ error }}</div>
+{% endif %}
+<table class="table table-bordered">
+  <thead>
+    <tr>
+      <th>Observer Name</th>
+      <th>Email</th>
+      <th>Reports (by Observer)</th>
+      <th>Reports (Admin Processed)</th>
+      <th>Total Processed</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for item in data %}
+    <tr>
+      <td>{{ item.observer.name }}</td>
+      <td>{{ item.observer.email }}</td>
+      <td>{{ item.count_observer }}</td>
+      <td>{{ item.count_admin }}</td>
+      <td>{{ item.total }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+
