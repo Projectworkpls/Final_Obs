@@ -308,8 +308,7 @@ Format it as a natural dialogue where:
         - NEVER assume gender - always refer to the student by their name "{user_info['student_name']}" throughout the report
         - Do not use pronouns like he/his, she/her, they/them - use the student's name consistently
         - If you need to refer to the student multiple times, use "{user_info['student_name']}" or "the student"
-        Make sure the report is grammatically correct and adheres to proper English syntax and semantics.
-
+        - Make sure the report is grammatically correct and adheres to proper English syntax and semantics.
         Please carefully analyze the given text and complete the report using the exact format, emojis, section titles, and scoring rubrics as described below. The student should be referred to consistently using their provided name "{user_info['student_name']}" - never use gender-specific pronouns or names from the audio/text content.
 
         📌 Important Instructions for the Report:
@@ -779,7 +778,26 @@ CRITICAL INSTRUCTIONS FOR NAME AND GENDER USAGE:
 
             # Try to parse as JSON and format nicely
             try:
-                json_response = json.loads(response.text)
+                # Clean the response text to extract JSON
+                response_text = response.text.strip()
+                
+                # Remove markdown code blocks if present
+                if response_text.startswith('```json'):
+                    response_text = response_text[7:]  # Remove ```json
+                if response_text.startswith('```'):
+                    response_text = response_text[3:]   # Remove ```
+                if response_text.endswith('```'):
+                    response_text = response_text[:-3]  # Remove trailing ```
+                
+                # Find JSON object in the text
+                start_idx = response_text.find('{')
+                end_idx = response_text.rfind('}') + 1
+                
+                if start_idx != -1 and end_idx > start_idx:
+                    json_text = response_text[start_idx:end_idx]
+                    json_response = json.loads(json_text)
+                else:
+                    json_response = json.loads(response_text)
 
                 # Format the JSON response into a readable report
                 formatted_report = f"""
@@ -806,9 +824,24 @@ CRITICAL INSTRUCTIONS FOR NAME AND GENDER USAGE:
 
                 return formatted_report.strip()
 
-            except json.JSONDecodeError:
-                # If not valid JSON, return the raw response
-                return response.text
+            except (json.JSONDecodeError, ValueError) as e:
+                # If JSON parsing fails, try to extract and format manually
+                logger.error(f"JSON parsing failed: {str(e)}")
+                logger.error(f"Response text: {response.text}")
+                
+                # Fallback: return a formatted version of the raw response
+                return f"""
+📋 Custom Report: Custom Analysis Report
+
+🧒 Student Name: {child_name}
+📅 Date: {datetime.now().strftime('%Y-%m-%d')}
+📝 Report Type: Custom Analysis
+
+📊 Analysis Results:
+{response.text}
+
+📋 Report Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+                """.strip()
 
         except Exception as e:
             return f"Error generating custom report: {str(e)}"
@@ -1156,19 +1189,40 @@ CRITICAL INSTRUCTIONS FOR NAME AND GENDER USAGE:
         from docx2pdf import convert
         import tempfile
         import os
-        docx_bytes = self.generate_monthly_docx_report(observations, goal_progress, strength_counts, development_counts,
-                                                       summary_json)
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.docx') as tmp_docx:
-            tmp_docx.write(docx_bytes.read())
-            tmp_docx_path = tmp_docx.name
-        tmp_pdf_path = tmp_docx_path.replace('.docx', '.pdf')
-        convert(tmp_docx_path, tmp_pdf_path)
-        with open(tmp_pdf_path, 'rb') as f:
-            pdf_bytes = f.read()
-        os.remove(tmp_docx_path)
-        os.remove(tmp_pdf_path)
         from io import BytesIO
-        return BytesIO(pdf_bytes)
+        
+        try:
+            # Generate the Word document first
+            docx_bytes = self.generate_monthly_docx_report(
+                observations, goal_progress, strength_counts, development_counts, summary_json
+            )
+            
+            # Create temporary files for conversion
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.docx') as tmp_docx:
+                tmp_docx.write(docx_bytes.read())
+                tmp_docx_path = tmp_docx.name
+            
+            tmp_pdf_path = tmp_docx_path.replace('.docx', '.pdf')
+            
+            # Convert docx to pdf
+            convert(tmp_docx_path, tmp_pdf_path)
+            
+            # Read the PDF file
+            with open(tmp_pdf_path, 'rb') as f:
+                pdf_bytes = f.read()
+            
+            # Clean up temporary files
+            try:
+                os.remove(tmp_docx_path)
+                os.remove(tmp_pdf_path)
+            except OSError:
+                pass  # Ignore cleanup errors
+            
+            return BytesIO(pdf_bytes)
+            
+        except Exception as e:
+            # If PDF conversion fails, raise the error with more context
+            raise Exception(f"PDF conversion failed: {str(e)}. This might be due to missing docx2pdf dependencies or system limitations.")
 
     def preprocess_audio_for_student(self, file, student_id):
         """Preprocess audio for students with known issues"""
@@ -1238,6 +1292,7 @@ CRITICAL INSTRUCTIONS FOR NAME AND GENDER USAGE:
             prompt = f"""
 You are an educational consultant helping an Observer plan engaging learning sessions. Based on the learning history below, suggest 5-7 specific, actionable topics or activities for today's observation session with {child_name}.
 Also, provide a brief rationale for each suggestion. For example, indicate which theme, curiosity, past mention/instance, or learning pattern from the child’s or Observer’s history informed your recommendation.
+
 OBSERVER'S RECENT TEACHING HISTORY:
 Recent Themes Covered: {', '.join(recent_themes[-8:]) if recent_themes else 'None available'}
 Recent Curiosity Seeds: {', '.join(recent_curiosities[-5:]) if recent_curiosities else 'None available'}
@@ -1309,6 +1364,3 @@ Please provide suggestions in this exact format:
 - Develop communication and expression skills
 
 🌟 **SESSION TIP:** Start with what interests {child_name} most and build the lesson around their natural curiosity!"""
-
-
-
