@@ -102,3 +102,4 @@ markdown==3.5.2
 beautifulsoup4==4.12.2
 Flask-Mail==0.9.1
 Flask-APScheduler==1.13.1
+gevent>=1.4
