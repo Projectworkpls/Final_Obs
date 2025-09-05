@@ -1045,19 +1045,42 @@ class MonthlyReportGenerator:
 
     def generate_monthly_pdf_report(self, observations, goal_progress, strength_counts, development_counts,
                                     summary_json):
-
+        """
+        Generate a PDF version of the monthly report by converting the Word doc.
+        """
         import tempfile
         import os
-        docx_bytes = self.generate_monthly_docx_report(observations, goal_progress, strength_counts, development_counts,
-                                                       summary_json)
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.docx') as tmp_docx:
-            tmp_docx.write(docx_bytes.read())
-            tmp_docx_path = tmp_docx.name
-        tmp_pdf_path = tmp_docx_path.replace('.docx', '.pdf')
-        convert(tmp_docx_path, tmp_pdf_path)
-        with open(tmp_pdf_path, 'rb') as f:
-            pdf_bytes = f.read()
-        os.remove(tmp_docx_path)
-        os.remove(tmp_pdf_path)
         from io import BytesIO
-        return BytesIO(pdf_bytes)
+        
+        try:
+            # Generate the Word document first
+            docx_bytes = self.generate_monthly_docx_report(
+                observations, goal_progress, strength_counts, development_counts, summary_json
+            )
+            
+            # Create temporary files for conversion
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.docx') as tmp_docx:
+                tmp_docx.write(docx_bytes.read())
+                tmp_docx_path = tmp_docx.name
+            
+            tmp_pdf_path = tmp_docx_path.replace('.docx', '.pdf')
+            
+            # Convert docx to pdf
+            convert(tmp_docx_path, tmp_pdf_path)
+            
+            # Read the PDF file
+            with open(tmp_pdf_path, 'rb') as f:
+                pdf_bytes = f.read()
+            
+            # Clean up temporary files
+            try:
+                os.remove(tmp_docx_path)
+                os.remove(tmp_pdf_path)
+            except OSError:
+                pass  # Ignore cleanup errors
+            
+            return BytesIO(pdf_bytes)
+            
+        except Exception as e:
+            # If PDF conversion fails, raise the error with more context
+            raise Exception(f"PDF conversion failed: {str(e)}. This might be due to missing docx2pdf dependencies or system limitations.")
