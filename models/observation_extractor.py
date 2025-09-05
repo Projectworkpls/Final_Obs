@@ -308,6 +308,7 @@ Format it as a natural dialogue where:
         - NEVER assume gender - always refer to the student by their name "{user_info['student_name']}" throughout the report
         - Do not use pronouns like he/his, she/her, they/them - use the student's name consistently
         - If you need to refer to the student multiple times, use "{user_info['student_name']}" or "the student"
+        Make sure the report is grammatically correct and adheres to proper English syntax and semantics.
 
         Please carefully analyze the given text and complete the report using the exact format, emojis, section titles, and scoring rubrics as described below. The student should be referred to consistently using their provided name "{user_info['student_name']}" - never use gender-specific pronouns or names from the audio/text content.
 
@@ -1257,6 +1258,7 @@ GUIDELINES FOR SUGGESTIONS:
 6. Consider seasonal relevance and current events when appropriate
 7. Ensure topics can be explored in a 30-45 minute session
 8. IMPORTANT: The conversation between teacher and student is happening over a voice call, so suggest activities that are possible and engaging in a remote setting
+9. Also, provide proper reasoning or a reference for why you are suggesting the particular activity.
 
 Please provide suggestions in this exact format:
 
@@ -1307,3 +1309,4 @@ Please provide suggestions in this exact format:
 - Develop communication and expression skills
 
 🌟 **SESSION TIP:** Start with what interests {child_name} most and build the lesson around their natural curiosity!"""
+
