@@ -180,7 +180,8 @@ def process_file():
         'observer_name': session.get('name'),
         'session_date': session_date,
         'session_start': session_start,
-        'session_end': session_end
+        'session_end': session_end,
+        'child_id': child_id
     }
 
     extractor = ObservationExtractor()
