@@ -1405,7 +1405,8 @@ def generate_ai_reviews():
                 # Generate AI review using the existing report generation logic
                 user_info = {
                     'student_name': ob.get('student_name', 'Student'),
-                    'observer_name': ob.get('observer_name', 'Observer')
+                    'observer_name': ob.get('observer_name', 'Observer'),
+                    'child_id': ob.get('student_id')
                 }
                 
                 # Generate AI review
