@@ -236,11 +236,24 @@ def create_user(user_data):
 def get_children():
     try:
         client = get_supabase_client()
-        response = client.table('children').select("*").execute()
+        response = client.table('children').select("id, name, birth_date, grade, gender").execute()
         return response.data if response.data else []
     except Exception as e:
         logger.error(f"Error getting children: {str(e)}")
         return []
+
+
+def get_child_by_id(child_id):
+    """Get child by ID with gender information"""
+    try:
+        client = get_supabase_client()
+        response = client.table("children").select("id, name, birth_date, grade, gender").eq("id", child_id).execute()
+        if response.data:
+            return response.data[0]
+        return None
+    except Exception as e:
+        logger.error(f"Error getting child by ID: {str(e)}")
+        return None
 
 
 def get_observers():
@@ -270,7 +283,7 @@ def get_observer_children(observer_id):
         child_ids = [m['child_id'] for m in mappings.data] if mappings.data else []
 
         if child_ids:
-            children = client.table('children').select("*").in_("id", child_ids).execute()
+            children = client.table('children').select("id, name, birth_date, grade, gender").in_("id", child_ids).execute()
             return children.data if children.data else []
         return []
     except Exception as e:
@@ -995,7 +1008,7 @@ def get_children_by_organization(organization_id):
             logger.warning("No organization_id provided")
             return []
 
-        result = client.table('children').select('*').eq('organization_id', organization_id).order('name').execute()
+        result = client.table('children').select('id, name, birth_date, grade, gender').eq('organization_id', organization_id).order('name').execute()
         logger.info(f"Found {len(result.data)} children in org {organization_id}")
         return result.data if result.data else []
     except Exception as e:
