@@ -623,7 +623,8 @@ def process_observation():
             'observer_name': observer_name,
             'session_date': session_date,
             'session_start': session_start,
-            'session_end': session_end
+            'session_end': session_end,
+            'child_id': child_id
         }
 
         extractor = ObservationExtractor()
