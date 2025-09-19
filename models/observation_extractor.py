@@ -24,6 +24,15 @@ class ObservationExtractor:
         self.gemini_api_key = Config.GOOGLE_API_KEY
         genai.configure(api_key=self.gemini_api_key)
 
+    def get_pronouns(self, gender):
+        """Get appropriate pronouns based on gender"""
+        if gender == 'male':
+            return {'subject': 'he', 'object': 'him', 'possessive': 'his'}
+        elif gender == 'female':
+            return {'subject': 'she', 'object': 'her', 'possessive': 'her'}
+        else:
+            return {'subject': 'they', 'object': 'them', 'possessive': 'their'}
+
     def image_to_base64(self, image_file):
         """Convert image file to base64 string"""
         return base64.b64encode(image_file.read()).decode('utf-8')
@@ -156,8 +165,8 @@ IMPORTANT: Never use gender-specific language or names from the observation text
         except Exception as e:
             raise Exception(f"Groq API Error: {str(e)}")
 
-    def transcribe_with_assemblyai(self, audio_file):
-        """Transcribe audio using AssemblyAI API"""
+    def transcribe_with_assemblyai(self, audio_file, language_code='en'):
+        """Transcribe audio using AssemblyAI API with English, Hindi, Marathi, or Punjabi."""
         if not Config.ASSEMBLYAI_API_KEY:
             return "Error: AssemblyAI API key is not configured."
 
@@ -168,7 +177,7 @@ IMPORTANT: Never use gender-specific language or names from the observation text
 
         try:
             # Upload the audio file
-            audio_file.seek(0)  # Reset file pointer
+            audio_file.seek(0)
             upload_response = requests.post(
                 "https://api.assemblyai.com/v2/upload",
                 headers={"authorization": Config.ASSEMBLYAI_API_KEY},
@@ -180,10 +189,10 @@ IMPORTANT: Never use gender-specific language or names from the observation text
 
             upload_url = upload_response.json()["upload_url"]
 
-            # Request transcription
+            # Prepare transcription request
             transcript_request = {
                 "audio_url": upload_url,
-                "language_code": "en"
+                "language_code": language_code  # 'en', 'hi', 'mr', or 'pa'
             }
 
             transcript_response = requests.post(
@@ -197,7 +206,6 @@ IMPORTANT: Never use gender-specific language or names from the observation text
 
             transcript_id = transcript_response.json()["id"]
 
-            # Poll for completion
             status = "processing"
             while status != "completed" and status != "error":
                 polling_response = requests.get(
@@ -299,17 +307,43 @@ Format it as a natural dialogue where:
 
     def generate_report_from_text(self, text_content, user_info):
         """Generate a structured report from text using Google Gemini"""
+        # Get child information with gender
+        from models.database import get_child_by_id
+        
+        # Ensure we have a valid child_id and student_name
+        child_id = user_info.get('child_id')
+        student_name = user_info.get('student_name', 'Student')
+        
+        # If no child_id, try to get child by name
+        if not child_id and student_name != 'Student':
+            from models.database import get_supabase_client
+            supabase = get_supabase_client()
+            child_data = supabase.table('children').select('id, name, gender').eq('name', student_name).execute().data
+            if child_data:
+                child_id = child_data[0]['id']
+                child = child_data[0]
+            else:
+                child = None
+        else:
+            child = get_child_by_id(child_id) if child_id else None
+        
+        # Get pronouns based on gender
+        pronouns = self.get_pronouns(child['gender']) if child and child.get('gender') else {'subject': 'they', 'object': 'them', 'possessive': 'their'}
+        
+        # Ensure we have a valid student name
+        if not student_name or student_name == 'Student':
+            student_name = child['name'] if child and child.get('name') else 'Student'
+        
         prompt = f"""
         You are an educational observer tasked with generating a comprehensive and accurate Daily Growth Report based on the following observational notes from a student session. Pay special attention to any achievements, learning moments, and areas for growth. The report should be structured, insightful, and easy to understand for parents. Add postives and negatives based on the text content provided. 
 
         CRITICAL INSTRUCTIONS FOR NAME AND GENDER USAGE:
         - NEVER extract or use any name from the audio transcription or text content
-        - ALWAYS use the exact name provided: {user_info['student_name']}
-        - NEVER assume gender - always refer to the student by their name "{user_info['student_name']}" throughout the report
-        - Do not use pronouns like he/his, she/her, they/them - use the student's name consistently
-        - If you need to refer to the student multiple times, use "{user_info['student_name']}" or "the student"
+        - ALWAYS use the exact name provided: {student_name}
+        - Use these pronouns for the student throughout the report: subject = {pronouns['subject']}, object = {pronouns['object']}, possessive = {pronouns['possessive']}
+        - When referring to the student, use "{student_name}" or the appropriate pronouns ({pronouns['subject']}/{pronouns['object']}/{pronouns['possessive']})
         - Make sure the report is grammatically correct and adheres to proper English syntax and semantics.
-        Please carefully analyze the given text and complete the report using the exact format, emojis, section titles, and scoring rubrics as described below. The student should be referred to consistently using their provided name "{user_info['student_name']}" - never use gender-specific pronouns or names from the audio/text content.
+        Please carefully analyze the given text and complete the report using the exact format, emojis, section titles, and scoring rubrics as described below. The student should be referred to consistently using their provided name "{student_name}" and the appropriate pronouns - never use names from the audio/text content.
 
         📌 Important Instructions for the Report:
         - Follow the format exactly as shown below.
@@ -345,8 +379,8 @@ Format it as a natural dialogue where:
 
         🧾 Daily Growth Report Format for Parents
 
-        🧒 Child's Name: {user_info['student_name']}
-        📅 Date: [{user_info['session_date']}]
+        🧒 Child's Name: {student_name}
+        📅 Date: [{user_info.get('session_date', 'Today')}]
         🌱 Curiosity Seed Explored: [Extract from text]
 
         📊 Growth Metrics & Observations
@@ -360,20 +394,20 @@ Format it as a natural dialogue where:
         🚀 Planning/Independence | [✅ Excellent/✅ Good/⚠️ Fair/📈 Needs Work] | [Brief summary]
 
         🌈 Curiosity Response Index: [1-10] / 10  
-        [Brief explanation of {user_info['student_name']}'s engagement with the curiosity seed]
+        [Brief explanation of {student_name}'s engagement with the curiosity seed]
 
         🗣️ Communication Skills & Thought Clarity
         • Confidence level: [Describe based on speech and tone in text]  
-        • Clarity of thought: [Describe {user_info['student_name']}'s ability to express thoughts clearly and independently]  
+        • Clarity of thought: [Describe {student_name}'s ability to express thoughts clearly and independently]  
         • Participation & engagement: [Describe based on frequency and quality of responses]  
         • Sequence of explanation: [Describe structure and coherence of thought process]  
 
         🧠 Overall Growth Score:  
         [🔵 Balanced Growth / 🟡 Moderate Growth / 🔴 Limited Growth] – [X/7] Areas Active 
-        [Brief recommendation for next steps or continued development for {user_info['student_name']}]
+        [Brief recommendation for next steps or continued development for {student_name}]
 
         📣 Note for Parent:  
-        [Comprehensive summary for parents with actionable insights and encouragement based on today's session for {user_info['student_name']}]
+        [Comprehensive summary for parents with actionable insights and encouragement based on today's session for {student_name}]
 
         🟢 Legend
 
@@ -397,6 +431,11 @@ Format it as a natural dialogue where:
 
     def generate_ai_communication_review(self, transcript, user_info):
         """Generate AI communication review for peer review system"""
+        # Get child information with gender
+        from models.database import get_child_by_id
+        child = get_child_by_id(user_info.get('child_id'))
+        pronouns = self.get_pronouns(child['gender']) if child and child.get('gender') else {'subject': 'they', 'object': 'them', 'possessive': 'their'}
+        
         prompt = f"""
         You are an AI assistant analyzing observer-student communication sessions for educational quality assessment. 
         Generate a comprehensive communication review in a professional report format based on the provided transcript.
@@ -404,6 +443,8 @@ Format it as a natural dialogue where:
         STUDENT: {user_info['student_name']}
         OBSERVER: {user_info['observer_name']}
         TRANSCRIPT: {transcript}
+        
+        Use these pronouns for the student throughout the review: subject = {pronouns['subject']}, object = {pronouns['object']}, possessive = {pronouns['possessive']}
 
         Generate a detailed AI communication review in the following professional format:
 
@@ -717,7 +758,7 @@ Format it as a natural dialogue where:
 
     def generate_custom_report_from_prompt(self, prompt, child_id):
         """Generate custom report based on prompt and stored data with new JSON format"""
-        from models.database import get_supabase_client
+        from models.database import get_supabase_client, get_child_by_id
 
         try:
             supabase = get_supabase_client()
@@ -725,9 +766,10 @@ Format it as a natural dialogue where:
             processed_data = supabase.table('processed_observations').select("*").eq('child_id', child_id).execute()
             observations = supabase.table('observations').select("*").eq('student_id', child_id).execute()
 
-            # Get child information
-            child_data = supabase.table('children').select("name").eq('id', child_id).execute().data
-            child_name = child_data[0]['name'] if child_data else 'Student'
+            # Get child information with gender
+            child = get_child_by_id(child_id)
+            child_name = child['name'] if child else 'Student'
+            pronouns = self.get_pronouns(child['gender']) if child and child.get('gender') else {'subject': 'they', 'object': 'them', 'possessive': 'their'}
 
             # Combine all data
             all_data = {
@@ -741,9 +783,8 @@ Format it as a natural dialogue where:
 CRITICAL INSTRUCTIONS FOR NAME AND GENDER USAGE:
 - ALWAYS use the exact name from the database: {child_name}
 - NEVER use any names that appear in the observation data or audio transcriptions
-- NEVER assume gender - always refer to the student by their name "{child_name}" or as "the student"
-- Do not use gender-specific pronouns (he/his, she/her, they/them) anywhere in the report
-- When describing activities, use "{child_name}" or "the student" consistently
+- Use these pronouns for the student throughout the report: subject = {pronouns['subject']}, object = {pronouns['object']}, possessive = {pronouns['possessive']}
+- When describing activities, use "{child_name}" or the appropriate pronouns ({pronouns['subject']}/{pronouns['object']}/{pronouns['possessive']})
 
             Based on the following prompt and all available data for this child, generate a comprehensive custom report in the specified JSON format:
 
@@ -846,10 +887,15 @@ CRITICAL INSTRUCTIONS FOR NAME AND GENDER USAGE:
         except Exception as e:
             return f"Error generating custom report: {str(e)}"
 
-    def generate_monthly_report_json_format(self, observations, goal_progress, child_name, year, month):
+    def generate_monthly_report_json_format(self, observations, goal_progress, child_name, year, month, child_id=None):
         """Generate monthly summary in the new JSON format with graph recommendations"""
         try:
             import calendar
+
+            # Get child information with gender
+            from models.database import get_child_by_id
+            child = get_child_by_id(child_id) if child_id else None
+            pronouns = self.get_pronouns(child['gender']) if child and child.get('gender') else {'subject': 'they', 'object': 'them', 'possessive': 'their'}
 
             # Prepare data for analysis
             observation_texts = []
@@ -941,9 +987,8 @@ CRITICAL INSTRUCTIONS FOR NAME AND GENDER USAGE:
 CRITICAL INSTRUCTIONS FOR NAME AND GENDER USAGE:
 - ALWAYS use the exact name from the database: {child_name}
 - NEVER use any names that appear in the observation data or audio transcriptions
-- NEVER assume gender - always refer to the student by their name "{child_name}" or as "the student"
-- Do not use gender-specific pronouns (he/his, she/her, they/them) anywhere in the report
-- When describing activities and progress, use "{child_name}" consistently
+- Use these pronouns for the student throughout the report: subject = {pronouns['subject']}, object = {pronouns['object']}, possessive = {pronouns['possessive']}
+- When describing activities and progress, use "{child_name}" or the appropriate pronouns ({pronouns['subject']}/{pronouns['object']}/{pronouns['possessive']})
 
             MONTH: {calendar.month_name[month]} {year}
             STUDENT: {child_name}
@@ -1240,9 +1285,14 @@ CRITICAL INSTRUCTIONS FOR NAME AND GENDER USAGE:
         # This is a placeholder - you'll need to implement actual fallback logic
         raise NotImplementedError("Fallback transcription not implemented yet")
 
-    def generate_topic_suggestions(self, observer_data, child_data, child_name):
+    def generate_topic_suggestions(self, observer_data, child_data, child_name, child_id=None):
         """Generate topic suggestions using Gemini AI based on observation history"""
         try:
+            # Get child information with gender
+            from models.database import get_child_by_id
+            child = get_child_by_id(child_id) if child_id else None
+            pronouns = self.get_pronouns(child['gender']) if child and child.get('gender') else {'subject': 'they', 'object': 'them', 'possessive': 'their'}
+
             # Prepare data for analysis
             recent_themes = []
             recent_strengths = []
@@ -1291,7 +1341,9 @@ CRITICAL INSTRUCTIONS FOR NAME AND GENDER USAGE:
             # Create comprehensive prompt for Gemini
             prompt = f"""
 You are an educational consultant helping an Observer plan engaging learning sessions. Based on the learning history below, suggest 5-7 specific, actionable topics or activities for today's observation session with {child_name}.
-Also, provide a brief rationale for each suggestion. For example, indicate which theme, curiosity, past mention/instance, or learning pattern from the child’s or Observer’s history informed your recommendation.
+Also, provide a brief rationale for each suggestion. For example, indicate which theme, curiosity, past mention/instance, or learning pattern from the child's or Observer's history informed your recommendation.
+
+Use these pronouns for the student throughout the suggestions: subject = {pronouns['subject']}, object = {pronouns['object']}, possessive = {pronouns['possessive']}
 
 OBSERVER'S RECENT TEACHING HISTORY:
 Recent Themes Covered: {', '.join(recent_themes[-8:]) if recent_themes else 'None available'}
@@ -1348,8 +1400,13 @@ Please provide suggestions in this exact format:
             logger.error(f"Error generating topic suggestions: {str(e)}")
             return self._fallback_suggestions(child_name)
 
-    def _fallback_suggestions(self, child_name):
+    def _fallback_suggestions(self, child_name, child_id=None):
         """Fallback suggestions when AI fails"""
+        # Get child information with gender
+        from models.database import get_child_by_id
+        child = get_child_by_id(child_id) if child_id else None
+        pronouns = self.get_pronouns(child['gender']) if child and child.get('gender') else {'subject': 'they', 'object': 'them', 'possessive': 'their'}
+        
         return f"""🎯 **SUGGESTED TOPICS FOR TODAY'S SESSION**
 
 1. **Creative Storytelling** - Have {child_name} create and narrate a story using everyday objects
@@ -1363,4 +1420,4 @@ Please provide suggestions in this exact format:
 - Build confidence through hands-on activities
 - Develop communication and expression skills
 
-🌟 **SESSION TIP:** Start with what interests {child_name} most and build the lesson around their natural curiosity!"""
+🌟 **SESSION TIP:** Start with what interests {child_name} most and build the lesson around {pronouns['possessive']} natural curiosity!"""
