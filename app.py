@@ -15,10 +15,24 @@ from routes.principal import principal_bp
 import logging
 import sys
 from flask_mail import Mail, Message
-from flask_apscheduler import APScheduler
 
+# Initialize mail and scheduler with error handling
 mail = Mail()
-scheduler = APScheduler()
+scheduler = None
+
+# Try to import and initialize APScheduler
+try:
+    from flask_apscheduler import APScheduler
+    scheduler = APScheduler()
+    print("✅ APScheduler imported and initialized successfully")
+except ImportError as e:
+    print(f"⚠️ Warning: APScheduler not available: {e}")
+    print("ℹ️ Scheduler functionality will be disabled")
+    scheduler = None
+except Exception as e:
+    print(f"⚠️ Warning: APScheduler initialization failed: {e}")
+    print("ℹ️ Scheduler functionality will be disabled")
+    scheduler = None
 
 # Fix Unicode encoding for Windows
 if sys.platform.startswith('win'):
@@ -47,9 +61,9 @@ def send_reminder_email(to, child_name, scheduled_time):
     """Send reminder email to observer with logging"""
     # Check if email is configured
     if not Config.is_email_configured():
-        logger.error(
+        logger.warning(
             "[MAIL] Email configuration missing! Please set EMAIL_USER and EMAIL_PASSWORD environment variables.")
-        print("[MAIL] ❌ Email configuration missing! Please set EMAIL_USER and EMAIL_PASSWORD environment variables.")
+        print("[MAIL] ⚠️ Email configuration missing! Please set EMAIL_USER and EMAIL_PASSWORD environment variables.")
         return False
 
     subject = f"Session Reminder: Observation for {child_name}"
@@ -189,14 +203,16 @@ def create_app():
     @app.route('/email_status')
     def email_status():
         """Debug endpoint to check email configuration status"""
-        status = {
-            'email_configured': Config.is_email_configured(),
-            'email_user': Config.EMAIL_USER if Config.EMAIL_USER else 'Not set',
-            'email_password': 'Set' if Config.EMAIL_PASSWORD else 'Not set',
-            'mail_server': Config.MAIL_SERVER,
-            'mail_port': Config.MAIL_PORT,
-            'mail_use_tls': Config.MAIL_USE_TLS
-        }
+        status = Config.debug_email_config()
+        status.update({
+            'environment': Config.FLASK_ENV,
+            'is_production': Config.IS_PRODUCTION,
+            'all_env_vars': {
+                'EMAIL_USER': os.environ.get('EMAIL_USER', 'Not set'),
+                'EMAIL_PASSWORD': 'Set' if os.environ.get('EMAIL_PASSWORD') else 'Not set',
+                'FLASK_ENV': os.environ.get('FLASK_ENV', 'Not set')
+            }
+        })
         return jsonify(status)
 
     @app.route('/scheduler_status')
@@ -275,7 +291,19 @@ def create_app():
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
     # Ensure session folder exists
-    os.makedirs(app.config['SESSION_FILE_DIR'], exist_ok=True)
+    try:
+        os.makedirs(app.config['SESSION_FILE_DIR'], exist_ok=True)
+        print(f"✅ Session folder created/verified: {app.config['SESSION_FILE_DIR']}")
+    except Exception as e:
+        print(f"⚠️ Warning: Failed to create session folder: {e}")
+        # Fallback to a temporary directory if filesystem access fails
+        import tempfile
+        app.config['SESSION_FILE_DIR'] = tempfile.gettempdir()
+        print(f"ℹ️ Using temporary directory for sessions: {app.config['SESSION_FILE_DIR']}")
+        
+        # For production deployments, consider using Redis or database sessions
+        if Config.IS_PRODUCTION:
+            print("ℹ️ Production environment detected - consider using Redis for sessions")
 
     # Initialize Login Manager
     login_manager = LoginManager()
