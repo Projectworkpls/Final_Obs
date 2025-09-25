@@ -15,10 +15,18 @@ from routes.principal import principal_bp
 import logging
 import sys
 from flask_mail import Mail, Message
-from flask_apscheduler import APScheduler
 
+# Initialize mail and scheduler with error handling
 mail = Mail()
-scheduler = APScheduler()
+scheduler = None
+
+# Try to import and initialize APScheduler
+try:
+    from flask_apscheduler import APScheduler
+    scheduler = APScheduler()
+except ImportError as e:
+    print(f"Warning: APScheduler not available: {e}")
+    print("Scheduler functionality will be disabled")
 
 # Fix Unicode encoding for Windows
 if sys.platform.startswith('win'):
@@ -73,6 +81,10 @@ def send_reminder_email(to, child_name, scheduled_time):
 
 def check_and_send_observer_reminders():
     """Check for upcoming sessions and send reminders - FIXED VERSION"""
+    if not scheduler:
+        print("[SCHEDULER] Scheduler not available - skipping reminder check")
+        return
+        
     with scheduler.app.app_context():
         # Define your timezone (change this to match your location)
         IST = pytz.timezone('Asia/Kolkata')
@@ -166,19 +178,29 @@ def create_app():
     app.config.from_object(Config)
 
     mail.init_app(app)
-    scheduler.init_app(app)
-    scheduler.start()
-
-    # Add the reminder job with better error handling
-    scheduler.add_job(
-        id='observer-reminders',
-        func=check_and_send_observer_reminders,
-        trigger='interval',
-        minutes=2,  # Changed from 1 to 2 minutes to reduce log spam
-        max_instances=1,  # Prevent overlapping runs
-        coalesce=True,  # If multiple runs are pending, only run once
-        misfire_grace_time=30  # Allow 30 seconds grace for missed runs
-    )
+    
+    # Initialize scheduler if available
+    if scheduler:
+        try:
+            scheduler.init_app(app)
+            scheduler.start()
+            
+            # Add the reminder job with better error handling
+            scheduler.add_job(
+                id='observer-reminders',
+                func=check_and_send_observer_reminders,
+                trigger='interval',
+                minutes=2,  # Changed from 1 to 2 minutes to reduce log spam
+                max_instances=1,  # Prevent overlapping runs
+                coalesce=True,  # If multiple runs are pending, only run once
+                misfire_grace_time=30  # Allow 30 seconds grace for missed runs
+            )
+            logger.info("Scheduler initialized successfully")
+        except Exception as e:
+            logger.error(f"Failed to initialize scheduler: {e}")
+            scheduler = None
+    else:
+        logger.warning("Scheduler not available - reminder functionality disabled")
 
     @app.route('/test_reminder')
     def test_reminder():
@@ -210,7 +232,8 @@ def create_app():
 
         status = {
             'current_time_ist': now_ist.strftime('%Y-%m-%d %H:%M:%S %Z'),
-            'scheduler_running': scheduler.running,
+            'scheduler_available': scheduler is not None,
+            'scheduler_running': scheduler.running if scheduler else False,
             'active_schedules': len(schedules),
             'schedules': []
         }
@@ -259,7 +282,10 @@ def create_app():
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
     app.config['SESSION_USE_SIGNER'] = True
     app.config['SESSION_KEY_PREFIX'] = 'learning_observer:'
-    app.config['SESSION_FILE_DIR'] = os.path.join(os.getcwd(), 'flask_session')
+    
+    # Use a more deployment-friendly session directory
+    session_dir = os.environ.get('SESSION_DIR', os.path.join(os.getcwd(), 'flask_session'))
+    app.config['SESSION_FILE_DIR'] = session_dir
 
     # Initialize server-side session
     Session(app)
@@ -272,10 +298,26 @@ def create_app():
             session.modified = True
 
     # Ensure upload folder exists
-    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    try:
+        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+        logger.info(f"Upload folder created/verified: {app.config['UPLOAD_FOLDER']}")
+    except Exception as e:
+        logger.error(f"Failed to create upload folder: {e}")
 
     # Ensure session folder exists
-    os.makedirs(app.config['SESSION_FILE_DIR'], exist_ok=True)
+    try:
+        os.makedirs(app.config['SESSION_FILE_DIR'], exist_ok=True)
+        logger.info(f"Session folder created/verified: {app.config['SESSION_FILE_DIR']}")
+    except Exception as e:
+        logger.error(f"Failed to create session folder: {e}")
+        # Fallback to a temporary directory if filesystem access fails
+        import tempfile
+        app.config['SESSION_FILE_DIR'] = tempfile.gettempdir()
+        logger.warning(f"Using temporary directory for sessions: {app.config['SESSION_FILE_DIR']}")
+        
+        # For production deployments, consider using Redis or database sessions
+        if Config.IS_PRODUCTION:
+            logger.warning("Consider using Redis or database sessions for production deployment")
 
     # Initialize Login Manager
     login_manager = LoginManager()
@@ -438,7 +480,15 @@ if __name__ == '__main__':
     try:
         app = create_app()
         logger.info("Starting Flask application...")
-        app.run(debug=True, host='0.0.0.0', port=5000)
+        
+        # Get configuration from environment
+        debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
+        port = int(os.environ.get('PORT', 5000))
+        host = os.environ.get('HOST', '0.0.0.0')
+        
+        logger.info(f"Starting server on {host}:{port} (debug={debug_mode})")
+        app.run(debug=debug_mode, host=host, port=port)
     except Exception as e:
         logger.error(f"Failed to start application: {e}")
         print(f"Application startup failed: {e}")
+        sys.exit(1)
