@@ -28,24 +28,16 @@ class Config:
     GROQ_API_KEY = os.environ.get('GROQ_API_KEY')
     OCR_API_KEY = os.environ.get('OCR_API_KEY')
     ASSEMBLYAI_API_KEY = os.environ.get('ASSEMBLYAI_API_KEY')
-    
-    # Email Configuration - with better error handling
     EMAIL_PASSWORD = os.environ.get('EMAIL_PASSWORD')
     EMAIL_USER = os.environ.get('EMAIL_USER')
-    
-    # Check if email configuration is available
-    @classmethod
-    def is_email_configured(cls):
-        return bool(cls.EMAIL_USER and cls.EMAIL_PASSWORD)
-    
     ADMIN_USER = os.environ.get('ADMIN_USER')
     ADMIN_PASS = os.environ.get('ADMIN_PASS')
     MAIL_SERVER = 'smtp.gmail.com'
     MAIL_PORT = 587
     MAIL_USE_TLS = True
-    MAIL_USERNAME = EMAIL_USER  # your email
-    MAIL_PASSWORD = EMAIL_PASSWORD  # your app password
-    MAIL_DEFAULT_SENDER = EMAIL_USER
+    MAIL_USERNAME = os.environ.get('EMAIL_USER')  # your email
+    MAIL_PASSWORD = os.environ.get('EMAIL_PASSWORD')  # your app password
+    MAIL_DEFAULT_SENDER = os.environ.get('EMAIL_USER')
 
     # CHANGED: File Upload Configuration - Updated from 16MB to 25MB
     UPLOAD_FOLDER = 'static/uploads'
@@ -56,3 +48,21 @@ class Config:
         'android', 'iphone', 'mobile', 'blackberry',
         'windows phone', 'opera mini', 'iemobile'
     ]
+    
+    @staticmethod
+    def is_email_configured():
+        """Check if email configuration is properly set"""
+        return bool(Config.EMAIL_USER and Config.EMAIL_PASSWORD)
+    
+    # Production settings
+    DEBUG = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
+    TESTING = False
+    
+    # Security settings for production
+    SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', 'False').lower() == 'true'
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    
+    # Production environment detection
+    FLASK_ENV = os.environ.get('FLASK_ENV', 'development')
+    IS_PRODUCTION = FLASK_ENV == 'production'
