@@ -238,6 +238,96 @@ body {
     filter: blur(0.5px);
 }
 
+.trust-badges-section {
+    padding: 3rem 0;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    position: relative;
+    border-top: 1px solid rgba(14, 165, 233, 0.1);
+    border-bottom: 1px solid rgba(14, 165, 233, 0.1);
+}
+
+.trust-badges-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 50% 50%, rgba(14, 165, 233, 0.03) 0%, transparent 70%);
+}
+
+.badges-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2rem;
+    max-width: 1000px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 2;
+}
+
+.badge-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(14, 165, 233, 0.08),
+                0 2px 8px rgba(37, 99, 235, 0.05);
+    border: 1px solid rgba(14, 165, 233, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.badge-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(180deg, #0ea5e9, #2563eb);
+}
+
+.badge-item:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 8px 30px rgba(14, 165, 233, 0.15),
+                0 4px 15px rgba(37, 99, 235, 0.1);
+    border-color: rgba(14, 165, 233, 0.2);
+}
+
+.badge-icon {
+    font-size: 2.5rem;
+    filter: drop-shadow(0 2px 4px rgba(14, 165, 233, 0.2));
+    flex-shrink: 0;
+}
+
+.badge-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.badge-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #0ea5e9;
+    line-height: 1;
+    background: linear-gradient(135deg, #0ea5e9, #2563eb);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.badge-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #475569;
+    line-height: 1.2;
+}
+
 .trust-section {
     padding: 6rem 0;
     background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
@@ -374,6 +464,50 @@ body {
     .quote-section {
         padding: 4rem 0;
     }
+
+    .trust-badges-section {
+        padding: 2rem 0;
+    }
+
+    .badges-container {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+
+    .badge-item {
+        padding: 1rem;
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
+    }
+
+    .badge-icon {
+        font-size: 2rem;
+    }
+
+    .badge-number {
+        font-size: 1.25rem;
+    }
+
+    .badge-label {
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .badges-container {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .badge-item {
+        flex-direction: row;
+        text-align: left;
+    }
+
+    .badge-icon {
+        font-size: 2.5rem;
+    }
 }
 </style>
 
@@ -382,6 +516,45 @@ body {
     <div class="hero-content">
         <h1 class="hero-title">Sanjaya – The Observer</h1>
         <p class="hero-subtitle">Every child needs someone who truly listens.</p>
+    </div>
+</section>
+
+<!-- Trust Badges Section -->
+<section class="trust-badges-section">
+    <div class="content-section">
+        <div class="badges-container">
+            <div class="badge-item">
+                <div class="badge-icon">👥</div>
+                <div class="badge-text">
+                    <span class="badge-number">100+</span>
+                    <span class="badge-label">Parents Trust Us</span>
+                </div>
+            </div>
+            
+            <div class="badge-item">
+                <div class="badge-icon">🏆</div>
+                <div class="badge-text">
+                    <span class="badge-number">50+</span>
+                    <span class="badge-label">Principals Endorse</span>
+                </div>
+            </div>
+            
+            <div class="badge-item">
+                <div class="badge-icon">⭐</div>
+                <div class="badge-text">
+                    <span class="badge-number">4.9/5</span>
+                    <span class="badge-label">Parent Rating</span>
+                </div>
+            </div>
+            
+            <div class="badge-item">
+                <div class="badge-icon">🔒</div>
+                <div class="badge-text">
+                    <span class="badge-number">100%</span>
+                    <span class="badge-label">Privacy Protected</span>
+                </div>
+            </div>
+        </div>
     </div>
 </section>
 
