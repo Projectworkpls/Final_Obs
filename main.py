@@ -462,11 +462,9 @@ def create_app():
     return app
 
 
-if __name__ == '__main__':
-    try:
-        app = create_app()
-        logger.info("Starting Flask application...")
-        app.run(debug=True, host='0.0.0.0', port=5000)
-    except Exception as e:
-        logger.error(f"Failed to start application: {e}")
-        print(f"Application startup failed: {e}")
+app = create_app()
+
+if __name__ == "__main__":
+    logger.info("Starting Flask application in development mode...")
+    app.run(debug=True, host="0.0.0.0", port=5000)
+
