@@ -439,5 +439,7 @@ def create_app():
 # Optional: for local development runs only. Gunicorn uses wsgi.py in production.
 if __name__ == "__main__":
     app = create_app()
-    logger.info("Starting Flask application in development mode...")
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    logger.info("Starting Flask application...")
+    port = int(os.environ.get("PORT", 5000))  # Render provides PORT
+    app.run(debug=True, host="0.0.0.0", port=port)
+
