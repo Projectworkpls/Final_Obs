@@ -85,6 +85,74 @@ body {
     text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
+/* BADGES ADDITION */
+.badges-row {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 2rem;
+    margin: 2rem 0 3rem 0;
+}
+.badge {
+    display: flex;
+    align-items: center;
+    border-radius: 1.5rem;
+    background: linear-gradient(90deg, #0ea5e9, #2563eb 80%);
+    color: #fff;
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 1rem 2rem;
+    box-shadow: 0 6px 18px rgba(14, 165, 233, 0.15);
+    letter-spacing: 0.01em;
+    border: 2px solid rgba(14, 165, 233, 0.10);
+    transition: transform 0.2s;
+}
+.badge .badge-icon {
+    font-size: 1.5rem;
+    margin-right: 1rem;
+}
+
+/* TESTIMONIALS SECTION ADDITION */
+.testimonials-section {
+    background: linear-gradient(135deg, #f8fafc 40%, #e0f2fe 100%);
+    padding: 6rem 0;
+    position: relative;
+}
+.testimonials-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 2.5rem;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+.testimonial-card {
+    background: #fff;
+    border-radius: 18px;
+    padding: 2.2rem;
+    box-shadow: 0 6px 24px rgba(37,99,235,0.08);
+    border: 1px solid rgba(14,165,233,0.10);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+.testimonial-quote {
+    font-size: 1.12rem;
+    color: #1e293b;
+    font-style: italic;
+    margin-bottom: 1.1rem;
+}
+.testimonial-author {
+    font-weight: 700;
+    color: #0ea5e9;
+    font-size: 1.03rem;
+}
+.testimonial-role {
+    color: #475569;
+    font-size: 0.95rem;
+    margin-top: 0.3rem;
+}
+
 .content-section {
     padding: 5rem 0;
     max-width: 1200px;
@@ -374,6 +442,16 @@ body {
     .quote-section {
         padding: 4rem 0;
     }
+
+    /* badges/testimonials section mobile tweaks */
+    .badges-row {
+        flex-direction: column;
+        gap: 1.2rem;
+    }
+    .testimonials-grid {
+        grid-template-columns: 1fr;
+        gap: 1.6rem;
+    }
 }
 </style>
 
@@ -382,6 +460,17 @@ body {
     <div class="hero-content">
         <h1 class="hero-title">Sanjaya – The Observer</h1>
         <p class="hero-subtitle">Every child needs someone who truly listens.</p>
+        <div class="badges-row">
+            <div class="badge">
+                <span class="badge-icon">👨‍👩‍👧‍👦</span> Trusted by 100+ Parents
+            </div>
+            <div class="badge">
+                <span class="badge-icon">🏫</span> Endorsed by Principals
+            </div>
+            <div class="badge">
+                <span class="badge-icon">🔒</span> 100% Private & Secure
+            </div>
+        </div>
     </div>
 </section>
 
@@ -421,6 +510,48 @@ body {
             <p class="feature-description">
                 This initiative is built under the guidance of Legendary Principals from India's most respected institutions. Trusted by parents nationwide.
             </p>
+        </div>
+    </div>
+</section>
+
+<!-- TESTIMONIALS Section -->
+<section class="testimonials-section">
+    <h2 class="section-title">Hear From Our Community</h2>
+    <div class="testimonials-grid">
+        <div class="testimonial-card">
+            <span class="testimonial-quote">"I am very happy with this programme as I can see a remarkable change in my child. She was an introvert but now she is opening up and is more confident. In fact, she has made me a good listener. I extend my full support to this programme."</span>
+            <span class="testimonial-author">Mr. Shah</span>
+            <span class="testimonial-role">Parent</span>
+        </div>
+        <div class="testimonial-card">
+            <span class="testimonial-quote">"It is a very innovative programme and need of the hour. Things which the children are reluctant to share with their parents, they share with ma'am because they have a patient listener. Both my children have opened up and are more confident."</span>
+            <span class="testimonial-author">Mr. Dey</span>
+            <span class="testimonial-role">Parent</span>
+        </div>
+        <div class="testimonial-card">
+            <span class="testimonial-quote">"I can see a vast difference for better in my daughter. She has become very regular in her work. She is very excited to share her day’s activities. I can see happiness on her face while talking to ma'am."</span>
+            <span class="testimonial-author">Mrs. Paliwal</span>
+            <span class="testimonial-role">Parent</span>
+        </div>
+        <div class="testimonial-card">
+            <span class="testimonial-quote">"After going through the growth reports I have realized that my child’s study habits and social interactions are very positive. The reports are helping me to guide him in the right direction. I am very satisfied with the programme."</span>
+            <span class="testimonial-author">Mrs. Dsouza</span>
+            <span class="testimonial-role">Parent</span>
+        </div>
+        <div class="testimonial-card">
+            <span class="testimonial-quote">"This platform allows me to share my views and ideas freely. It helps me express positive thoughts and open up about negative ones, helping me rectify errors in social and academic life."</span>
+            <span class="testimonial-author">Daivik</span>
+            <span class="testimonial-role">Student, 16 years</span>
+        </div>
+        <div class="testimonial-card">
+            <span class="testimonial-quote">"I am happy because I get a chance to talk, share, narrate stories and recite poems daily."</span>
+            <span class="testimonial-author">Ovi</span>
+            <span class="testimonial-role">Student, 6 years</span>
+        </div>
+        <div class="testimonial-card">
+            <span class="testimonial-quote">"This programme has allowed me to say whatever I want without being objected. I can relieve myself of the things I want to say."</span>
+            <span class="testimonial-author">Arnav</span>
+            <span class="testimonial-role">Student, 12 years</span>
         </div>
     </div>
 </section>
