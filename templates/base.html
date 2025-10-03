@@ -154,6 +154,78 @@
             padding: 1.5rem 0 1rem 0;
             font-size: 1rem;
         }
+        .contact-tooltip-container {
+            position: relative;
+            cursor: pointer;
+            color: #e0f2fe !important;
+            font-weight: 500 !important;
+            font-size: 1rem !important;
+            padding: 0.75rem 1.25rem !important;
+            border-radius: 8px !important;
+            transition: all 0.3s ease !important;
+            margin: 0 0.25rem;
+            text-decoration: none !important;
+        }
+        .contact-tooltip-container:hover {
+            background: rgba(255, 255, 255, 0.1) !important;
+            color: #fff !important;
+            transform: translateY(-2px);
+        }
+        .contact-tooltip-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 280px;
+            background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+            color: white;
+            text-align: left;
+            padding: 16px 20px;
+            border-radius: 12px;
+            box-shadow: 0 12px 32px rgba(14, 165, 233, 0.25);
+            font-size: 0.9rem;
+            z-index: 10000;
+            line-height: 1.5;
+            white-space: normal;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            margin-top: 8px;
+        }
+        .contact-tooltip-container:hover .contact-tooltip-content {
+            display: block;
+            animation: fadeInDown 0.3s ease;
+        }
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+        .contact-tooltip-content::after {
+            content: "";
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            margin-left: -8px;
+            border-width: 8px;
+            border-style: solid;
+            border-color: transparent transparent #2563eb transparent;
+        }
+        .contact-tooltip-content a {
+            color: #60a5fa !important;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+        .contact-tooltip-content a:hover {
+            color: #93c5fd !important;
+            text-decoration: underline;
+        }
         @media (max-width: 991px) {
             .navbar-toggler {
                 border-color: rgba(255, 255, 255, 0.5) !important;
@@ -210,6 +282,14 @@
                         <a class="nav-link" href="{{ url_for('parent_landing') }}">
                             <i class="fas fa-users me-1"></i>Parents
                         </a>
+                        <span class="contact-tooltip-container">
+                            <i class="fas fa-envelope me-1"></i>Contact
+                            <span class="contact-tooltip-content">
+                                Email: <a href="mailto:founder@dacharya.com">founder@dacharya.com</a><br>
+                                Whatsapp: 8291188188<br>
+                                Website: <a href="https://dacharya.com" target="_blank">dacharya.com</a>
+                            </span>
+                        </span>
                         <a class="btn btn-login ms-2" href="{{ url_for('auth.login') }}">
                             <i class="fas fa-sign-in-alt me-1"></i>Login
                         </a>
