@@ -33,6 +33,127 @@ body {
     margin-top: -1px; /* Seamless flow from navbar */
 }
 
+/* Profile Section Styles */
+.profile-section {
+    background: linear-gradient(135deg, #f8fafc 0%, #f0f9ff 50%, #e0f2fe 100%);
+    padding: 4rem 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.profile-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(ellipse at center, rgba(14, 165, 233, 0.05) 0%, transparent 70%);
+}
+
+.profile-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 3rem;
+}
+
+.profile-image-container {
+    flex: 0 0 210px; /* slightly larger container */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px; /* padding around image inside border */
+    box-sizing: content-box;
+    border: 2px solid #0ea5e9;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(14, 165, 233, 0.15);
+    background: linear-gradient(135deg, #f8fafc 0%, #f0f9ff 100%);
+}
+
+.profile-image {
+    width: 190px; /* slightly larger to fill container */
+    height: 190px;
+    border-radius: 14px;
+    object-fit: cover; /* cover cropping to avoid empty areas */
+    object-position: top; /* crops from bottom, always shows head */
+    display: block;
+}
+
+.profile-image:hover {
+    transform: scale(1.05);
+}
+
+.profile-name {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #2563eb;
+    margin-top: 1rem;
+    text-align: center;
+}
+
+.profile-info {
+    flex: 1;
+}
+
+.profile-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, #0f172a 0%, #2563eb 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.profile-description {
+    font-size: 1.1rem;
+    color: #334155;
+    line-height: 1.7;
+    margin-bottom: 1.5rem;
+}
+
+.profile-highlight {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border-left: 4px solid #0ea5e9;
+    padding: 1.5rem;
+    border-radius: 12px;
+    font-style: italic;
+    color: #1e293b;
+    font-size: 1.05rem;
+    box-shadow: 0 4px 16px rgba(14, 165, 233, 0.1);
+}
+
+@media (max-width: 768px) {
+    .profile-container {
+        flex-direction: column;
+        text-align: center;
+        gap: 2rem;
+    }
+    
+    .profile-image-container {
+        flex: none;
+    }
+    
+    .profile-image {
+        width: 150px;
+        height: 150px;
+    }
+    
+    .profile-title {
+        font-size: 1.8rem;
+    }
+    
+    .profile-section {
+        padding: 3rem 0;
+    }
+}
+
 .hero-section::before {
     content: '';
     position: absolute;
@@ -468,7 +589,25 @@ body {
                 <span class="badge-icon">🏫</span> Endorsed by Principals
             </div>
             <div class="badge">
-                <span class="badge-icon">🔒</span> 100% Private & Secure
+                <span class="badge-icon">🔒</span> 100% Private & Secure
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Profile Section -->
+<section class="profile-section">
+    <div class="profile-container">
+        <div class="profile-image-container">
+            <img src="/static/images/punam-jaiswal.jpg" alt="Punam Jaiswal" class="profile-image">
+            <div class="profile-name">Punam Jaiswal</div>
+        </div>
+        <div class="profile-info">
+            <h2 class="profile-title">Meet Our Head</h2>
+            <p class="profile-description">
+With years of experience in child psychology and education, Punam Ma'am, as Principal, brings a unique blend of empathy and expertise to every interaction. Her gentle approach and profound understanding of children's needs make her the ideal guide for your child's educational journey.            </p>
+            <div class="profile-highlight">
+                "Every child has a story to tell. My role is simply to listen, understand, and help parents see the beautiful complexity of their child's world."
             </div>
         </div>
     </div>
