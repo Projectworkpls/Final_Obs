@@ -603,7 +603,7 @@ body {
             <div class="profile-name">Punam Jaiswal</div>
         </div>
         <div class="profile-info">
-            <h2 class="profile-title">Meet Our Founder</h2>
+            <h2 class="profile-title">Meet Our Head</h2>
             <p class="profile-description">
 With years of experience in child psychology and education, Punam Ma'am, as Principal, brings a unique blend of empathy and expertise to every interaction. Her gentle approach and profound understanding of children's needs make her the ideal guide for your child's educational journey.            </p>
             <div class="profile-highlight">
@@ -731,5 +731,26 @@ With years of experience in child psychology and education, Punam Ma'am, as Prin
         </div>
     </div>
 </section>
+
+<!-- Sanjaya Chatbot -->
+<div id="chatbot-icon"></div>
+<div id="chatbot-container">
+    <div id="chatbot-header">
+        <h3>Sanjaya Assistant</h3>
+        <div id="chatbot-controls">
+            <button id="chatbot-minimize-btn" title="Minimize">−</button>
+            <button id="chatbot-close-btn" title="Close">×</button>
+        </div>
+    </div>
+    <div id="chatbot-body"></div>
+    <div id="chatbot-input-container">
+        <textarea id="chatbot-input" placeholder="Ask me anything about Sanjaya..." rows="1"></textarea>
+        <button id="chatbot-send-btn">Send</button>
+    </div>
+</div>
+
+<!-- Include chatbot styles and scripts -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/chatbot.css') }}">
+<script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
 
 {% endblock %}
