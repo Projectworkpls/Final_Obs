@@ -289,6 +289,39 @@ body {
     gap: 3rem;
     margin-top: 4rem;
 }
+.section-grid-two-rows {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* Default to 3 columns */
+    gap: 20px; /* Adjust as needed */
+    margin-bottom: 20px; /* Space between rows */
+}
+
+/* For the specific case of two cards in the second row, you might need to target it */
+.section-grid-two-rows:last-child {
+    grid-template-columns: repeat(2, 1fr); /* Two columns for the last row */
+    max-width: calc((2 * (100% / 3)) + 20px); /* Adjust max-width to center 2 cards */
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+    .section-grid-two-rows {
+        grid-template-columns: repeat(2, 1fr); /* 2 columns on tablets */
+    }
+    .section-grid-two-rows:last-child {
+        grid-template-columns: 1fr; /* 1 column on tablets if only 2 cards are left */
+    }
+}
+
+@media (max-width: 480px) {
+    .section-grid-two-rows {
+        grid-template-columns: 1fr; /* 1 column on mobile */
+    }
+    .section-grid-two-rows:last-child {
+        grid-template-columns: 1fr; /* 1 column on mobile */
+    }
+}
 
 .feature-card {
     background: linear-gradient(145deg, #ffffff 0%, #f0f9ff 100%);
@@ -535,6 +568,115 @@ body {
     z-index: 2;
 }
 
+/* How It Works Section - NEW STYLES */
+.how-it-works-section {
+    padding: 60px 20px;
+    background-color: #f8f9fa; /* A clean, light grey background */
+    text-align: center;
+}
+
+.how-it-works-grid {
+    display: grid;
+    /* This grid setup is complex and may need adjustments based on your full stylesheet */
+    grid-template-columns: repeat(5, auto);
+    grid-template-rows: repeat(3, auto);
+    gap: 15px 0;
+    justify-content: center;
+    align-items: center;
+    margin-top: 40px;
+}
+
+.step-card {
+    /* Updated gradient: from dark blue to a lighter, more vibrant blue */
+    background: linear-gradient(145deg, #2a4b8d, #00A9C9);
+    color: white;
+    padding: 20px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 120px;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(42, 75, 141, 0.2);
+    border: 1px solid #4a6fbb;
+}
+
+.step-number {
+    background-color: white;
+    /* Changed from green to your site's accent orange */
+    color: #FFA500;
+    border: 2px solid #FFA500;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2em;
+    margin-bottom: 15px;
+}
+
+.step-description {
+    margin: 0;
+    font-size: 1em;
+    line-height: 1.4;
+}
+
+.step-arrow {
+    width: 100px;
+    height: 2px;
+    /* Changed from grey to a muted brand blue */
+    background: repeating-linear-gradient(to right, #6c8bc7 0, #6c8bc7 4px, transparent 4px, transparent 8px);
+    position: relative;
+}
+
+/* Add responsive design for smaller screens */
+@media (max-width: 992px) {
+    .how-it-works-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+    .step-arrow {
+        /* Hides horizontal arrows on mobile and creates vertical space */
+        width: 0;
+        height: 10px;
+        background: none;
+    }
+    .step-arrow::after {
+        /* Optional: Add a vertical arrow for mobile view */
+        content: '↓';
+        font-size: 24px;
+        color: #6c8bc7;
+    }
+}
+
+/* Positioning for the steps based on the image */
+/* Row 1 */
+.how-it-works-grid > div:nth-child(1) { grid-column: 1; grid-row: 1; } /* Step 1 */
+.how-it-works-grid > div:nth-child(2) { grid-column: 2; grid-row: 1; } /* Arrow 1-2 */
+.how-it-works-grid > div:nth-child(3) { grid-column: 3; grid-row: 1; } /* Step 2 */
+.how-it-works-grid > div:nth-child(4) { grid-column: 4; grid-row: 1; } /* Arrow 2-3 */
+.how-it-works-grid > div:nth-child(5) { grid-column: 5; grid-row: 1; } /* Step 3 */
+
+/* Row 2 */
+.how-it-works-grid > div:nth-child(6) { grid-column: 1; grid-row: 2; } /* Arrow 3-4 (vertical down arrow implied from step 3) */
+.how-it-works-grid > div:nth-child(7) { grid-column: 1; grid-row: 2; } /* Step 4 */ /* This would be complex to style directly as an arrow in grid */
+.how-it-works-grid > div:nth-child(8) { grid-column: 2; grid-row: 2; } /* Arrow 4-5 */
+.how-it-works-grid > div:nth-child(9) { grid-column: 3; grid-row: 2; } /* Step 5 */
+.how-it-works-grid > div:nth-child(10) { grid-column: 4; grid-row: 2; } /* Arrow 5-6 */
+.how-it-works-grid > div:nth-child(11) { grid-column: 5; grid-row: 2; } /* Step 6 */
+
+/* Row 3 */
+.how-it-works-grid > div:nth-child(12) { grid-column: 1; grid-row: 3; } /* Arrow 6-7 (vertical down arrow implied from step 6) */
+.how-it-works-grid > div:nth-child(13) { grid-column: 1; grid-row: 3; } /* Step 7 */
+.how-it-works-grid > div:nth-child(14) { grid-column: 2; grid-row: 3; } /* Arrow 7-8 */
+.how-it-works-grid > div:nth-child(15) { grid-column: 3; grid-row: 3; } /* Step 8 */
+.how-it-works-grid > div:nth-child(16) { grid-column: 4; grid-row: 3; } /* Arrow 8-9 */
+.how-it-works-grid > div:nth-child(17) { grid-column: 5; grid-row: 3; } /* Step 9 */
+
 @media (max-width: 768px) {
     .hero-section {
         min-height: 40vh;
@@ -612,48 +754,103 @@ With years of experience in child psychology and education, Punam Ma'am, as Prin
         </div>
     </div>
 </section>
-
-<!-- Main Content -->
 <section class="content-section">
-    <h2 class="section-title">How We Transform Learning</h2>
-    <p class="section-subtitle">Through patient observation and thoughtful reporting, we help parents understand their child's unique journey.</p>
+    <h2 class="section-title">FEATURES</h2>
 
-    <div class="section-grid">
+    <div class="section-grid-two-rows">
         <div class="feature-card">
-            <span class="feature-icon">🌱</span>
-            <h3 class="feature-title">What We Do</h3>
+            <span class="feature-icon">🤗</span>
+            <h3 class="feature-title">MATCHED WITH A CARING OBSERVER</h3>
             <p class="feature-description">
-                In just <strong>5 minutes a day</strong>, we listen – patiently, without judgement – to what your child learned, felt, and experienced. We silently observe, you silently grow wiser.
+                Every child is thoughtfully paired with a warm, understanding observer who patiently listens.
             </p>
         </div>
 
         <div class="feature-card">
-            <span class="feature-icon">📝</span>
-            <h3 class="feature-title">Daily Summary Delivered</h3>
+            <span class="feature-icon">⏰</span>
+            <h3 class="feature-title">A DAILY 5-MINUTE SHARING TIME</h3>
             <p class="feature-description">
-                You receive a confidential report on your child's daily journey – compiled by trained Observers, supervised by Legendary Principals. <span class="highlight">No bias. No agenda. Just truth.</span>
+                Just five minutes a day to share stories, daily activities, dreams, or simply feelings – whatever's on their heart.
             </p>
         </div>
 
         <div class="feature-card">
-            <span class="feature-icon">🔒</span>
-            <h3 class="feature-title">100% Private & Secure</h3>
+            <span class="feature-icon">👍</span>
+            <h3 class="feature-title">ENCOURAGEMENT & GENTLE GUIDANCE</h3>
             <p class="feature-description">
-                Observer identity is rotated for your child's safety. No recordings. No digital traces. No monitoring tools – call only.
+                Observers listen with care, celebrate little wins, and note progress that matters.
+            </p>
+        </div>
+    </div>
+    <div class="section-grid-two-rows">
+        <div class="feature-card">
+            <span class="feature-icon">📈</span>
+            <h3 class="feature-title">GROWTH UPDATES FOR PARENTS</h3>
+            <p class="feature-description">
+                Parents receive daily reports simple, easy-to-read reports highlighting their child's progress.
             </p>
         </div>
 
         <div class="feature-card">
-            <span class="feature-icon">🌟</span>
-            <h3 class="feature-title">Built by Educators</h3>
+            <span class="feature-icon">🏆</span>
+            <h3 class="feature-title">JOURNEY TO CONFIDENCE</h3>
             <p class="feature-description">
-                This initiative is built under the guidance of Legendary Principals from India's most respected institutions. Trusted by parents nationwide.
+                With time, children blossom – becoming more expressive, confident, and joyful.
             </p>
         </div>
     </div>
 </section>
 
-<!-- TESTIMONIALS Section -->
+<section class="how-it-works-section">
+    <h2 class="section-title">HOW IT WORKS</h2>
+    <div class="how-it-works-grid">
+        <div class="step-card">
+            <span class="step-number">1</span>
+            <p class="step-description">Principals Nominate & Train Observers</p>
+        </div>
+        <div class="step-arrow"></div>
+        <div class="step-card">
+            <span class="step-number">2</span>
+            <p class="step-description">Observer Calls Child & Listens</p>
+        </div>
+        <div class="step-arrow"></div>
+        <div class="step-card">
+            <span class="step-number">3</span>
+            <p class="step-description">Child Speaks Freely</p>
+        </div>
+        <div class="step-arrow"></div>
+        <div class="step-card">
+            <span class="step-number">4</span>
+            <p class="step-description">Data Goes To AI System</p>
+        </div>
+        <div class="step-arrow"></div>
+        <div class="step-card">
+            <span class="step-number">5</span>
+            <p class="step-description">AI Captures Cues</p>
+        </div>
+        <div class="step-arrow"></div>
+        <div class="step-card">
+            <span class="step-number">6</span>
+            <p class="step-description">AI Highlights Trends & Patterns</p>
+        </div>
+        <div class="step-arrow"></div>
+        <div class="step-card">
+            <span class="step-number">7</span>
+            <p class="step-description">Principal Reviews Performance</p>
+        </div>
+        <div class="step-arrow"></div>
+        <div class="step-card">
+            <span class="step-number">8</span>
+            <p class="step-description">Principal Guides Parents</p>
+        </div>
+        <div class="step-arrow"></div>
+        <div class="step-card">
+            <span class="step-number">9</span>
+            <p class="step-description">The child develops soft skills.</p>
+        </div>
+    </div>
+</section>
+
 <section class="testimonials-section">
     <h2 class="section-title">Hear From Our Community</h2>
     <div class="testimonials-grid">

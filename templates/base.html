@@ -11,43 +11,139 @@
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !important;
-            line-height: 1.6;
-            color: #1a1a1a;
-            margin: 0;
-            padding: 0;
-            background-color: #f8fafc;
-        }
-        .unified-navbar {
-            background: linear-gradient(135deg, #1e3a8a, #2563eb) !important;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            padding: 1rem 0;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-        .navbar-brand {
-            font-size: 1.75rem !important;
-            font-weight: 700 !important;
-            color: #ffffff !important;
-            letter-spacing: 0.5px;
-            text-decoration: none !important;
-            display: flex;
-            align-items: center;
-        }
-        .navbar-brand:hover {
-            color: #ffffff !important;
-            opacity: 0.9;
-        }
-        .navbar-brand .brand-dot {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            background: #f59e42;
-            border-radius: 50%;
-            margin-left: 8px;
-            animation: pulse 2s infinite;
-        }
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !important;
+    line-height: 1.6;
+    color: #1a1a1a;
+    margin: 0;
+    padding: 0;
+    background-color: #f8fafc;
+}
+
+/* --- Unified Navbar Styles --- */
+.unified-navbar {
+    padding: 0.25rem 0;
+    background: linear-gradient(90deg, #3A5FAA 0%, #00A9C9 100%);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+/* --- Logo Styling --- */
+.brand-logo {
+    height: 65px;
+    width: auto;
+    filter: drop-shadow(0 0 7px rgba(255, 255, 255, 0.7));
+    transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+.navbar-brand {
+    /* Removed extra padding here to keep the navbar sleek */
+    /* Vertical alignment is handled by Bootstrap's flexbox properties */
+}
+
+.navbar-brand:hover .brand-logo {
+    transform: scale(1.05);
+    filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.9));
+}
+
+/* --- Nav Link Styling --- */
+.unified-navbar .nav-link,
+.unified-navbar .navbar-text {
+    color: #ffffff;
+    font-weight: 500;
+    padding: 0.4rem 1rem;
+    border-radius: 8px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.unified-navbar .nav-link:hover,
+.unified-navbar .nav-link.active {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+}
+
+.unified-navbar .nav-link i,
+.unified-navbar .navbar-text i {
+    color: #e0e0e0;
+    margin-right: 8px;
+}
+
+/* --- Contact Tooltip Styling --- */
+.contact-item {
+    position: relative;
+}
+
+.contact-tooltip {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #fff;
+    color: #333;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+    width: max-content;
+    margin-top: 10px;
+    z-index: 1000;
+    text-align: left;
+    font-size: 0.9rem;
+}
+
+.contact-item:hover .contact-tooltip {
+    display: block;
+}
+
+.contact-tooltip a {
+    color: #2A4B8D;
+    text-decoration: none;
+}
+
+.contact-tooltip a:hover {
+    text-decoration: underline;
+}
+
+/* --- Button Styling --- */
+.btn-login, .btn-get-started {
+    font-weight: bold;
+    border-radius: 50px;
+    padding: 0.4rem 1.5rem; /* This is the correct, smaller padding */
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.btn-login {
+    background-color: #FFA500;
+    color: #fff;
+}
+
+.btn-login:hover {
+    background-color: #e69500;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.btn-get-started {
+    background-color: transparent;
+    border-color: #fff;
+    color: #fff;
+}
+
+.btn-get-started:hover {
+    background-color: #fff;
+    color: #2A4B8D;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* --- Mobile Toggler Icon --- */
+.navbar-toggler {
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 1%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
         @keyframes pulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.7; }
@@ -260,88 +356,71 @@
     </style>
 </head>
 <body>
-    <!-- UNIFIED NAVIGATION BAR -->
-    <nav class="navbar navbar-expand-lg unified-navbar">
-        <div class="container">
-            <a class="navbar-brand" href="{{ url_for('landing') }}">
-                <i class="fas fa-eye me-2"></i>Sanjaya – The Observer
-                <span class="brand-dot"></span>
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <!-- Empty left nav for spacing -->
-                <ul class="navbar-nav me-auto"></ul>
-                <!-- Right Side Actions -->
-                <div class="navbar-nav ms-auto align-items-center flex-row flex-wrap">
-                    {% if not session.user_id %}
-                        <a class="nav-link" href="{{ url_for('landing') }}">
-                            <i class="fas fa-home me-1"></i>Home
-                        </a>
-                        <a class="nav-link" href="{{ url_for('parent_landing') }}">
-                            <i class="fas fa-users me-1"></i>Parents
-                        </a>
-                        <span class="contact-tooltip-container">
-                            <i class="fas fa-envelope me-1"></i>Contact
-                            <span class="contact-tooltip-content">
-                                Email: <a href="mailto:founder@dacharya.com">founder@dacharya.com</a><br>
-                                Whatsapp: 8291188188<br>
-                                Website: <a href="https://dacharya.com" target="_blank">dacharya.com</a>
-                            </span>
-                        </span>
-                        <a class="btn btn-login ms-2" href="{{ url_for('auth.login') }}">
-                            <i class="fas fa-sign-in-alt me-1"></i>Login
-                        </a>
-                        <div class="dropdown ms-2">
-                            <button class="btn btn-get-started dropdown-toggle" type="button" id="quickAccessDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-rocket me-1"></i>Get Started
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="quickAccessDropdown">
-                                <li><a class="dropdown-item" href="{{ url_for('auth.apply_observer') }}">
-                                    <i class="fas fa-user-secret me-2"></i>Apply as Observer
-                                </a></li>
-                                <li><a class="dropdown-item" href="{{ url_for('auth.apply_principal') }}">
-                                    <i class="fas fa-user-tie me-2"></i>Apply as Principal
-                                </a></li>
-                                <li><a class="dropdown-item" href="{{ url_for('parent_signup') }}">
-                                    <i class="fas fa-users me-2"></i>Enroll My Child
-                                </a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="{{ url_for('payment_form') }}">
-                                    <i class="fas fa-gift me-2"></i>Start Free Trial
-                                </a></li>
-                            </ul>
+ <nav class="navbar navbar-expand-lg unified-navbar">
+    <div class="container">
+        <a class="navbar-brand" href="{{ url_for('landing') }}">
+            <img src="{{ url_for('static', filename='images/Screenshot from 2025-10-09 02-11-57.png') }}" alt="Sanjaya Logo" class="brand-logo">
+        </a>
+        
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto align-items-center">
+                {% if not session.user_id %}
+                    <li class="nav-item">
+                        <a class="nav-link mx-1" href="{{ url_for('landing') }}"><i class="fas fa-home"></i> Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link mx-1" href="{{ url_for('parent_landing') }}"><i class="fas fa-users"></i> Parents</a>
+                    </li>
+                    <li class="nav-item contact-item mx-1">
+                        <a class="nav-link" href="#"><i class="fas fa-envelope"></i> Contact</a>
+                        <div class="contact-tooltip">
+                            <strong>Email:</strong> <a href="mailto:founder@dacharya.com">founder@dacharya.com</a><br>
+                            <strong>Whatsapp:</strong> 8291188188<br>
+                            <strong>Website:</strong> <a href="https://dacharya.com" target="_blank">dacharya.com</a>
                         </div>
-                    {% else %}
-                        <span class="navbar-text me-3">
-                            <i class="fas fa-user-circle me-1"></i>Welcome, {{ session.name }}!
-                        </span>
+                    </li>
+                    <li class="nav-item ms-lg-3">
+                        <a class="btn btn-login" href="{{ url_for('auth.login') }}"><i class="fas fa-sign-in-alt"></i> Login</a>
+                    </li>
+                    <li class="nav-item dropdown ms-2">
+                        <button class="btn btn-get-started dropdown-toggle" type="button" id="getStartedDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-rocket"></i> Get Started
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="getStartedDropdown">
+                            <li><a class="dropdown-item" href="{{ url_for('auth.apply_observer') }}"><i class="fas fa-user-secret me-2"></i>Apply as Observer</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('auth.apply_principal') }}"><i class="fas fa-user-tie me-2"></i>Apply as Principal</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('parent_signup') }}"><i class="fas fa-users me-2"></i>Enroll My Child</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('payment_form') }}"><i class="fas fa-gift me-2"></i>Start Free Trial</a></li>
+                        </ul>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <span class="navbar-text me-3"><i class="fas fa-user-circle"></i> Welcome, {{ session.name }}!</span>
+                    </li>
+                    <li class="nav-item">
                         {% if session.role == 'Admin' %}
-                            <a class="nav-link d-inline me-2" href="{{ url_for('admin.dashboard') }}">
-                                <i class="fas fa-crown me-1"></i>Admin Dashboard
-                            </a>
+                            <a class="nav-link" href="{{ url_for('admin.dashboard') }}"><i class="fas fa-crown"></i> Admin Dashboard</a>
                         {% elif session.role == 'Principal' %}
-                            <a class="nav-link d-inline me-2" href="{{ url_for('principal.dashboard') }}">
-                                <i class="fas fa-user-tie me-1"></i>Principal Dashboard
-                            </a>
+                            <a class="nav-link" href="{{ url_for('principal.dashboard') }}"><i class="fas fa-user-tie"></i> Principal Dashboard</a>
                         {% elif session.role == 'Observer' %}
-                            <a class="nav-link d-inline me-2" href="{{ url_for('observer.dashboard') }}">
-                                <i class="fas fa-user-secret me-1"></i>Observer Dashboard
-                            </a>
+                            <a class="nav-link" href="{{ url_for('observer.dashboard') }}"><i class="fas fa-user-secret"></i> Observer Dashboard</a>
                         {% elif session.role == 'Parent' %}
-                            <a class="nav-link d-inline me-2" href="{{ url_for('parent.dashboard') }}">
-                                <i class="fas fa-child me-1"></i>Parent Dashboard
-                            </a>
+                            <a class="nav-link" href="{{ url_for('parent.dashboard') }}"><i class="fas fa-child"></i> Parent Dashboard</a>
                         {% endif %}
-                        <a class="btn btn-login ms-2" href="{{ url_for('auth.logout') }}">
-                            <i class="fas fa-sign-out-alt me-1"></i>Logout
-                        </a>
-                    {% endif %}
-                </div>
-            </div>
+                    </li>
+                    <li class="nav-item ms-3">
+                        <a class="btn btn-login" href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </li>
+                {% endif %}
+            </ul>
         </div>
-    </nav>
+    </div>
+</nav>
 
     <main class="container-fluid py-4">
         {% with messages = get_flashed_messages(with_categories=true) %}
