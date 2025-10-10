@@ -31,9 +31,11 @@
         line-height: 1.6;
         color: var(--navy);
         overflow-x: hidden;
-        /* Applying a subtle pattern to the main background so it's visible */
         background-color: var(--light-bg);
         background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2329867F' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        
+        /* Ensures space below the fixed navbar */
+        padding-top: 75px; 
     }
 
     h1, h2, h3, h4, h5, h6 {
@@ -75,7 +77,7 @@
 
     /* --- 2. Hero Section --- */
     .hero-section {
-        padding: 4rem 0;
+        padding: 3rem 0;
         min-height: 50vh;
         background: linear-gradient(135deg, var(--navy) 0%, var(--teal) 100%);
         color: var(--white);
@@ -118,18 +120,24 @@
         border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
+     .badge:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
     .badge .badge-icon {
         font-size: 1.5rem;
         margin-right: 0.75rem;
     }
     
-    /* --- 3. Profile (Founder) Section (Revised for Centering) --- */
+    /* --- 3. Profile (Founder) Section --- */
     .profile-section .container {
         max-width: 1100px;
         background: linear-gradient(135deg, var(--light-bg) 0%, var(--light-bg-alt) 100%);
         padding: 3rem 4rem;
         border-radius: 24px;
         box-shadow: 0 15px 40px rgba(41, 134, 127, 0.08);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
 
     .profile-container {
@@ -219,6 +227,7 @@
         box-shadow: 0 8px 30px rgba(41, 134, 127, 0.08);
         border: 1px solid var(--border-color);
         text-align: center;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
     
     .feature-icon { font-size: 3rem; margin-bottom: 1.5rem; }
@@ -241,13 +250,14 @@
     }
     
     .step-card {
-        background: linear-gradient(135deg, var(--navy) 0%, var(--teal) 100%); /* Changed this line */
+        background: linear-gradient(135deg, var(--navy) 0%, var(--teal) 100%);
         color: var(--white);
         padding: 1.5rem 1rem;
         border-radius: 12px;
         text-align: center;
         position: relative;
         box-shadow: 0 5px 15px rgba(29, 54, 84, 0.15);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
 
     .step-card:not(:nth-child(3n))::after {
@@ -303,6 +313,7 @@
         box-shadow: 0 6px 24px rgba(29, 54, 84, 0.08);
         display: flex;
         flex-direction: column;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
     
     .testimonial-quote {
@@ -366,6 +377,15 @@
     .trust-title { font-size: 1.3rem; color: var(--navy); margin-bottom: 0.75rem; }
     .trust-desc { color: var(--text-muted); }
 
+    /* --- Hover rule for other cards --- */
+    .profile-section .container:hover,
+    .feature-card:hover,
+    .step-card:hover,
+    .testimonial-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 40px rgba(41, 134, 127, 0.15);
+    }
+    
     /* --- 9. Responsive Design --- */
     @media (max-width: 992px) {
         .feature-grid-row.bottom-row { max-width: 100%; }
@@ -385,7 +405,7 @@
         .profile-section .container,
         .how-it-works-section .container,
         .testimonials-section .container {
-            padding: 2rem; /* Reduce padding on mobile */
+            padding: 2rem;
         }
         .profile-container {
             flex-direction: column;
@@ -417,7 +437,7 @@
 <section class="section profile-section">
     <div class="container profile-container">
         <div class="profile-image-container">
-            <img src="/static/images/punam-jaiswal.jpg" alt="Punam Jaiswal" class="profile-image">
+            <img src="{{ url_for('static', filename='images/punam-jaiswal.jpg') }}" alt="Punam Jaiswal" class="profile-image">
             <div class="profile-name">Punam Jaiswal</div>
         </div>
         <div class="profile-info">
