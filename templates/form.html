@@ -6,11 +6,15 @@
   <title>Pay Securely - Sanjaya – The Observer</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Avenir+Next+Arabic:wght@300;400;500;600;700;800&family=Archivo+Black&display=swap');
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: 'Inter', sans-serif;
-      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 25%, #f8fafc 50%, #f0f9ff 100%);
+      font-family: 'Avenir Next Arabic', sans-serif;
+      background-color: #f8fafc; /* Clean, neutral background */
+      /* --- Added background graphic --- */
+      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2329867F' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
       min-height: 100vh;
       display: flex;
       justify-content: center;
@@ -21,18 +25,19 @@
       background: white;
       padding: 2.5rem 3rem;
       border-radius: 20px;
-      box-shadow: 0 10px 40px rgba(14, 165, 233, 0.1);
+      box-shadow: 0 10px 40px rgba(41, 134, 127, 0.1); /* Teal shadow */
       max-width: 400px;
       width: 100%;
-      border: 1px solid rgba(14, 165, 233, 0.1);
+      border: 1px solid rgba(41, 134, 127, 0.1); /* Teal border */
       text-align: center;
     }
     h2 {
-      color: #0f172a;
+      font-family: 'Archivo Black', sans-serif;
+      color: #1D3654; /* Navy */
       margin-bottom: 2rem;
       font-weight: 700;
       font-size: 1.8rem;
-      background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+      background: linear-gradient(135deg, #1D3654 0%, #29867F 100%); /* PDF Gradient */
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -41,22 +46,22 @@
       display: block;
       margin-bottom: 0.5rem;
       font-weight: 600;
-      color: #334155;
+      color: #1D3654; /* Navy */
       text-align: left;
     }
     input {
       width: 100%;
       padding: 14px 18px;
       margin-bottom: 1.5rem;
-      border: 1.5px solid #cbd5e1;
+      border: 1.5px solid #C2C6C9; /* PDF Grey Beige */
       border-radius: 12px;
       font-size: 1rem;
       transition: all 0.3s;
     }
     input:focus {
-      border-color: #2563eb;
+      border-color: #29867F; /* Teal */
       outline: none;
-      box-shadow: 0 0 8px rgba(37, 99, 235, 0.3);
+      box-shadow: 0 0 8px rgba(41, 134, 127, 0.3); /* Teal glow */
       transform: translateY(-2px);
     }
     .instamojo-btn-container {
@@ -69,10 +74,10 @@
       border-radius: 50px;
       font-size: 1.1rem;
       font-weight: 700;
-      background: linear-gradient(135deg, #10b981, #059669);
-      color: #fff;
+      background: linear-gradient(135deg, #D8AF53, #c7a04b); /* PDF Gold Gradient */
+      color: #1D3654; /* Navy text for contrast */
       padding: 16px 0;
-      box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+      box-shadow: 0 10px 30px rgba(216, 175, 83, 0.3); /* Gold shadow */
       border: none;
       transition: all 0.3s;
       cursor: pointer;
@@ -80,15 +85,15 @@
     }
     .im-embed-btn:hover {
       transform: translateY(-5px);
-      box-shadow: 0 15px 40px rgba(16, 185, 129, 0.4);
-      color: #fff;
+      box-shadow: 0 15px 40px rgba(216, 175, 83, 0.4); /* Gold hover shadow */
+      color: #29867F;
       text-decoration: none;
     }
     .back-link {
       display: block;
       text-align: center;
       margin-top: 1.5rem;
-      color: #2563eb;
+      color: #29867F; /* Teal */
       text-decoration: none;
       font-weight: 500;
     }

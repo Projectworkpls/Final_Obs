@@ -1,106 +1,134 @@
 {% extends "base.html" %}
 
-{% block title %}Login - Learning Observer{% endblock %}
+{% block title %}Login - Sanjaya – The Observer{% endblock %}
 
 {% block content %}
+<style>
+    body {
+        /* This new background matches the softer, cooler tone of the image */
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: calc(100vh - 80px); /* Adjust for navbar height if needed */
+    }
+
+    /* Overriding the default card to match the new design */
+    .card.shadow {
+        border-radius: 16px;
+        box-shadow: 0 4px 25px rgba(0, 0, 0, 0.07) !important;
+        border: 1px solid #e2e8f0;
+        max-width: 380px;
+        width: 100%;
+    }
+
+    /* New, simpler title styles */
+    .card-title {
+        font-family: 'Avenir Next Arabic', sans-serif;
+        font-weight: 700;
+        font-size: 2rem;
+        color: #1e293b;
+        margin-bottom: 0.5rem;
+    }
+
+    .card-subtitle {
+        color: #64748b;
+        margin-bottom: 2.5rem;
+        font-size: 1rem;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #334155;
+        font-size: 0.9rem;
+    }
+
+    .form-control {
+        padding: 12px 16px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        background-color: #f8fafc;
+    }
+
+    .form-control:focus {
+        border-color: #1D3654; /* Navy focus color */
+        box-shadow: 0 0 0 3px rgba(29, 54, 84, 0.1); /* Navy glow */
+        background-color: #fff;
+        transform: none; /* Removed transform for a cleaner feel */
+    }
+    
+    .btn-primary {
+        background: linear-gradient(to right, #29867F, #1D3654); /* Kept brand gradient for the button */
+        border: none;
+        padding: 14px 0;
+        font-weight: 600;
+        font-size: 1rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(29, 54, 84, 0.2);
+    }
+    
+    .auth-links {
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #e2e8f0;
+    }
+    
+    .auth-links a {
+        color: #29867F; /* Teal link color */
+        text-decoration: none;
+        font-weight: 500;
+        margin: 0 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .auth-links a:hover {
+        text-decoration: underline;
+    }
+
+    .auth-links span {
+        color: #cbd5e1;
+    }
+
+</style>
+
 <div class="row justify-content-center">
     <div class="col-md-6 col-lg-4">
         <div class="card shadow">
-            <div class="card-body">
-                <h2 class="card-title text-center mb-4">
-                    <i class="fas fa-eye text-primary me-2"></i>Learning Observer
-                </h2>
+            <div class="card-body p-4 p-md-5 text-center">
+                
+                <h2 class="card-title">Login</h2>
+                <p class="card-subtitle">Sign in to your account</p>
 
-                <ul class="nav nav-tabs mb-3" id="authTabs" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login" type="button" role="tab">
-                            Login
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="register-tab" data-bs-toggle="tab" data-bs-target="#register" type="button" role="tab">
-                            Register
-                        </button>
-                    </li>
-                </ul>
-
-                <div class="tab-content" id="authTabsContent">
-                    <!-- Login Tab -->
-                    <div class="tab-pane fade show active" id="login" role="tabpanel">
-                        <form method="POST" action="{{ url_for('auth.login') }}">
-                            <div class="mb-3">
-                                <label for="email" class="form-label">Email</label>
-                                <input type="email" class="form-control" id="email" name="email" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="password" class="form-label">Password</label>
-                                <input type="password" class="form-control" id="password" name="password" required>
-                            </div>
-                            <button type="submit" class="btn btn-primary w-100">
-                                <i class="fas fa-sign-in-alt me-2"></i>Login
-                            </button>
-                        </form>
+                <form method="POST" action="{{ url_for('auth.login') }}">
+                    <div class="mb-3 text-start">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
                     </div>
-
-                    <!-- Register Tab -->
-                    <div class="tab-pane fade" id="register" role="tabpanel">
-                        <form method="POST" action="{{ url_for('auth.register') }}">
-                            <div class="mb-3">
-                                <label for="reg_name" class="form-label">Full Name</label>
-                                <input type="text" class="form-control" id="reg_name" name="name" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="reg_email" class="form-label">Email</label>
-                                <input type="email" class="form-control" id="reg_email" name="email" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="role" class="form-label">Role</label>
-                                <select class="form-select" id="role" name="role" required onchange="toggleChildSelection()">
-                                    <option value="">Select Role</option>
-                                    <option value="Observer">Observer</option>
-                                    <option value="Parent">Parent</option>
-                                </select>
-                            </div>
-                            <div class="mb-3" id="child_selection" style="display: none;">
-                                <label for="child_id" class="form-label">Select Your Child</label>
-                                <select class="form-select" id="child_id" name="child_id">
-                                    <option value="">Select Child</option>
-                                    {% for child in children %}
-                                    <option value="{{ child.id }}">{{ child.name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label for="reg_password" class="form-label">Password</label>
-                                <input type="password" class="form-control" id="reg_password" name="password" required minlength="8">
-                            </div>
-                            <div class="mb-3">
-                                <label for="confirm_password" class="form-label">Confirm Password</label>
-                                <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
-                            </div>
-                            <button type="submit" class="btn btn-success w-100">
-                                <i class="fas fa-user-plus me-2"></i>Register
-                            </button>
-                        </form>
+                    <div class="mb-4 text-start">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
                     </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-sign-in-alt me-2"></i>Login
+                    </button>
+                </form>
+
+                <div class="auth-links">
+                    <a href="{{ url_for('auth.apply_observer') }}">Apply as Observer</a>
+                    <span>|</span>
+                    <a href="{{ url_for('parent_signup') }}">Sign up as Parent</a>
+                    <span>|</span>
+                    <a href="{{ url_for('auth.apply_principal') }}">Apply as Principal</a>
                 </div>
+
             </div>
         </div>
     </div>
 </div>
 
-<script>
-function toggleChildSelection() {
-    const role = document.getElementById('role').value;
-    const childSelection = document.getElementById('child_selection');
-
-    if (role === 'Parent') {
-        childSelection.style.display = 'block';
-        document.getElementById('child_id').required = true;
-    } else {
-        childSelection.style.display = 'none';
-        document.getElementById('child_id').required = false;
-    }
-}
-</script>
 {% endblock %}
