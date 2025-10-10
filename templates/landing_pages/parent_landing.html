@@ -73,7 +73,7 @@
         left: 0;
         width: 100%;
         height: 4px;
-        background: linear-gradient(90deg, #0ea5e9, #2563eb, #1d4ed8);
+        background: linear-gradient(135deg, #1D3654 0%, #29867F 100%);
     }
     .feature-card:hover {
         transform: translateY(-8px) scale(1.02);
@@ -106,7 +106,7 @@
     /* Hero and other sections styling */
     .hero-section {
         min-height: 60vh;
-        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 25%, #1e40af 50%, #0ea5e9 75%, #0284c7 100%);
+        background: linear-gradient(135deg, #1D3654 0%, #29867F 100%);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -193,7 +193,7 @@
         color: #334155;
         background: linear-gradient(145deg, #ffffff 0%, #f0f9ff 100%);
         border-radius: 12px;
-        border-left: 4px solid #0ea5e9;
+        border-left: 4px solid #29867F;
         box-shadow: 0 4px 20px rgba(14, 165, 233, 0.05);
     }
     .styled-list li::before {
@@ -201,7 +201,7 @@
         position: absolute;
         left: 1rem;
         top: 1rem;
-        color: #0ea5e9;
+        color: #29867F; 
         font-size: 1.2rem;
         font-weight: bold;
     }
@@ -209,7 +209,7 @@
         width: 100%;
         text-align: center;
         padding: 6rem 0;
-        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 25%, #0ea5e9 75%, #0284c7 100%);
+        background: linear-gradient(135deg, #1D3654 0%, #29867F 100%);
         color: #fff;
         position: relative;
         overflow: hidden;
@@ -235,7 +235,7 @@
         align-items: center;
         gap: 12px;
         background: #fff;
-        color: #2563eb;
+        color: #1D3654;
         font-weight: 700;
         font-size: 1.2rem;
         padding: 1.2rem 3rem;
@@ -252,7 +252,7 @@
         box-shadow: 0 15px 40px rgba(245, 158, 66, 0.3);
     }
     .footer-section {
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        background:  linear-gradient(90deg, #1D3654 0%, #29867F 100%);
         color: white;
         padding: 3rem 0;
         text-align: center;
@@ -317,16 +317,15 @@
         }
     }
 </style>
-<!-- Hero Section -->
 <section class="hero-section">
     <div class="hero-content">
         <h1 class="hero-title">Welcome, Parents</h1>
         <p class="hero-subtitle">Finally, Someone Who Listens to Your Child - Without Judging</p>
     </div>
+    <div id="bubble-container"></div>
 </section>
-<!-- What is Sanjaya Section -->
 <section class="content-section">
-    <h2 class="section-title">💡 What is Sanjaya – The Observer?</h2>
+    <h2 class="section-title"> What is Sanjaya – The Observer?</h2>
     <p class="section-subtitle">
         Your child is learning every day — not just in school, but through conversations, digital content, emotions, and life experiences. But in today's busy world… who's truly listening?
     </p>
@@ -337,9 +336,8 @@
         Every child is paired with a trained ethical observer who listens to them for 5 minutes a day – and simply documents what they learned, felt, or experienced.
     </p>
 </section>
-<!-- How Does It Work Section - 5 cards: 2 top, 3 bottom -->
 <section class="content-section">
-    <h2 class="section-title">🧭 How Does It Work?</h2>
+    <h2 class="section-title">How Does It Work?</h2>
     <div class="section-grid five-cards">
         <div class="feature-card">
             <span class="feature-icon">✅</span>
@@ -368,9 +366,8 @@
         </div>
     </div>
 </section>
-<!-- What Will You Get Section - 5 cards: 2 top, 3 bottom -->
 <section class="content-section">
-    <h2 class="section-title">✅ What Will You Get?</h2>
+    <h2 class="section-title">What Will You Get?</h2>
     <div class="section-grid five-cards">
         <div class="feature-card">
             <span class="feature-icon">📩</span>
@@ -399,16 +396,14 @@
         </div>
     </div>
 </section>
-<!-- 7-Day Free Trial Section -->
 <section class="content-section">
-    <h2 class="section-title">🎁 Start with a 7-Day Free Trial</h2>
+    <h2 class="section-title">Start with a 7-Day Free Trial</h2>
     <p class="section-subtitle">
         We know trust takes time. That's why your first 7 working days are absolutely free. After that, if you choose to continue, the program is just <strong>$200/month</strong>.
     </p>
 </section>
-<!-- Who Should Join Section -->
 <section class="content-section">
-    <h2 class="section-title">👪 Who Should Join?</h2>
+    <h2 class="section-title">Who Should Join?</h2>
     <ul class="styled-list">
         <li>Parents who want a non-intrusive daily check-in for their child</li>
         <li>Working parents who want support, not surveillance</li>
@@ -416,7 +411,6 @@
         <li>Parents who believe in trust, observation, and guided growth</li>
     </ul>
 </section>
-<!-- CTA Section -->
 <section class="full-cta">
     <div class="cta-content">
         <h2 style="font-size: 2.5rem; margin-bottom: 1rem;">📝 Ready to Try It?</h2>
@@ -428,8 +422,4 @@
         </a>
     </div>
 </section>
-<!-- Footer -->
-<footer class="footer-section">
-    <p class="footer-text">&copy; 2025 Sanjaya – The Observer. Crafted with care for every child.</p>
-</footer>
 {% endblock %}

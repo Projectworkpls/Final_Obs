@@ -1,2 +1,9 @@
+# Environment variables
 .env
-.env
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# Flask session files
+flask_session/

@@ -4,608 +4,447 @@
 
 {% block content %}
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Avenir+Next+Arabic:wght@300;400;500;600;700;800&family=Archivo+Black&display=swap');
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+    /* --- 1. Root Variables & General Styles --- */
+    :root {
+        --navy: #1D3654;
+        --teal: #29867F;
+        --gold: #D8AF53;
+        --light-bg: #f8fafc;
+        --light-bg-alt: #f1f2f2;
+        --text-dark: #1e293b;
+        --text-muted: #475569;
+        --white: #ffffff;
+        --border-color: #e2e8f0;
+        --pdf-grey-beige: #C2C6C9;
+    }
 
-body {
-    font-family: 'Inter', sans-serif;
-    line-height: 1.6;
-    color: #1a1a1a;
-    overflow-x: hidden;
-    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 25%, #f8fafc 50%, #f0f9ff 100%);
-    background-attachment: fixed;
-}
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
 
-.hero-section {
-    min-height: 50vh;
-    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 25%, #1e40af 50%, #0ea5e9 75%, #0284c7 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    overflow: hidden;
-    padding: 4rem 0;
-    margin-top: -1px; /* Seamless flow from navbar */
-}
+    body {
+        font-family: 'Avenir Next Arabic', sans-serif;
+        line-height: 1.6;
+        color: var(--navy);
+        overflow-x: hidden;
+        background-color: var(--light-bg);
+        background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2329867F' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        
+        /* Ensures space below the fixed navbar */
+        padding-top: 75px; 
+    }
 
-/* Profile Section Styles */
-.profile-section {
-    background: linear-gradient(135deg, #f8fafc 0%, #f0f9ff 50%, #e0f2fe 100%);
-    padding: 4rem 0;
-    position: relative;
-    overflow: hidden;
-}
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Archivo Black', sans-serif;
+    }
 
-.profile-section::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: radial-gradient(ellipse at center, rgba(14, 165, 233, 0.05) 0%, transparent 70%);
-}
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 2rem;
+        position: relative;
+        z-index: 2;
+    }
 
-.profile-container {
-    max-width: 1000px;
-    margin: 0 auto;
-    padding: 0 2rem;
-    position: relative;
-    z-index: 2;
-    display: flex;
-    align-items: center;
-    gap: 3rem;
-}
-
-.profile-image-container {
-    flex: 0 0 210px; /* slightly larger container */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 8px; /* padding around image inside border */
-    box-sizing: content-box;
-    border: 2px solid #0ea5e9;
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(14, 165, 233, 0.15);
-    background: linear-gradient(135deg, #f8fafc 0%, #f0f9ff 100%);
-}
-
-.profile-image {
-    width: 190px; /* slightly larger to fill container */
-    height: 190px;
-    border-radius: 14px;
-    object-fit: cover; /* cover cropping to avoid empty areas */
-    object-position: top; /* crops from bottom, always shows head */
-    display: block;
-}
-
-.profile-image:hover {
-    transform: scale(1.05);
-}
-
-.profile-name {
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: #2563eb;
-    margin-top: 1rem;
-    text-align: center;
-}
-
-.profile-info {
-    flex: 1;
-}
-
-.profile-title {
-    font-size: 2.2rem;
-    font-weight: 700;
-    color: #0f172a;
-    margin-bottom: 1rem;
-    background: linear-gradient(135deg, #0f172a 0%, #2563eb 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.profile-description {
-    font-size: 1.1rem;
-    color: #334155;
-    line-height: 1.7;
-    margin-bottom: 1.5rem;
-}
-
-.profile-highlight {
-    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-    border-left: 4px solid #0ea5e9;
-    padding: 1.5rem;
-    border-radius: 12px;
-    font-style: italic;
-    color: #1e293b;
-    font-size: 1.05rem;
-    box-shadow: 0 4px 16px rgba(14, 165, 233, 0.1);
-}
-
-@media (max-width: 768px) {
-    .profile-container {
-        flex-direction: column;
+    .section {
+        padding: 5rem 0;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .section-title {
+        font-size: clamp(2rem, 5vw, 3rem);
         text-align: center;
-        gap: 2rem;
+        margin-bottom: 1rem;
+        background: linear-gradient(135deg, var(--navy) 0%, #334155 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .section-subtitle {
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 1.2rem;
+        max-width: 600px;
+        margin: 0 auto 4rem auto;
+        line-height: 1.6;
+    }
+
+    /* --- 2. Hero Section --- */
+    .hero-section {
+        padding: 3rem 0;
+        min-height: 50vh;
+        background: linear-gradient(135deg, var(--navy) 0%, var(--teal) 100%);
+        color: var(--white);
+        display: flex;
+        align-items: center;
+        text-align: center;
+    }
+
+    .hero-title {
+        font-size: clamp(2.5rem, 6vw, 4.5rem);
+        line-height: 1.1;
+        text-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1rem;
+    }
+
+    .hero-subtitle {
+        font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+        font-weight: 400;
+        max-width: 600px;
+        margin: 0 auto 2.5rem auto;
+        color: rgba(255, 255, 255, 0.95);
+    }
+
+    .badges-row {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+    }
+
+    .badge {
+        display: flex;
+        align-items: center;
+        border-radius: 50px;
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(5px);
+        color: var(--white);
+        font-weight: 500;
+        padding: 0.75rem 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+     .badge:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .badge .badge-icon {
+        font-size: 1.5rem;
+        margin-right: 0.75rem;
+    }
+    
+    /* --- 3. Profile (Founder) Section --- */
+    .profile-section .container {
+        max-width: 1100px;
+        background: linear-gradient(135deg, var(--light-bg) 0%, var(--light-bg-alt) 100%);
+        padding: 3rem 4rem;
+        border-radius: 24px;
+        box-shadow: 0 15px 40px rgba(41, 134, 127, 0.08);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .profile-container {
+        display: flex;
+        align-items: center;
+        gap: 3rem;
     }
     
     .profile-image-container {
-        flex: none;
+        flex: 0 0 200px;
+        text-align: center;
     }
     
     .profile-image {
-        width: 150px;
-        height: 150px;
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        object-fit: cover;
+        object-position: top;
+        border: 4px solid var(--white);
+        box-shadow: 0 10px 30px rgba(41, 134, 127, 0.2);
+        margin-bottom: 1rem;
     }
     
-    .profile-title {
-        font-size: 1.8rem;
+    .profile-name {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--navy);
     }
     
-    .profile-section {
-        padding: 3rem 0;
+    .profile-info {
+        flex: 1;
     }
-}
-
-.hero-section::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 70% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-                linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.05) 50%, transparent 70%);
-    opacity: 0.8;
-}
-
-.hero-section::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 120px;
-    background: linear-gradient(to top, rgba(240, 249, 255, 0.9), transparent);
-}
-
-.hero-content {
-    position: relative;
-    z-index: 2;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 2rem;
-    text-align: center;
-}
-
-.hero-title {
-    font-size: clamp(2.5rem, 6vw, 4.5rem);
-    font-weight: 800;
-    color: white;
-    margin-bottom: 1.5rem;
-    letter-spacing: -0.02em;
-    line-height: 1.1;
-    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-}
-
-.hero-subtitle {
-    font-size: clamp(1.1rem, 2.5vw, 1.5rem);
-    color: rgba(255, 255, 255, 0.95);
-    font-weight: 400;
-    max-width: 600px;
-    margin: 0 auto;
-    line-height: 1.4;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-/* BADGES ADDITION */
-.badges-row {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 2rem;
-    margin: 2rem 0 3rem 0;
-}
-.badge {
-    display: flex;
-    align-items: center;
-    border-radius: 1.5rem;
-    background: linear-gradient(90deg, #0ea5e9, #2563eb 80%);
-    color: #fff;
-    font-weight: 600;
-    font-size: 1rem;
-    padding: 1rem 2rem;
-    box-shadow: 0 6px 18px rgba(14, 165, 233, 0.15);
-    letter-spacing: 0.01em;
-    border: 2px solid rgba(14, 165, 233, 0.10);
-    transition: transform 0.2s;
-}
-.badge .badge-icon {
-    font-size: 1.5rem;
-    margin-right: 1rem;
-}
-
-/* TESTIMONIALS SECTION ADDITION */
-.testimonials-section {
-    background: linear-gradient(135deg, #f8fafc 40%, #e0f2fe 100%);
-    padding: 6rem 0;
-    position: relative;
-}
-.testimonials-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-    gap: 2.5rem;
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 0 2rem;
-}
-.testimonial-card {
-    background: #fff;
-    border-radius: 18px;
-    padding: 2.2rem;
-    box-shadow: 0 6px 24px rgba(37,99,235,0.08);
-    border: 1px solid rgba(14,165,233,0.10);
-    display: flex;
-    flex-direction: column;
-    position: relative;
-}
-.testimonial-quote {
-    font-size: 1.12rem;
-    color: #1e293b;
-    font-style: italic;
-    margin-bottom: 1.1rem;
-}
-.testimonial-author {
-    font-weight: 700;
-    color: #0ea5e9;
-    font-size: 1.03rem;
-}
-.testimonial-role {
-    color: #475569;
-    font-size: 0.95rem;
-    margin-top: 0.3rem;
-}
-
-.content-section {
-    padding: 5rem 0;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding-left: 2rem;
-    padding-right: 2rem;
-    position: relative;
-}
-
-.section-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: 3rem;
-    margin-top: 4rem;
-}
-
-.feature-card {
-    background: linear-gradient(145deg, #ffffff 0%, #f0f9ff 100%);
-    border-radius: 24px;
-    padding: 2.5rem;
-    box-shadow: 0 10px 40px rgba(14, 165, 233, 0.08),
-                0 4px 20px rgba(37, 99, 235, 0.06);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    border: 1px solid rgba(14, 165, 233, 0.1);
-    position: relative;
-    overflow: hidden;
-}
-
-.feature-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 4px;
-    background: linear-gradient(90deg, #0ea5e9, #2563eb, #1d4ed8);
-}
-
-.feature-card::after {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -50%;
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(circle, rgba(14, 165, 233, 0.03) 0%, transparent 70%);
-    transition: all 0.4s ease;
-    transform: scale(0);
-}
-
-.feature-card:hover {
-    transform: translateY(-12px) scale(1.02);
-    box-shadow: 0 25px 60px rgba(14, 165, 233, 0.15),
-                0 10px 30px rgba(37, 99, 235, 0.1);
-}
-
-.feature-card:hover::after {
-    transform: scale(1);
-}
-
-.feature-icon {
-    font-size: 3rem;
-    margin-bottom: 1.5rem;
-    display: block;
-    filter: drop-shadow(0 4px 8px rgba(14, 165, 233, 0.2));
-}
-
-.feature-title {
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: #0f172a;
-    margin-bottom: 1rem;
-    line-height: 1.3;
-}
-
-.feature-description {
-    color: #334155;
-    line-height: 1.7;
-    font-size: 1rem;
-}
-
-.highlight {
-    color: #0ea5e9;
-    font-weight: 600;
-    background: linear-gradient(120deg, #0ea5e9, #2563eb);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.quote-section {
-    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f8fafc 100%);
-    padding: 6rem 0;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-}
-
-.quote-section::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: radial-gradient(ellipse at center, rgba(14, 165, 233, 0.05) 0%, transparent 70%);
-}
-
-.quote-container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 0 2rem;
-    position: relative;
-    z-index: 2;
-}
-
-.quote-text {
-    font-size: clamp(1.5rem, 4vw, 2.2rem);
-    font-weight: 300;
-    color: #0f172a;
-    font-style: italic;
-    line-height: 1.4;
-    position: relative;
-    background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.quote-text::before {
-    content: '"';
-    font-size: 6rem;
-    color: #0ea5e9;
-    position: absolute;
-    top: -2rem;
-    left: -2rem;
-    font-family: serif;
-    opacity: 0.3;
-    filter: blur(0.5px);
-}
-
-.quote-text::after {
-    content: '"';
-    font-size: 6rem;
-    color: #0ea5e9;
-    position: absolute;
-    bottom: -4rem;
-    right: -2rem;
-    font-family: serif;
-    opacity: 0.3;
-    filter: blur(0.5px);
-}
-
-.trust-section {
-    padding: 6rem 0;
-    background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
-    position: relative;
-}
-
-.trust-section::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: radial-gradient(circle at 20% 80%, rgba(37, 99, 235, 0.03) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(14, 165, 233, 0.03) 0%, transparent 50%);
-}
-
-.trust-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 2rem;
-    margin-top: 3rem;
-    position: relative;
-    z-index: 2;
-}
-
-.trust-item {
-    text-align: center;
-    padding: 2.5rem 1.5rem;
-    border-radius: 20px;
-    background: linear-gradient(145deg, #ffffff 0%, #f0f9ff 100%);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border: 1px solid rgba(14, 165, 233, 0.08);
-    box-shadow: 0 4px 20px rgba(14, 165, 233, 0.05);
-}
-
-.trust-item:hover {
-    transform: translateY(-8px) scale(1.05);
-    box-shadow: 0 15px 40px rgba(14, 165, 233, 0.12);
-    border-color: rgba(14, 165, 233, 0.2);
-}
-
-.trust-icon {
-    font-size: 2.5rem;
-    margin-bottom: 1rem;
-    filter: drop-shadow(0 4px 8px rgba(14, 165, 233, 0.15));
-}
-
-.trust-title {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #0f172a;
-    margin-bottom: 0.5rem;
-}
-
-.trust-desc {
-    color: #475569;
-    font-size: 0.9rem;
-}
-
-.section-title {
-    font-size: clamp(2rem, 5vw, 3rem);
-    font-weight: 700;
-    color: #0f172a;
-    text-align: center;
-    margin-bottom: 1rem;
-    letter-spacing: -0.01em;
-    background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.section-subtitle {
-    text-align: center;
-    color: #475569;
-    font-size: 1.2rem;
-    max-width: 600px;
-    margin: 0 auto;
-    line-height: 1.6;
-}
-
-.footer-section {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    color: white;
-    padding: 3rem 0;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-}
-
-.footer-section::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: radial-gradient(ellipse at center top, rgba(14, 165, 233, 0.1) 0%, transparent 70%);
-}
-
-.footer-text {
-    color: #cbd5e1;
-    font-size: 0.9rem;
-    position: relative;
-    z-index: 2;
-}
-
-@media (max-width: 768px) {
-    .hero-section {
-        min-height: 40vh;
-        padding: 3rem 0;
+    
+    .profile-info-title {
+        font-size: clamp(1.8rem, 4vw, 2.2rem);
+        margin-bottom: 1rem;
+        background: linear-gradient(135deg, var(--navy) 0%, var(--teal) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .profile-description {
+        font-size: 1.1rem;
+        color: #334155;
+        margin-bottom: 1.5rem;
+    }
+    
+    .profile-highlight {
+        border-left: 4px solid var(--gold);
+        padding: 1.5rem;
+        border-radius: 8px;
+        font-style: italic;
+        color: var(--text-dark);
+        background: var(--white);
+        box-shadow: 0 4px 20px rgba(216, 175, 83, 0.1);
     }
 
-    .section-grid {
-        grid-template-columns: 1fr;
+    /* --- 4. Features Section --- */
+    .feature-grid {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
         gap: 2rem;
     }
 
+    .feature-grid-row {
+        display: grid;
+        gap: 2rem;
+        width: 100%;
+    }
+
+    .feature-grid-row.top-row {
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    }
+
+    .feature-grid-row.bottom-row {
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        max-width: calc(66.66% + 1rem);
+    }
+
     .feature-card {
-        padding: 2rem;
+        background: var(--white);
+        border-radius: 16px;
+        padding: 2.5rem;
+        box-shadow: 0 8px 30px rgba(41, 134, 127, 0.08);
+        border: 1px solid var(--border-color);
+        text-align: center;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .feature-icon { font-size: 3rem; margin-bottom: 1.5rem; }
+    .feature-title { font-size: 1.3rem; color: var(--navy); margin-bottom: 0.75rem; }
+    .feature-description { color: var(--text-muted); }
+    
+    /* --- 5. How It Works Section --- */
+    .how-it-works-section .container {
+        max-width: 1100px;
+        background-color: var(--white);
+        padding: 3rem 4rem;
+        border-radius: 24px;
+        box-shadow: 0 15px 40px rgba(41, 134, 127, 0.08);
+    }
+    
+    .how-it-works-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2rem 4rem;
+    }
+    
+    .step-card {
+        background: linear-gradient(135deg, var(--navy) 0%, var(--teal) 100%);
+        color: var(--white);
+        padding: 1.5rem 1rem;
+        border-radius: 12px;
+        text-align: center;
+        position: relative;
+        box-shadow: 0 5px 15px rgba(29, 54, 84, 0.15);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
 
-    .content-section {
-        padding: 3rem 0;
+    .step-card:not(:nth-child(3n))::after {
+        content: '';
+        position: absolute;
+        left: 100%;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 4rem;
+        height: 2px;
+        background: repeating-linear-gradient(to right, var(--pdf-grey-beige) 0, var(--pdf-grey-beige) 4px, transparent 4px, transparent 8px);
     }
 
-    .quote-text::before,
-    .quote-text::after {
-        display: none;
+    .step-number {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 0.75rem auto;
+        width: 30px;
+        height: 30px;
+        border: 2px solid var(--white);
+        color: var(--white);
+        border-radius: 50%;
+        font-weight: 700;
+        font-size: 1rem;
     }
 
-    .trust-section,
-    .quote-section {
-        padding: 4rem 0;
+    .step-description {
+        font-size: 1rem;
+        font-weight: 500;
+        line-height: 1.4;
     }
 
-    /* badges/testimonials section mobile tweaks */
-    .badges-row {
-        flex-direction: column;
-        gap: 1.2rem;
+    /* --- 6. Testimonials Section --- */
+    .testimonials-section .container {
+        max-width: 1100px;
+        background: linear-gradient(135deg, var(--light-bg) 40%, var(--light-bg-alt) 100%);
+        padding: 3rem 4rem;
+        border-radius: 24px;
+        box-shadow: 0 15px 40px rgba(41, 134, 127, 0.08);
     }
+
     .testimonials-grid {
-        grid-template-columns: 1fr;
-        gap: 1.6rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 2rem;
     }
-}
+    
+    .testimonial-card {
+        background: var(--white);
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 6px 24px rgba(29, 54, 84, 0.08);
+        display: flex;
+        flex-direction: column;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .testimonial-quote {
+        color: var(--text-dark);
+        font-style: italic;
+        margin-bottom: 1.5rem;
+        flex-grow: 1;
+    }
+    
+    .testimonial-author { font-weight: 700; color: var(--teal); }
+    .testimonial-role { color: var(--text-muted); font-size: 0.9rem; }
+    
+    /* --- 7. Quote Section --- */
+    .quote-section {
+        text-align: center;
+    }
+    
+    .quote-text {
+        font-size: clamp(1.5rem, 4vw, 2.2rem);
+        font-weight: 300;
+        font-style: italic;
+        line-height: 1.4;
+        max-width: 800px;
+        margin: 0 auto;
+        color: var(--navy);
+        position: relative;
+    }
+    
+    .quote-text::before, .quote-text::after {
+        content: '"';
+        font-size: 6rem;
+        color: var(--teal);
+        position: absolute;
+        font-family: serif;
+        opacity: 0.2;
+    }
+    
+    .quote-text::before { top: -2rem; left: -2rem; }
+    .quote-text::after { bottom: -4rem; right: -2rem; }
+
+    /* --- 8. Trust Section --- */
+    .trust-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+    }
+    .trust-item {
+        background: var(--white);
+        border-radius: 16px;
+        padding: 2.5rem;
+        box-shadow: 0 8px 30px rgba(41, 134, 127, 0.08);
+        border: 1px solid var(--border-color);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        text-align: center;
+    }
+    .trust-item:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 40px rgba(41, 134, 127, 0.15);
+    }
+    .trust-icon { font-size: 3rem; margin-bottom: 1.5rem; }
+    .trust-title { font-size: 1.3rem; color: var(--navy); margin-bottom: 0.75rem; }
+    .trust-desc { color: var(--text-muted); }
+
+    /* --- Hover rule for other cards --- */
+    .profile-section .container:hover,
+    .feature-card:hover,
+    .step-card:hover,
+    .testimonial-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 40px rgba(41, 134, 127, 0.15);
+    }
+    
+    /* --- 9. Responsive Design --- */
+    @media (max-width: 992px) {
+        .feature-grid-row.bottom-row { max-width: 100%; }
+        .how-it-works-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 3rem 2rem;
+        }
+        .step-card:not(:nth-child(3n))::after { content: none; }
+        .step-card:not(:nth-child(2n))::after {
+            content: '';
+            width: 2rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .section { padding: 3rem 0; }
+        .profile-section .container,
+        .how-it-works-section .container,
+        .testimonials-section .container {
+            padding: 2rem;
+        }
+        .profile-container {
+            flex-direction: column;
+            text-align: center;
+            gap: 2rem;
+        }
+        .badges-row {
+            flex-direction: column;
+            align-items: center;
+        }
+        .quote-text::before, .quote-text::after { display: none; }
+        .how-it-works-grid { grid-template-columns: 1fr; }
+        .step-card::after { content: none !important; }
+    }
 </style>
 
-    <!-- Hero Section -->
 <section class="hero-section">
-    <div class="hero-content">
+    <div class="container">
         <h1 class="hero-title">Sanjaya – The Observer</h1>
         <p class="hero-subtitle">Every child needs someone who truly listens.</p>
         <div class="badges-row">
-            <div class="badge">
-                <span class="badge-icon">👨‍👩‍👧‍👦</span> Trusted by 100+ Parents
-            </div>
-            <div class="badge">
-                <span class="badge-icon">🏫</span> Endorsed by Principals
-            </div>
-            <div class="badge">
-                <span class="badge-icon">🔒</span> 100% Private & Secure
-            </div>
+            <div class="badge"><span class="badge-icon">👨‍👩‍👧‍👦</span> Trusted by 100+ Parents</div>
+            <div class="badge"><span class="badge-icon">🏫</span> Endorsed by Principals</div>
+            <div class="badge"><span class="badge-icon">🔒</span> 100% Private & Secure</div>
         </div>
     </div>
 </section>
 
-<!-- Profile Section -->
-<section class="profile-section">
-    <div class="profile-container">
+<section class="section profile-section">
+    <div class="container profile-container">
         <div class="profile-image-container">
-            <img src="/static/images/punam-jaiswal.jpg" alt="Punam Jaiswal" class="profile-image">
+            <img src="{{ url_for('static', filename='images/punam-jaiswal.jpg') }}" alt="Punam Jaiswal" class="profile-image">
             <div class="profile-name">Punam Jaiswal</div>
         </div>
         <div class="profile-info">
-            <h2 class="profile-title">Meet Our Head</h2>
+            <h2 class="profile-info-title">Meet Our Founder</h2>
             <p class="profile-description">
-With years of experience in child psychology and education, Punam Ma'am, as Principal, brings a unique blend of empathy and expertise to every interaction. Her gentle approach and profound understanding of children's needs make her the ideal guide for your child's educational journey.            </p>
+                With years of experience in child psychology and education, Punam Ma'am, as Principal, brings a unique blend of empathy and expertise to every interaction. Her gentle approach and profound understanding of children's needs make her the ideal guide for your child's educational journey.
+            </p>
             <div class="profile-highlight">
                 "Every child has a story to tell. My role is simply to listen, understand, and help parents see the beautiful complexity of their child's world."
             </div>
@@ -613,116 +452,133 @@ With years of experience in child psychology and education, Punam Ma'am, as Prin
     </div>
 </section>
 
-<!-- Main Content -->
-<section class="content-section">
-    <h2 class="section-title">How We Transform Learning</h2>
-    <p class="section-subtitle">Through patient observation and thoughtful reporting, we help parents understand their child's unique journey.</p>
-
-    <div class="section-grid">
-        <div class="feature-card">
-            <span class="feature-icon">🌱</span>
-            <h3 class="feature-title">What We Do</h3>
-            <p class="feature-description">
-                In just <strong>5 minutes a day</strong>, we listen – patiently, without judgement – to what your child learned, felt, and experienced. We silently observe, you silently grow wiser.
-            </p>
-        </div>
-
-        <div class="feature-card">
-            <span class="feature-icon">📝</span>
-            <h3 class="feature-title">Daily Summary Delivered</h3>
-            <p class="feature-description">
-                You receive a confidential report on your child's daily journey – compiled by trained Observers, supervised by Legendary Principals. <span class="highlight">No bias. No agenda. Just truth.</span>
-            </p>
-        </div>
-
-        <div class="feature-card">
-            <span class="feature-icon">🔒</span>
-            <h3 class="feature-title">100% Private & Secure</h3>
-            <p class="feature-description">
-                Observer identity is rotated for your child's safety. No recordings. No digital traces. No monitoring tools – call only.
-            </p>
-        </div>
-
-        <div class="feature-card">
-            <span class="feature-icon">🌟</span>
-            <h3 class="feature-title">Built by Educators</h3>
-            <p class="feature-description">
-                This initiative is built under the guidance of Legendary Principals from India's most respected institutions. Trusted by parents nationwide.
-            </p>
+<section class="section">
+    <div class="container">
+        <h2 class="section-title">FEATURES</h2>
+        <div class="feature-grid">
+            <div class="feature-grid-row top-row">
+                <div class="feature-card">
+                    <span class="feature-icon">🤗</span>
+                    <h3 class="feature-title">MATCHED WITH A CARING OBSERVER</h3>
+                    <p class="feature-description">Every child is thoughtfully paired with a warm, understanding observer who patiently listens.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">⏰</span>
+                    <h3 class="feature-title">A DAILY 5-MINUTE SHARING TIME</h3>
+                    <p class="feature-description">Just five minutes a day to share stories, daily activities, dreams, or simply feelings.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">👍</span>
+                    <h3 class="feature-title">ENCOURAGEMENT & GUIDANCE</h3>
+                    <p class="feature-description">Observers listen with care, celebrate little wins, and note progress that matters.</p>
+                </div>
+            </div>
+            <div class="feature-grid-row bottom-row">
+                <div class="feature-card">
+                    <span class="feature-icon">📈</span>
+                    <h3 class="feature-title">GROWTH UPDATES FOR PARENTS</h3>
+                    <p class="feature-description">Parents receive simple, easy-to-read reports highlighting their child's progress.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">🏆</span>
+                    <h3 class="feature-title">JOURNEY TO CONFIDENCE</h3>
+                    <p class="feature-description">With time, children blossom – becoming more expressive, confident, and joyful.</p>
+                </div>
+            </div>
         </div>
     </div>
 </section>
 
-<!-- TESTIMONIALS Section -->
-<section class="testimonials-section">
-    <h2 class="section-title">Hear From Our Community</h2>
-    <div class="testimonials-grid">
-        <div class="testimonial-card">
-            <span class="testimonial-quote">"I am very happy with this programme as I can see a remarkable change in my child. She was an introvert but now she is opening up and is more confident. In fact, she has made me a good listener. I extend my full support to this programme."</span>
-            <span class="testimonial-author">Mr. Shah</span>
-            <span class="testimonial-role">Parent</span>
-        </div>
-        <div class="testimonial-card">
-            <span class="testimonial-quote">"It is a very innovative programme and need of the hour. Things which the children are reluctant to share with their parents, they share with ma'am because they have a patient listener. Both my children have opened up and are more confident."</span>
-            <span class="testimonial-author">Mr. Dey</span>
-            <span class="testimonial-role">Parent</span>
-        </div>
-        <div class="testimonial-card">
-            <span class="testimonial-quote">"I can see a vast difference for better in my daughter. She has become very regular in her work. She is very excited to share her day’s activities. I can see happiness on her face while talking to ma'am."</span>
-            <span class="testimonial-author">Mrs. Paliwal</span>
-            <span class="testimonial-role">Parent</span>
-        </div>
-        <div class="testimonial-card">
-            <span class="testimonial-quote">"After going through the growth reports I have realized that my child’s study habits and social interactions are very positive. The reports are helping me to guide him in the right direction. I am very satisfied with the programme."</span>
-            <span class="testimonial-author">Mrs. Dsouza</span>
-            <span class="testimonial-role">Parent</span>
-        </div>
-        <div class="testimonial-card">
-            <span class="testimonial-quote">"This platform allows me to share my views and ideas freely. It helps me express positive thoughts and open up about negative ones, helping me rectify errors in social and academic life."</span>
-            <span class="testimonial-author">Daivik</span>
-            <span class="testimonial-role">Student, 16 years</span>
-        </div>
-        <div class="testimonial-card">
-            <span class="testimonial-quote">"I am happy because I get a chance to talk, share, narrate stories and recite poems daily."</span>
-            <span class="testimonial-author">Ovi</span>
-            <span class="testimonial-role">Student, 6 years</span>
-        </div>
-        <div class="testimonial-card">
-            <span class="testimonial-quote">"This programme has allowed me to say whatever I want without being objected. I can relieve myself of the things I want to say."</span>
-            <span class="testimonial-author">Arnav</span>
-            <span class="testimonial-role">Student, 12 years</span>
+<section class="section how-it-works-section">
+    <div class="container">
+        <h2 class="section-title">HOW IT WORKS</h2>
+        <div class="how-it-works-grid">
+            <div class="step-card"><div class="step-number">1</div><p class="step-description">Principals Nominate & Train Observers</p></div>
+            <div class="step-card"><div class="step-number">2</div><p class="step-description">Observer Calls Child & Listens</p></div>
+            <div class="step-card"><div class="step-number">3</div><p class="step-description">Child Speaks Freely</p></div>
+            <div class="step-card"><div class="step-number">4</div><p class="step-description">Data Goes To AI System</p></div>
+            <div class="step-card"><div class="step-number">5</div><p class="step-description">AI Captures Cues</p></div>
+            <div class="step-card"><div class="step-number">6</div><p class="step-description">AI Highlights Trends & Patterns</p></div>
+            <div class="step-card"><div class="step-number">7</div><p class="step-description">Principal Reviews Performance</p></div>
+            <div class="step-card"><div class="step-number">8</div><p class="step-description">Principal Guides Parents</p></div>
+            <div class="step-card"><div class="step-number">9</div><p class="step-description">The child develops soft skills.</p></div>
         </div>
     </div>
 </section>
 
-<!-- Quote Section -->
-<section class="quote-section">
-    <div class="quote-container">
+<section class="section testimonials-section">
+    <div class="container">
+        <h2 class="section-title">Hear From Our Community</h2>
+        <div class="testimonials-grid">
+            <div class="testimonial-card">
+                <p class="testimonial-quote">"I am very happy with this programme as I can see a remarkable change in my child. She was an introvert but now she is opening up and is more confident."</p>
+                <div>
+                    <div class="testimonial-author">Mr. Shah</div>
+                    <div class="testimonial-role">Parent</div>
+                </div>
+            </div>
+            <div class="testimonial-card">
+                <p class="testimonial-quote">"It is a very innovative programme and need of the hour. Both my children have opened up and are more confident."</p>
+                <div>
+                    <div class="testimonial-author">Mr. Dey</div>
+                    <div class="testimonial-role">Parent</div>
+                </div>
+            </div>
+            <div class="testimonial-card">
+                <p class="testimonial-quote">"I can see a vast difference for better in my daughter. She is very excited to share her day’s activities. I can see happiness on her face while talking to ma'am."</p>
+                <div>
+                    <div class="testimonial-author">Mrs. Paliwal</div>
+                    <div class="testimonial-role">Parent</div>
+                </div>
+            </div>
+            <div class="testimonial-card">
+                <p class="testimonial-quote">"The reports are helping me to guide him in the right direction. I am very satisfied with the programme."</p>
+                <div>
+                    <div class="testimonial-author">Mrs. Dsouza</div>
+                    <div class="testimonial-role">Parent</div>
+                </div>
+            </div>
+            <div class="testimonial-card">
+                <p class="testimonial-quote">"This platform allows me to share my views and ideas freely. It helps me express positive thoughts and open up about negative ones."</p>
+                <div>
+                    <div class="testimonial-author">Daivik</div>
+                    <div class="testimonial-role">Student, 16 years</div>
+                </div>
+            </div>
+            <div class="testimonial-card">
+                <p class="testimonial-quote">"I am happy because I get a chance to talk, share, narrate stories and recite poems daily."</p>
+                <div>
+                    <div class="testimonial-author">Ovi</div>
+                    <div class="testimonial-role">Student, 6 years</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section quote-section">
+    <div class="container">
         <p class="quote-text">
             No advice. No analysis. Just awareness.<br>
             When someone truly listens, clarity follows. And children flourish.
         </p>
-        </div>
+    </div>
 </section>
 
-<!-- Trust Section -->
-<section class="trust-section">
-    <div class="content-section">
+<section class="section">
+    <div class="container">
         <h2 class="section-title">Why Parents Trust Sanjaya</h2>
-
         <div class="trust-grid">
             <div class="trust-item">
                 <div class="trust-icon">🧠</div>
                 <h4 class="trust-title">Expert Guidance</h4>
                 <p class="trust-desc">Supervised by legendary educators</p>
             </div>
-
             <div class="trust-item">
                 <div class="trust-icon">🔐</div>
                 <h4 class="trust-title">Complete Privacy</h4>
                 <p class="trust-desc">No recordings, no digital traces</p>
             </div>
-
             <div class="trust-item">
                 <div class="trust-icon">📈</div>
                 <h4 class="trust-title">Daily Insights</h4>
@@ -731,26 +587,5 @@ With years of experience in child psychology and education, Punam Ma'am, as Prin
         </div>
     </div>
 </section>
-
-<!-- Sanjaya Chatbot -->
-<div id="chatbot-icon"></div>
-<div id="chatbot-container">
-    <div id="chatbot-header">
-        <h3>Sanjaya Assistant</h3>
-        <div id="chatbot-controls">
-            <button id="chatbot-minimize-btn" title="Minimize">−</button>
-            <button id="chatbot-close-btn" title="Close">×</button>
-        </div>
-    </div>
-    <div id="chatbot-body"></div>
-    <div id="chatbot-input-container">
-        <textarea id="chatbot-input" placeholder="Ask me anything about Sanjaya..." rows="1"></textarea>
-        <button id="chatbot-send-btn">Send</button>
-    </div>
-</div>
-
-<!-- Include chatbot styles and scripts -->
-<link rel="stylesheet" href="{{ url_for('static', filename='css/chatbot.css') }}">
-<script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
 
 {% endblock %}
