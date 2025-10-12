@@ -186,9 +186,10 @@
         .floating-mascot {
             position: fixed;
             bottom: 10px;
-            right: 10px;
+            left: 10px;
             width: 130px;
             z-index: 10;
+            opacity: 0.80;
             animation: bounce 4s ease-in-out infinite;
         }
 
@@ -260,6 +261,7 @@
     <div class="shape" style="top:20%; left:60%; animation-delay:8s;">
         <img src="{{ url_for('static', filename='images/teddy-bear.png') }}" alt="Teddy Bear">
     </div>
+
 </div>
 
 <img src="{{ url_for('static', filename='images/alphabetical.png') }}" alt="Mascot" class="floating-mascot">

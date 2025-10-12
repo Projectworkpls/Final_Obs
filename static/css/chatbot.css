@@ -1,17 +1,19 @@
-/* Sanjaya Chatbot Styles */
+/* Sanjaya Chatbot Styles - Themed to match the main site */
+/* Palette: Navy (#1D3654), Teal (#29867F), Gold (#D8AF53) */
+
 #chatbot-icon {
     position: fixed;
-    bottom: 30px;
+    bottom: 100px;
     right: 30px;
     width: 60px;
     height: 60px;
-    background: linear-gradient(135deg, #0ea5e9, #2563eb);
+    background: linear-gradient(135deg, #1D3654, #29867F);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 8px 25px rgba(14, 165, 233, 0.3);
+    box-shadow: 0 8px 25px rgba(41, 134, 127, 0.3);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 1000;
     border: 3px solid white;
@@ -19,27 +21,28 @@
 
 #chatbot-icon:hover {
     transform: scale(1.1);
-    box-shadow: 0 12px 35px rgba(14, 165, 233, 0.4);
+    box-shadow: 0 12px 35px rgba(41, 134, 127, 0.4);
 }
 
 #chatbot-icon.chatbot-icon-active {
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    /* CHANGE: Deepens the existing gradient */
+    background: linear-gradient(135deg, #162942, #1f635e);
     transform: scale(1.05);
 }
 
 #chatbot-icon::before {
     content: '💬';
-    font-size: 24px;
+    font-size: 30px;
     color: white;
 }
 
 #chatbot-container {
     position: fixed;
-    bottom: 100px;
+    bottom: 160px;
     right: 30px;
-    width: 380px;
-    height: 500px;
-    background: white;
+    width: 500px;
+    height: 600px;
+    background: #f8fafc; /* CHANGE: Using light site background color */
     border-radius: 20px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
     display: flex;
@@ -49,7 +52,7 @@
     visibility: hidden;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 999;
-    border: 1px solid rgba(14, 165, 233, 0.1);
+    border: 1px solid rgba(41, 134, 127, 0.2);
     overflow: hidden;
 }
 
@@ -60,7 +63,8 @@
 }
 
 #chatbot-header {
-    background: linear-gradient(135deg, #0ea5e9, #2563eb);
+    /* CHANGE: Using the site's primary Navy-to-Teal gradient */
+    background: linear-gradient(135deg, #1D3654, #29867F);
     color: white;
     padding: 20px;
     display: flex;
@@ -76,6 +80,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    font-family: 'Archivo Black', sans-serif; /* CHANGE: Match heading font */
 }
 
 #chatbot-header h3::before {
@@ -114,7 +119,7 @@
     flex: 1;
     padding: 20px;
     overflow-y: auto;
-    background: #f8fafc;
+    background: #f8fafc; /* CHANGE: Consistent light background */
     display: flex;
     flex-direction: column;
     gap: 15px;
@@ -170,11 +175,15 @@
     font-size: 14px;
     line-height: 1.4;
     word-wrap: break-word;
+    font-family: 'Avenir Next Arabic', sans-serif; /* CHANGE: Match body font */
 }
 
 .chatbot-message-user .chatbot-message-content {
-    background: linear-gradient(135deg, #0ea5e9, #2563eb);
-    color: white;
+    /* CHANGE: Using the site's Gold accent color for user messages */
+    background: #D8AF53;
+    /* CHANGE: Using Navy for text for high contrast on gold */
+    color: #1D3654;
+    font-weight: 500; /* Add weight for better readability */
     border-bottom-right-radius: 6px;
 }
 
@@ -216,16 +225,18 @@
     transition: all 0.2s ease;
     resize: none;
     max-height: 100px;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Avenir Next Arabic', sans-serif; /* CHANGE: Match body font */
 }
 
 #chatbot-input:focus {
-    border-color: #0ea5e9;
-    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+    /* CHANGE: Focus color changed to Teal */
+    border-color: #29867F;
+    box-shadow: 0 0 0 3px rgba(41, 134, 127, 0.1);
 }
 
 #chatbot-send-btn {
-    background: linear-gradient(135deg, #0ea5e9, #2563eb);
+    /* CHANGE: Using the site's primary Navy-to-Teal gradient */
+    background: linear-gradient(135deg, #1D3654, #29867F);
     border: none;
     color: white;
     width: 45px;
@@ -242,7 +253,8 @@
 
 #chatbot-send-btn:hover:not(:disabled) {
     transform: scale(1.05);
-    box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3);
+    /* CHANGE: Shadow color updated to match Teal */
+    box-shadow: 0 4px 15px rgba(41, 134, 127, 0.3);
 }
 
 #chatbot-send-btn:disabled {
@@ -316,7 +328,8 @@
 .chatbot-typing-dot {
     width: 8px;
     height: 8px;
-    background: #94a3b8;
+    /* CHANGE: Using the site's Teal color for typing dots */
+    background: #29867F;
     border-radius: 50%;
     animation: typing 1.4s infinite ease-in-out;
 }
@@ -334,4 +347,3 @@
         opacity: 1;
     }
 }
-

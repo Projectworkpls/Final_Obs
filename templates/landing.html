@@ -85,6 +85,10 @@
         align-items: center;
         text-align: center;
     }
+    
+    .hero-content {
+        width: 100%;
+    }
 
     .hero-title {
         font-size: clamp(2.5rem, 6vw, 4.5rem);
@@ -118,6 +122,7 @@
         font-weight: 500;
         padding: 0.75rem 1.5rem;
         border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
 
      .badge:hover {
@@ -230,9 +235,18 @@
         transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
     
-    .feature-icon { font-size: 3rem; margin-bottom: 1.5rem; }
-    .feature-title { font-size: 1.3rem; color: var(--navy); margin-bottom: 0.75rem; }
-    .feature-description { color: var(--text-muted); }
+    .feature-icon { 
+        font-size: 3rem; 
+        margin-bottom: 1.5rem; 
+    }
+    .feature-title { 
+        font-size: 1.3rem; 
+        color: var(--navy); 
+        margin-bottom: 0.75rem; 
+    }
+    .feature-description { 
+        color: var(--text-muted); 
+    }
     
     /* --- 5. How It Works Section --- */
     .how-it-works-section .container {
@@ -323,8 +337,14 @@
         flex-grow: 1;
     }
     
-    .testimonial-author { font-weight: 700; color: var(--teal); }
-    .testimonial-role { color: var(--text-muted); font-size: 0.9rem; }
+    .testimonial-author { 
+        font-weight: 700; 
+        color: var(--teal); 
+    }
+    .testimonial-role { 
+        color: var(--text-muted); 
+        font-size: 0.9rem; 
+    }
     
     /* --- 7. Quote Section --- */
     .quote-section {
@@ -351,8 +371,14 @@
         opacity: 0.2;
     }
     
-    .quote-text::before { top: -2rem; left: -2rem; }
-    .quote-text::after { bottom: -4rem; right: -2rem; }
+    .quote-text::before { 
+        top: -2rem; 
+        left: -2rem; 
+    }
+    .quote-text::after { 
+        bottom: -4rem; 
+        right: -2rem; 
+    }
 
     /* --- 8. Trust Section --- */
     .trust-grid {
@@ -373,9 +399,18 @@
         transform: translateY(-10px);
         box-shadow: 0 20px 40px rgba(41, 134, 127, 0.15);
     }
-    .trust-icon { font-size: 3rem; margin-bottom: 1.5rem; }
-    .trust-title { font-size: 1.3rem; color: var(--navy); margin-bottom: 0.75rem; }
-    .trust-desc { color: var(--text-muted); }
+    .trust-icon { 
+        font-size: 3rem; 
+        margin-bottom: 1.5rem; 
+    }
+    .trust-title { 
+        font-size: 1.3rem; 
+        color: var(--navy); 
+        margin-bottom: 0.75rem; 
+    }
+    .trust-desc { 
+        color: var(--text-muted); 
+    }
 
     /* --- Hover rule for other cards --- */
     .profile-section .container:hover,
@@ -396,7 +431,13 @@
         .step-card:not(:nth-child(3n))::after { content: none; }
         .step-card:not(:nth-child(2n))::after {
             content: '';
+            position: absolute;
+            left: 100%;
+            top: 50%;
+            transform: translateY(-50%);
             width: 2rem;
+            height: 2px;
+            background: repeating-linear-gradient(to right, var(--pdf-grey-beige) 0, var(--pdf-grey-beige) 4px, transparent 4px, transparent 8px);
         }
     }
 
@@ -422,31 +463,42 @@
     }
 </style>
 
+
 <section class="hero-section">
     <div class="container">
-        <h1 class="hero-title">Sanjaya – The Observer</h1>
-        <p class="hero-subtitle">Every child needs someone who truly listens.</p>
-        <div class="badges-row">
-            <div class="badge"><span class="badge-icon">👨‍👩‍👧‍👦</span> Trusted by 100+ Parents</div>
-            <div class="badge"><span class="badge-icon">🏫</span> Endorsed by Principals</div>
-            <div class="badge"><span class="badge-icon">🔒</span> 100% Private & Secure</div>
+        <div class="hero-content">
+            <h1 class="hero-title">Sanjaya – The Observer</h1>
+            <p class="hero-subtitle">Every child needs someone who truly listens.</p>
+            <div class="badges-row">
+                <div class="badge">
+                    <span class="badge-icon">👨‍👩‍👧‍👦</span> Trusted by 100+ Parents
+                </div>
+                <div class="badge">
+                    <span class="badge-icon">🏫</span> Endorsed by Principals
+                </div>
+                <div class="badge">
+                    <span class="badge-icon">🔒</span> 100% Private & Secure
+                </div>
+            </div>
         </div>
     </div>
 </section>
 
 <section class="section profile-section">
-    <div class="container profile-container">
-        <div class="profile-image-container">
-            <img src="{{ url_for('static', filename='images/punam-jaiswal.jpg') }}" alt="Punam Jaiswal" class="profile-image">
-            <div class="profile-name">Punam Jaiswal</div>
-        </div>
-        <div class="profile-info">
-            <h2 class="profile-info-title">Meet Our Founder</h2>
-            <p class="profile-description">
-                With years of experience in child psychology and education, Punam Ma'am, as Principal, brings a unique blend of empathy and expertise to every interaction. Her gentle approach and profound understanding of children's needs make her the ideal guide for your child's educational journey.
-            </p>
-            <div class="profile-highlight">
-                "Every child has a story to tell. My role is simply to listen, understand, and help parents see the beautiful complexity of their child's world."
+    <div class="container">
+        <div class="profile-container">
+            <div class="profile-image-container">
+                <img src="{{ url_for('static', filename='images/punam-jaiswal.jpg') }}" alt="Punam Jaiswal" class="profile-image">
+                <div class="profile-name">Punam Jaiswal</div>
+            </div>
+            <div class="profile-info">
+                <h2 class="profile-info-title">Meet Our Founder</h2>
+                <p class="profile-description">
+                    With years of experience in child psychology and education, Punam Ma'am, as Principal, brings a unique blend of empathy and expertise to every interaction. Her gentle approach and profound understanding of children's needs make her the ideal guide for your child's educational journey.
+                </p>
+                <div class="profile-highlight">
+                    "Every child has a story to tell. My role is simply to listen, understand, and help parents see the beautiful complexity of their child's world."
+                </div>
             </div>
         </div>
     </div>
@@ -511,35 +563,35 @@
         <h2 class="section-title">Hear From Our Community</h2>
         <div class="testimonials-grid">
             <div class="testimonial-card">
-                <p class="testimonial-quote">"I am very happy with this programme as I can see a remarkable change in my child. She was an introvert but now she is opening up and is more confident."</p>
+                <p class="testimonial-quote">"I am very happy with this programme as I can see a remarkable change in my child. She was an introvert but now she is opening up and is more confident. In fact, she has made me a good listener. I extend my full support to this programme."</p>
                 <div>
                     <div class="testimonial-author">Mr. Shah</div>
                     <div class="testimonial-role">Parent</div>
                 </div>
             </div>
             <div class="testimonial-card">
-                <p class="testimonial-quote">"It is a very innovative programme and need of the hour. Both my children have opened up and are more confident."</p>
+                <p class="testimonial-quote">"It is a very innovative programme and need of the hour. Things which the children are reluctant to share with their parents, they share with ma'am because they have a patient listener. Both my children have opened up and are more confident."</p>
                 <div>
                     <div class="testimonial-author">Mr. Dey</div>
                     <div class="testimonial-role">Parent</div>
                 </div>
             </div>
             <div class="testimonial-card">
-                <p class="testimonial-quote">"I can see a vast difference for better in my daughter. She is very excited to share her day’s activities. I can see happiness on her face while talking to ma'am."</p>
+                <p class="testimonial-quote">"I can see a vast difference for better in my daughter. She has become very regular in her work. She is very excited to share her day’s activities. I can see happiness on her face while talking to ma'am."</p>
                 <div>
                     <div class="testimonial-author">Mrs. Paliwal</div>
                     <div class="testimonial-role">Parent</div>
                 </div>
             </div>
             <div class="testimonial-card">
-                <p class="testimonial-quote">"The reports are helping me to guide him in the right direction. I am very satisfied with the programme."</p>
+                <p class="testimonial-quote">"After going through the growth reports I have realized that my child’s study habits and social interactions are very positive. The reports are helping me to guide him in the right direction. I am very satisfied with the programme."</p>
                 <div>
                     <div class="testimonial-author">Mrs. Dsouza</div>
                     <div class="testimonial-role">Parent</div>
                 </div>
             </div>
             <div class="testimonial-card">
-                <p class="testimonial-quote">"This platform allows me to share my views and ideas freely. It helps me express positive thoughts and open up about negative ones."</p>
+                <p class="testimonial-quote">"This platform allows me to share my views and ideas freely. It helps me express positive thoughts and open up about negative ones, helping me rectify errors in social and academic life."</p>
                 <div>
                     <div class="testimonial-author">Daivik</div>
                     <div class="testimonial-role">Student, 16 years</div>
@@ -550,6 +602,13 @@
                 <div>
                     <div class="testimonial-author">Ovi</div>
                     <div class="testimonial-role">Student, 6 years</div>
+                </div>
+            </div>
+            <div class="testimonial-card">
+                <p class="testimonial-quote">"This programme has allowed me to say whatever I want without being objected. I can relieve myself of the things I want to say."</p>
+                <div>
+                    <div class="testimonial-author">Arnav</div>
+                    <div class="testimonial-role">Student, 12 years</div>
                 </div>
             </div>
         </div>
@@ -587,5 +646,24 @@
         </div>
     </div>
 </section>
+
+<div id="chatbot-icon"></div>
+<div id="chatbot-container">
+    <div id="chatbot-header">
+        <h3>Sanjaya Assistant</h3>
+        <div id="chatbot-controls">
+            <button id="chatbot-minimize-btn" title="Minimize">−</button>
+            <button id="chatbot-close-btn" title="Close">×</button>
+        </div>
+    </div>
+    <div id="chatbot-body"></div>
+    <div id="chatbot-input-container">
+        <textarea id="chatbot-input" placeholder="Ask me anything about Sanjaya..." rows="1"></textarea>
+        <button id="chatbot-send-btn">Send</button>
+    </div>
+</div>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/chatbot.css') }}">
+<script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
 
 {% endblock %}

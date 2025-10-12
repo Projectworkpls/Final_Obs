@@ -175,4 +175,3 @@ class SanjayaChatbot {
 document.addEventListener('DOMContentLoaded', () => {
     new SanjayaChatbot();
 });
-
