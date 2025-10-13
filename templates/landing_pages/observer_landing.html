@@ -269,6 +269,7 @@
         font-size: 2.5rem;
         margin-bottom: 1.5rem;
         display: block;
+        color: #29867F; /* Added a consistent professional color */
         filter: drop-shadow(0 4px 8px rgba(14, 165, 233, 0.2));
     }
     .feature-title {
@@ -311,13 +312,14 @@
     }
 
     .styled-list li::before {
-        content: "✓";
+        content: "\f00c"; /* Font Awesome checkmark */
+        font-family: "Font Awesome 6 Free";
+        font-weight: 900;
         position: absolute;
         left: 1rem;
         top: 1rem;
-        color: #29867F; 
+        color: #29867F;
         font-size: 1.2rem;
-        font-weight: bold;
     }
 
     /* CTA Section */
@@ -457,9 +459,6 @@
   </style>
 </head>
 <body>
-  <!-- The navigation bar is now inherited from base.html -->
-
-  <!-- Hero Section -->
   <header class="hero-section">
     <div class="hero-content">
       <h1 class="hero-title">Welcome, Observers</h1>
@@ -467,27 +466,25 @@
     </div>
   </header>
 
-  <!-- Content Sections -->
   <section class="content-section">
-    <h2 class="section-title">🌱 What is Sanjaya?</h2>
+    <h2 class="section-title">What is Sanjaya?</h2>
     <p class="section-subtitle">
       Children today are learning not just from school, but from conversations, experiences, people, and technology.<br>
       <b>Sanjaya – The Observer</b> is a unique initiative supervised by India's Legendary Principals, where you silently observe and document what children learn each day — without judging or advising.
     </p>
-    <!-- 3 cards in one row -->
     <div class="section-grid three-cards">
       <div class="feature-card">
-        <span class="feature-icon">🧑‍🏫</span>
+        <span class="feature-icon"><i class="fas fa-chalkboard-user"></i></span>
         <h3 class="feature-title">You are not a teacher</h3>
         <p class="feature-description">Your role transcends traditional teaching boundaries</p>
       </div>
       <div class="feature-card">
-        <span class="feature-icon">🧑‍💼</span>
+        <span class="feature-icon"><i class="fas fa-comment-slash"></i></span>
         <h3 class="feature-title">You are not a counselor</h3>
         <p class="feature-description">No therapy sessions, just genuine listening</p>
       </div>
       <div class="feature-card">
-        <span class="feature-icon">👂</span>
+        <span class="feature-icon"><i class="fas fa-ear-listen"></i></span>
         <h3 class="feature-title">You are an ethical listener</h3>
         <p class="feature-description">Just like Sanjaya in the Mahabharata – quietly witnessing the journey of growth.</p>
       </div>
@@ -506,8 +503,7 @@
   </section>
 
   <section class="content-section">
-    <h2 class="section-title">🔒 What You'll See</h2>
-    <!-- 3 cards in one row -->
+    <h2 class="section-title">What You'll See</h2>
     <div class="section-grid three-cards">
       <div class="feature-card">
         <span class="feature-icon"><i class="fas fa-user-graduate"></i></span>
@@ -529,7 +525,6 @@
 
   <section class="content-section">
     <h2 class="section-title">Why You Should Join</h2>
-    <!-- 5 cards in perfect 2+3 layout -->
     <div class="section-grid five-cards">
       <div class="feature-card">
         <span class="feature-icon"><i class="fas fa-award"></i></span>
@@ -560,39 +555,37 @@
   </section>
 
   <section class="content-section">
-    <h2 class="section-title">🧰 Training & Support</h2>
-    <!-- 4 cards in 2x2 layout -->
+    <h2 class="section-title">Training & Support</h2>
     <div class="section-grid four-cards">
       <div class="feature-card">
-        <span class="feature-icon">🎥</span>
+        <span class="feature-icon"><i class="fas fa-video"></i></span>
         <h3 class="feature-title">Video Training Modules</h3>
         <p class="feature-description">Comprehensive video guides for effective observation</p>
       </div>
       <div class="feature-card">
-        <span class="feature-icon">📘</span>
+        <span class="feature-icon"><i class="fas fa-book-open"></i></span>
         <h3 class="feature-title">Observer Manual & Sample Reports</h3>
         <p class="feature-description">Detailed documentation and real examples</p>
       </div>
       <div class="feature-card">
-        <span class="feature-icon">🧠</span>
+        <span class="feature-icon"><i class="fas fa-brain"></i></span>
         <h3 class="feature-title">Weekly AI-guided insights</h3>
         <p class="feature-description">Advanced analytics to improve your observation skills</p>
       </div>
       <div class="feature-card">
-        <span class="feature-icon">👥</span>
+        <span class="feature-icon"><i class="fas fa-users-gear"></i></span>
         <h3 class="feature-title">Peer group support</h3>
         <p class="feature-description">Connect with fellow observers for shared learning</p>
       </div>
     </div>
   </section>
 
-  <!-- CTA Section -->
   <section class="full-cta">
     <div class="cta-content">
-      <h2 style="font-size: 2.5rem; margin-bottom: 1rem;">📝 Ready to Join?</h2>
+      <h2 style="font-size: 2.5rem; margin-bottom: 1rem;">Ready to Join?</h2>
       <p style="font-size: 1.2rem; margin-bottom: 2rem;">Step into a meaningful role. No lectures. No pressure. Just presence.<br>Click below to begin your onboarding journey.</p>
       <a href="{{ url_for('auth.apply_observer') }}" class="cta-btn-large">
-        <span>👉</span> Apply as Observer
+        <i class="fas fa-arrow-right"></i> Apply as Observer
       </a>
     </div>
   </section>

@@ -84,6 +84,7 @@
         font-size: 2.5rem;
         margin-bottom: 1.5rem;
         display: block;
+        color: #29867F; /* Professional icon color */
         filter: drop-shadow(0 4px 8px rgba(14, 165, 233, 0.2));
     }
     .feature-title {
@@ -196,14 +197,16 @@
         border-left: 4px solid #29867F;
         box-shadow: 0 4px 20px rgba(14, 165, 233, 0.05);
     }
+    /* UPDATED LIST STYLE TO USE FONT AWESOME ICON */
     .styled-list li::before {
-        content: "✓";
+        content: "\f00c"; /* Font Awesome checkmark unicode */
+        font-family: "Font Awesome 6 Free";
+        font-weight: 900; /* Required for solid icons */
         position: absolute;
         left: 1rem;
         top: 1rem;
         color: #29867F; 
         font-size: 1.2rem;
-        font-weight: bold;
     }
     .full-cta {
         width: 100%;
@@ -340,27 +343,27 @@
     <h2 class="section-title">How Does It Work?</h2>
     <div class="section-grid five-cards">
         <div class="feature-card">
-            <span class="feature-icon">✅</span>
+            <span class="feature-icon"><i class="fas fa-file-signature"></i></span>
             <h3 class="feature-title">Complete Student Profile</h3>
             <p class="feature-description">You fill a detailed student profile at the time of joining</p>
         </div>
         <div class="feature-card">
-            <span class="feature-icon">✅</span>
+            <span class="feature-icon"><i class="fas fa-user-check"></i></span>
             <h3 class="feature-title">Verified Observer Assignment</h3>
             <p class="feature-description">A verified Observer is assigned to your child</p>
         </div>
         <div class="feature-card">
-            <span class="feature-icon">✅</span>
+            <span class="feature-icon"><i class="fas fa-phone-volume"></i></span>
             <h3 class="feature-title">Daily 5-Minute Calls</h3>
             <p class="feature-description">Every day, your child receives a short 5-minute phone call</p>
         </div>
         <div class="feature-card">
-            <span class="feature-icon">✅</span>
+            <span class="feature-icon"><i class="fas fa-ear-listen"></i></span>
             <h3 class="feature-title">Pure Listening</h3>
             <p class="feature-description">The Observer just listens and records — no judgment, no advice</p>
         </div>
         <div class="feature-card">
-            <span class="feature-icon">✅</span>
+            <span class="feature-icon"><i class="fas fa-clipboard-check"></i></span>
             <h3 class="feature-title">Daily Reports</h3>
             <p class="feature-description">You receive a daily summary report on WhatsApp</p>
         </div>
@@ -370,27 +373,27 @@
     <h2 class="section-title">What Will You Get?</h2>
     <div class="section-grid five-cards">
         <div class="feature-card">
-            <span class="feature-icon">📩</span>
+            <span class="feature-icon"><i class="fas fa-lightbulb"></i></span>
             <h3 class="feature-title">Daily Learning Insights</h3>
             <p class="feature-description">Daily insight into what your child is learning or struggling with</p>
         </div>
         <div class="feature-card">
-            <span class="feature-icon">🧠</span>
+            <span class="feature-icon"><i class="fas fa-shield"></i></span>
             <h3 class="feature-title">Digital Influence Clarity</h3>
             <p class="feature-description">Clarity on your child's digital and social influences</p>
         </div>
         <div class="feature-card">
-            <span class="feature-icon">🔍</span>
+            <span class="feature-icon"><i class="fas fa-chart-line"></i></span>
             <h3 class="feature-title">Behavioral Patterns</h3>
             <p class="feature-description">Patterns and behavioral trends reported by trained observers</p>
         </div>
         <div class="feature-card">
-            <span class="feature-icon">🛡</span>
+            <span class="feature-icon"><i class="fas fa-lock"></i></span>
             <h3 class="feature-title">Complete Confidentiality</h3>
             <p class="feature-description">Your child's data is private, secure, and ethically handled</p>
         </div>
         <div class="feature-card">
-            <span class="feature-icon">🌟</span>
+            <span class="feature-icon"><i class="fas fa-user-tie"></i></span>
             <h3 class="feature-title">Elite Support</h3>
             <p class="feature-description">Support from the Elite Principals Club if any concern needs escalation</p>
         </div>
@@ -399,7 +402,7 @@
 <section class="content-section">
     <h2 class="section-title">Start with a 7-Day Free Trial</h2>
     <p class="section-subtitle">
-        We know trust takes time. That's why your first 7 working days are absolutely free. After that, if you choose to continue, the program is just <strong>$200/month</strong>.
+        We know trust takes time. That's why your first 7 working days are absolutely free. After that, if you choose to continue, the program is just <strong>₹16,500/month</strong>.
     </p>
 </section>
 <section class="content-section">
@@ -413,12 +416,12 @@
 </section>
 <section class="full-cta">
     <div class="cta-content">
-        <h2 style="font-size: 2.5rem; margin-bottom: 1rem;">📝 Ready to Try It?</h2>
+        <h2 style="font-size: 2.5rem; margin-bottom: 1rem;">Ready to Try It?</h2>
         <p style="font-size: 1.2rem; margin-bottom: 2rem;">
             Let your child be seen, heard, and supported — without pressure. Click below to begin your 7-day free trial.
         </p>
         <a href="{{ url_for('payment_form') }}" class="cta-btn-large">
-            <span>👉</span> Start Free Trial Now
+            <i class="fas fa-arrow-right"></i> Start Free Trial Now
         </a>
     </div>
 </section>

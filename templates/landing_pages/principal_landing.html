@@ -81,6 +81,7 @@
         font-size: 2.5rem;
         margin-bottom: 1.5rem;
         display: block;
+        color: #29867F; /* Professional icon color */
         filter: drop-shadow(0 4px 8px rgba(14, 165, 233, 0.2));
     }
     .feature-title {
@@ -192,14 +193,16 @@
         border-left: 4px solid #29867F;
         box-shadow: 0 4px 20px rgba(14, 165, 233, 0.05);
     }
+    /* UPDATED LIST STYLE TO USE FONT AWESOME ICON */
     .styled-list li::before {
-        content: "✓";
+        content: "\f00c"; /* Font Awesome checkmark unicode */
+        font-family: "Font Awesome 6 Free";
+        font-weight: 900; /* Required for solid icons */
         position: absolute;
         left: 1rem;
         top: 1rem;
         color: #29867F; 
         font-size: 1.2rem;
-        font-weight: bold;
     }
     .full-cta {
         width: 100%;
@@ -312,21 +315,18 @@
         }
     }
 </style>
-<!-- Hero Section -->
 <section class="hero-section">
     <div class="hero-content">
         <h1 class="hero-title">Welcome, Respected Principals</h1>
         <p class="hero-subtitle">Become a Guardian of Unbiased Learning with Sanjaya – The Observer</p>
     </div>
 </section>
-<!-- Why This Program Matters -->
 <section class="content-section">
-    <h2 class="section-title">🌟 Why This Program Matters</h2>
+    <h2 class="section-title">Why This Program Matters</h2>
     <p class="section-subtitle">
         Every child is constantly learning – not just from books, but from people, experiences, and technology. But who's silently observing this journey and guiding it without bias? That's where Sanjaya – The Observer steps in. Built under the wisdom and supervision of India's Legendary Principals, this program ensures every child is being seen, heard, and supported.
     </p>
 </section>
-<!-- Your Role as a Principal -->
 <section class="content-section">
     <h2 class="section-title">Your Role as a Principal</h2>
     <p class="section-subtitle">
@@ -340,38 +340,36 @@
         <li>Promote Trust among parents, observers, and your educator network</li>
     </ul>
 </section>
-<!-- How It Works Section - 5 cards: 2 top, 3 bottom -->
 <section class="content-section">
     <h2 class="section-title">How It Works</h2>
     <div class="section-grid five-cards">
         <div class="feature-card">
-            <span class="feature-icon">1️⃣</span>
+            <span class="feature-icon"><i class="fas fa-user-check"></i></span>
             <h3 class="feature-title">Observer Training & Verification</h3>
             <p class="feature-description">Observers are trained and verified by admin under your supervision</p>
         </div>
         <div class="feature-card">
-            <span class="feature-icon">2️⃣</span>
+            <span class="feature-icon"><i class="fas fa-file-signature"></i></span>
             <h3 class="feature-title">Parent Enrollment</h3>
             <p class="feature-description">Parents subscribe and fill detailed student profiles</p>
         </div>
         <div class="feature-card">
-            <span class="feature-icon">3️⃣</span>
+            <span class="feature-icon"><i class="fas fa-headset"></i></span>
             <h3 class="feature-title">Daily Observation Calls</h3>
             <p class="feature-description">Observers conduct 5-minute daily calls to quietly listen and document</p>
         </div>
         <div class="feature-card">
-            <span class="feature-icon">4️⃣</span>
+            <span class="feature-icon"><i class="fas fa-clipboard-list"></i></span>
             <h3 class="feature-title">Principal Review</h3>
             <p class="feature-description">You receive Observer summaries and can review or escalate as needed</p>
         </div>
         <div class="feature-card">
-            <span class="feature-icon">5️⃣</span>
+            <span class="feature-icon"><i class="fa-solid fa-lock"></i></span>
             <h3 class="feature-title">Confidential Support</h3>
             <p class="feature-description">All insights are confidential and used only to support the learner's journey</p>
         </div>
     </div>
 </section>
-<!-- What You Gain Section - 4 cards: 2x2 layout -->
 <section class="content-section">
     <h2 class="section-title">What You Gain</h2>
     <div class="section-grid four-cards">
@@ -397,17 +395,15 @@
         </div>
     </div>
 </section>
-<!-- CTA Section -->
 <section class="full-cta">
     <div class="cta-content">
-        <h2 style="font-size: 2.5rem; margin-bottom: 1rem;">📝 Ready to Join?</h2>
+        <h2 style="font-size: 2.5rem; margin-bottom: 1rem;">Ready to Join?</h2>
         <p style="font-size: 1.2rem; margin-bottom: 2rem;">
             Become the cornerstone of India's most ethical observation program. Click below to start your onboarding and get verified by the admin.
         </p>
         <a href="{{ url_for('auth.apply_principal') }}" class="cta-btn-large">
-            <span>👉</span> Apply as Principal
+            <i class="fas fa-arrow-right"></i> Apply as Principal
         </a>
     </div>
 </section>
-<!-- Footer -->
 {% endblock %}
