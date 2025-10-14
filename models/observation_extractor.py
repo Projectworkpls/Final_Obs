@@ -396,7 +396,7 @@ Format it as a natural dialogue where:
         🌈 Curiosity Response Index: [1-10] / 10  
         [Brief explanation of {student_name}'s engagement with the curiosity seed]
 
-        🗣️ Communication Skills & Thought Clarity
+        🗣️ Communication Skills
         • Confidence level: [Describe based on speech and tone in text]  
         • Clarity of thought: [Describe {student_name}'s ability to express thoughts clearly and independently]  
         • Participation & engagement: [Describe based on frequency and quality of responses]  
