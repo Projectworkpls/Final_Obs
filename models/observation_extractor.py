@@ -268,9 +268,10 @@ Format it as a natural dialogue where:
 
             # Use the same Gemini API pattern as your existing methods
             model = genai.GenerativeModel('gemini-2.0-flash')
+            config = genai.types.GenerationConfig(temperature=0.2)
             response = model.generate_content([
                 {"role": "user", "parts": [{"text": prompt}]}
-            ])
+            ],generation_config=config)
 
             if response and response.text:
                 return response.text.strip()
@@ -422,9 +423,10 @@ Format it as a natural dialogue where:
 
         try:
             model = genai.GenerativeModel('gemini-2.0-flash')
+            config = genai.types.GenerationConfig(temperature=0.2)
             response = model.generate_content([
                 {"role": "user", "parts": [{"text": prompt}]}
-            ])
+            ],generation_config=config)
             return response.text
         except Exception as e:
             return f"Error generating report: {str(e)}"
