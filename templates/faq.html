@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block title %}FAQ | Sanjaya – The Observer{% endblock %}
+
+{% block content %}
+<style>
+    .hero-section {
+        min-height: 50vh;
+        background: linear-gradient(135deg, #1D3654 0%, #29867F 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.15) 0%, transparent 50%),
+                    radial-gradient(circle at 70% 80%, rgba(255,255,255,0.1) 0%, transparent 50%);
+        opacity: 0.7;
+    }
+    .hero-content {
+        position: relative;
+        z-index: 2;
+        padding: 0 2rem;
+    }
+    .hero-title {
+        font-size: clamp(2.5rem, 6vw, 4rem);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+    }
+    .hero-subtitle {
+        font-size: 1.2rem;
+        color: rgba(255,255,255,0.9);
+        margin-top: 1rem;
+    }
+    .faq-section {
+        max-width: 900px;
+        margin: 5rem auto;
+        padding: 0 1.5rem;
+    }
+    .faq-card {
+        background: linear-gradient(145deg, #ffffff 0%, #f0f9ff 100%);
+        border: 1px solid rgba(14, 165, 233, 0.1);
+        border-radius: 18px;
+        box-shadow: 0 4px 18px rgba(14,165,233,0.08);
+        margin-bottom: 1.2rem;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .faq-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 30px rgba(14,165,233,0.15);
+    }
+    .faq-question {
+        padding: 1.3rem 1.5rem;
+        cursor: pointer;
+        font-weight: 600;
+        color: #1D3654;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 1.1rem;
+    }
+    .faq-answer {
+        padding: 1.2rem 1.5rem;
+        color: #334155;
+        line-height: 1.6;
+        display: none;
+        border-top: 1px solid rgba(37,99,235,0.08);
+    }
+    .faq-answer.open {
+        display: block;
+        animation: fadeIn 0.3s ease-in-out;
+    }
+    .faq-icon {
+        transition: transform 0.3s ease;
+    }
+    .faq-icon.rotate {
+        transform: rotate(90deg);
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
+<section class="hero-section">
+    <div class="hero-content">
+        <h1 class="hero-title">Frequently Asked Questions</h1>
+        <p class="hero-subtitle">Everything you need to know about Sanjaya – The Observer</p>
+    </div>
+</section>
+
+<section class="faq-section">
+    {% set faqs = [
+        ("What is Sanjaya – The Observer?", "Sanjaya is a child-centric program that quietly observes and understands a child’s learning journey—beyond textbooks—so parents and schools get balanced, unbiased insights and timely guidance."),
+        ("Who leads the initiative?", "The program is built under the wisdom and supervision of experienced school principals, with leadership from a founder/principal who has a background in child psychology and education."),
+        ("How does the program work, in simple terms?", "We gather gentle observations and inputs from home and school, synthesize learning, behavior, and wellbeing patterns, and share practical, age-appropriate recommendations with parents and educators."),
+        ("Who is it for (age groups)?", "For preschool and school-age children, adapting by age—focusing first on attachment and play, later on habits, peers, and study skills."),
+        ("Is this a clinical assessment or therapy?", "No. Sanjaya is an observation-based guidance program—not a diagnosis or therapy. If specialist help is needed, we suggest qualified referrals with your consent."),
+        ("What kind of concerns can it help with?", "Daily routines, emotions, peer issues, screen time, focus and homework habits, transitions, and home–school communication."),
+        ("What are the benefits for schools?", "Clearer child profiles, early behavioral flags, smoother teacher–parent conversations, and practical classroom insights."),
+        ("What will parents receive?", "A concise insight note with 3–5 suggested actions for home/school, followed by a short check-in."),
+        ("How long does it take?", "A typical cycle includes onboarding, 1–2 weeks of observation, a feedback session, and a follow-up."),
+        ("How do you handle privacy and consent?", "We collect minimal information, take written consent, and never share child data with third parties. Notes are accessible only to authorized adults."),
+        ("Will this add pressure on my child?", "No. Observations blend naturally into routines—play, school, and home life—designed to be child-friendly and non-intrusive."),
+        ("Can Sanjaya work with my child’s teacher or counsellor?", "Yes, we coordinate with your school team for consistent, practical guidance."),
+        ("Do you support children with special needs?", "We provide supportive observations and day-to-day strategies, referring to professionals if specialized care is required."),
+        ("Is it online, offline, or hybrid?", "Currently, the program operates fully online."),
+        ("How do we enroll?", "Schools can onboard grades or cohorts; parents can express interest individually. Contact: <strong>8291188188</strong>.")
+    ] %}
+
+    {% for q, a in faqs %}
+    <div class="faq-card">
+        <div class="faq-question" onclick="toggleFAQ(this)">
+            <span>{{ q }}</span>
+            <i class="faq-icon fas fa-chevron-right"></i>
+        </div>
+        <div class="faq-answer">{{ a|safe }}</div>
+    </div>
+    {% endfor %}
+</section>
+
+<script>
+    function toggleFAQ(el) {
+        const answer = el.nextElementSibling;
+        const icon = el.querySelector('.faq-icon');
+        answer.classList.toggle('open');
+        icon.classList.toggle('rotate');
+    }
+</script>
+{% endblock %}

@@ -437,6 +437,10 @@ def create_app():
     def parent_landing():
         return render_template('landing_pages/parent_landing.html')
 
+    @app.route("/faq")
+    def FAQ_landing():
+        return render_template("faq.html")
+
     # --- PAYMENT FORM PAGE ---
     @app.route('/payment_form')
     def payment_form():
