@@ -407,8 +407,10 @@ Format it as a natural dialogue where:
         🚀 Planning/Independence | [✅ Excellent/✅ Good/⚠️ Fair/📈 Needs Work] | [Brief summary]
         🧭 Character | [✅ Excellent/✅ Good/⚠️ Fair/📈 Needs Work] | [Brief summary]
         
-        🌈 Curiosity Response Index: [1-10] / 10  
-        [Brief explanation of {student_name}'s engagement with the curiosity seed]ation: [Describe structure and coherence of thought process]  
+        🌈 Curiosity Response Index: [1-10] / 10
+        [Brief explanation of {student_name}'s engagement with the curiosity seed]
+
+        🗣️ Communication Skills & Thought Clarity: [Describe structure and coherence of thought process]
 
         🧠 Overall Growth Score:  
         [🔵 Balanced Growth / 🟡 Moderate Growth / 🔴 Limited Growth] – [X/7] Areas Active 
@@ -565,7 +567,7 @@ Format it as a natural dialogue where:
                 run.bold = True
                 run.font.name = "Segoe UI Emoji"
                 run.font.size = docx.shared.Pt(11)
-            elif line.startswith(("🌈", "🗣️")):
+            elif line.startswith(("🌈")):
                 heading = doc.add_heading(line, level=2)
                 heading.runs[0].font.name = "Segoe UI Emoji"
             elif line.startswith("🧠 Overall"):
@@ -616,7 +618,6 @@ Format it as a natural dialogue where:
             "🧭": "[Character/Values]",
             "🚀": "[Planning/Independence]",
             "🌈": "[Curiosity Response]",
-            "🗣️": "[Communication Skills]",
             "📣": "[Note for Parent]",
             "🟢": "[Excellent]",
             "✅": "[Good]",
