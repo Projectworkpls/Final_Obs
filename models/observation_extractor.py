@@ -402,15 +402,13 @@ Format it as a natural dialogue where:
         🧠 Intellectual | [✅ Excellent/✅ Good/⚠️ Fair/📈 Needs Work] | [Brief summary]
         😊 Emotional | [✅ Excellent/✅ Good/⚠️ Fair/📈 Needs Work] | [Brief summary]
         🤝 Social | [✅ Excellent/✅ Good/⚠️ Fair/📈 Needs Work] | [Brief summary]
-        🎨 Creativity | [✅ Excellent/✅ Good/⚠️ Fair/📈 Needs Work] | [Brief summary]
+        🎨 Creative | [✅ Excellent/✅ Good/⚠️ Fair/📈 Needs Work] | [Brief summary]
         🏃 Physical | [✅ Excellent/✅ Good/⚠️ Fair/📈 Needs Work] | [Brief summary]
         🚀 Planning/Independence | [✅ Excellent/✅ Good/⚠️ Fair/📈 Needs Work] | [Brief summary]
         🧭 Character | [✅ Excellent/✅ Good/⚠️ Fair/📈 Needs Work] | [Brief summary]
         
         🌈 Curiosity Response Index: [1-10] / 10
         [Brief explanation of {student_name}'s engagement with the curiosity seed]
-
-        🗣️ Communication Skills & Thought Clarity: [Describe structure and coherence of thought process]
 
         🧠 Overall Growth Score:  
         [🔵 Balanced Growth / 🟡 Moderate Growth / 🔴 Limited Growth] – [X/7] Areas Active 
@@ -1544,3 +1542,4 @@ Please provide suggestions in this exact format:
 - Develop communication and expression skills
 
 🌟 **SESSION TIP:** Start with what interests {child_name} most and build the lesson around {pronouns["possessive"]} natural curiosity!"""
+
