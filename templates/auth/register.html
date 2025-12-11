@@ -55,16 +55,7 @@
                             <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
                         </div>
 
-                        <div class="mb-4">
-                            <label for="child_id" class="form-label">Select Your Child</label>
-                            <select class="form-select" id="child_id" name="child_id" required>
-                                <option value="">Choose your child...</option>
-                                {% for child in children %}
-                                <option value="{{ child.id }}">{{ child.name }}</option>
-                                {% endfor %}
-                            </select>
-                            <div class="form-text">If your child is not listed, please contact the administrator</div>
-                        </div>
+                        
 
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-primary btn-lg">
